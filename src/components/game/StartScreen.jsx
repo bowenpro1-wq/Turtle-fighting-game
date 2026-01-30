@@ -34,8 +34,12 @@ export default function StartScreen({ onStart }) {
         <h3 className="text-cyan-300 text-2xl font-semibold mb-6 text-center">操作指南</h3>
         <div className="grid grid-cols-2 gap-6 text-white/90 text-lg">
           <div className="flex items-center gap-3">
-            <kbd className="px-4 py-2 bg-white/20 rounded-lg font-mono font-bold">W A S D</kbd>
-            <span>移动</span>
+            <kbd className="px-4 py-2 bg-white/20 rounded-lg font-mono font-bold">A / D</kbd>
+            <span>左右移动</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <kbd className="px-4 py-2 bg-white/20 rounded-lg font-mono font-bold">空格</kbd>
+            <span>跳跃</span>
           </div>
           <div className="flex items-center gap-3">
             <kbd className="px-4 py-2 bg-red-500/40 rounded-lg font-mono font-bold">K</kbd>
@@ -49,7 +53,7 @@ export default function StartScreen({ onStart }) {
             <kbd className="px-4 py-2 bg-blue-500/40 rounded-lg font-mono font-bold">O</kbd>
             <span>飞行 3秒</span>
           </div>
-          <div className="flex items-center gap-3 col-span-2 justify-center">
+          <div className="flex items-center gap-3">
             <kbd className="px-4 py-2 bg-yellow-500/40 rounded-lg font-mono font-bold">B</kbd>
             <span>打开商店</span>
           </div>
@@ -71,14 +75,19 @@ export default function StartScreen({ onStart }) {
         </Button>
       </motion.div>
 
-      <motion.p
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}
-        className="mt-8 text-orange-300/80 text-xl font-medium"
+        className="mt-8 text-center space-y-2"
       >
-        击败 20 个 BOSS 赢得胜利！
-      </motion.p>
+        <p className="text-orange-300/80 text-xl font-medium">
+          击败 20 个 BOSS 赢得胜利！
+        </p>
+        <p className="text-cyan-300/70 text-lg">
+          保护建筑物免受敌人攻击
+        </p>
+      </motion.div>
     </motion.div>
   );
 }
