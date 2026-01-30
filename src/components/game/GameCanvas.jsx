@@ -9,9 +9,9 @@ const ZHONGDALIN = {
   name: 'zhongdalin',
   width: 50,
   height: 70,
-  speed: 1.8,
-  health: 60,
-  damage: 15,
+  speed: 1.0,
+  health: 30,
+  damage: 10,
   shootInterval: 0, // No ranged attack
   color: '#4ade80',
   behaviorType: 'melee',
