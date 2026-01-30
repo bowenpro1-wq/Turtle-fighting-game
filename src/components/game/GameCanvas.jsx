@@ -3,8 +3,8 @@ import { motion } from 'framer-motion';
 
 const CANVAS_WIDTH = typeof window !== 'undefined' ? window.innerWidth : 1200;
 const CANVAS_HEIGHT = typeof window !== 'undefined' ? window.innerHeight : 800;
-const WORLD_WIDTH = 4000;
-const WORLD_HEIGHT = 3000;
+const WORLD_WIDTH = 1800;
+const WORLD_HEIGHT = 2000;
 
 // Zhongdalin enemy for tower mode
 const ZHONGDALIN = {
@@ -14,11 +14,12 @@ const ZHONGDALIN = {
   speed: 1.8,
   health: 60,
   damage: 15,
-  shootInterval: 4000,
+  shootInterval: 0, // No ranged attack
   color: '#4ade80',
-  behaviorType: 'aggressive',
+  behaviorType: 'melee',
   attacksBuildings: false,
-  ramAttack: true
+  ramAttack: true,
+  vineAttack: true
 };
 
 // Enemy types with unique behaviors
@@ -253,14 +254,25 @@ export default function GameCanvas({
       }
     }
 
-    const side = Math.floor(Math.random() * 4);
     let spawnX, spawnY;
     
-    switch(side) {
-      case 0: spawnX = Math.random() * WORLD_WIDTH; spawnY = -50; break;
-      case 1: spawnX = WORLD_WIDTH + 50; spawnY = Math.random() * WORLD_HEIGHT; break;
-      case 2: spawnX = Math.random() * WORLD_WIDTH; spawnY = WORLD_HEIGHT + 50; break;
-      default: spawnX = -50; spawnY = Math.random() * WORLD_HEIGHT; break;
+    // In tower mode, spawn near player
+    if (gameMode === 'tower') {
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 300 + Math.random() * 200;
+      spawnX = game.player.x + Math.cos(angle) * distance;
+      spawnY = game.player.y + Math.sin(angle) * distance;
+      // Keep in bounds
+      spawnX = Math.max(50, Math.min(WORLD_WIDTH - 50, spawnX));
+      spawnY = Math.max(50, Math.min(WORLD_HEIGHT - 50, spawnY));
+    } else {
+      const side = Math.floor(Math.random() * 4);
+      switch(side) {
+        case 0: spawnX = Math.random() * WORLD_WIDTH; spawnY = -50; break;
+        case 1: spawnX = WORLD_WIDTH + 50; spawnY = Math.random() * WORLD_HEIGHT; break;
+        case 2: spawnX = Math.random() * WORLD_WIDTH; spawnY = WORLD_HEIGHT + 50; break;
+        default: spawnX = -50; spawnY = Math.random() * WORLD_HEIGHT; break;
+      }
     }
     
     return {
@@ -715,8 +727,40 @@ export default function GameCanvas({
         const dx = game.player.x - enemy.x;
         const dy = game.player.y - enemy.y;
         const distToPlayer = Math.sqrt(dx * dx + dy * dy);
-        
-        if (enemy.behaviorType === 'patrol') {
+
+        // Zhongdalin melee behavior
+        if (enemy.behaviorType === 'melee' && enemy.name === 'zhongdalin') {
+          // Ram attack - charge at player
+          enemy.vx = (dx / distToPlayer) * enemy.speed;
+          enemy.vy = (dy / distToPlayer) * enemy.speed;
+          enemy.x += enemy.vx;
+          enemy.y += enemy.vy;
+
+          // Collision damage (ram attack)
+          if (distToPlayer < 60 && !isFlying) {
+            if (game.animationFrame % 30 === 0) {
+              onPlayerDamage(enemy.damage * 0.5);
+            }
+          }
+
+          // Vine attack - slow moving vines
+          if (Date.now() - enemy.lastShot > 3000 && distToPlayer < 400) {
+            for (let i = 0; i < 3; i++) {
+              const angle = Math.atan2(dy, dx) + (i - 1) * 0.4;
+              game.enemyBullets.push({
+                x: enemy.x + enemy.width / 2,
+                y: enemy.y + enemy.height / 2,
+                vx: Math.cos(angle) * 3,
+                vy: Math.sin(angle) * 3,
+                damage: enemy.damage * 0.7,
+                size: 8,
+                color: '#22c55e',
+                type: 'vine'
+              });
+            }
+            enemy.lastShot = Date.now();
+          }
+        } else if (enemy.behaviorType === 'patrol') {
           if (distToPlayer < 400) {
             enemy.state = 'attack';
             enemy.vx = (dx / distToPlayer) * enemy.speed;
@@ -1322,76 +1366,99 @@ export default function GameCanvas({
 }
 
 function drawBackground(ctx, camera, frame) {
-  // Grass base
-  const grassGradient = ctx.createRadialGradient(
-    CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 0,
-    CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, CANVAS_WIDTH
-  );
-  grassGradient.addColorStop(0, '#7cb342');
-  grassGradient.addColorStop(0.6, '#689f38');
-  grassGradient.addColorStop(1, '#558b2f');
-  ctx.fillStyle = grassGradient;
+  // Tower stone floor
+  ctx.fillStyle = '#4a5568';
   ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-
-  // Grass texture - scattered across world
+  
+  // Stone tiles
   ctx.save();
-  ctx.globalAlpha = 0.3;
-  for (let i = 0; i < 200; i++) {
-    const worldX = (i * 67 + 23) % WORLD_WIDTH;
-    const worldY = (i * 91 + 41) % WORLD_HEIGHT;
+  ctx.strokeStyle = '#2d3748';
+  ctx.lineWidth = 2;
+  const tileSize = 100;
+  
+  for (let y = -tileSize; y < CANVAS_HEIGHT + tileSize; y += tileSize) {
+    for (let x = -tileSize; x < CANVAS_WIDTH + tileSize; x += tileSize) {
+      const worldX = x + camera.x;
+      const worldY = y + camera.y;
+      const tileX = x - (camera.x % tileSize);
+      const tileY = y - (camera.y % tileSize);
+      
+      // Darker tiles for pattern
+      if ((Math.floor(worldX / tileSize) + Math.floor(worldY / tileSize)) % 2 === 0) {
+        ctx.fillStyle = '#3a4556';
+      } else {
+        ctx.fillStyle = '#4a5568';
+      }
+      ctx.fillRect(tileX, tileY, tileSize, tileSize);
+      ctx.strokeRect(tileX, tileY, tileSize, tileSize);
+    }
+  }
+  ctx.restore();
+  
+  // Tower walls on edges
+  ctx.save();
+  const wallThickness = 40;
+  ctx.fillStyle = '#1a202c';
+  ctx.strokeStyle = '#2d3748';
+  ctx.lineWidth = 4;
+  
+  // Left wall
+  if (camera.x < 200) {
+    const wallX = -camera.x;
+    ctx.fillRect(wallX, 0, wallThickness, CANVAS_HEIGHT);
+    ctx.strokeRect(wallX, 0, wallThickness, CANVAS_HEIGHT);
+    // Wall bricks
+    ctx.fillStyle = '#2d3748';
+    for (let i = 0; i < CANVAS_HEIGHT; i += 30) {
+      ctx.fillRect(wallX + 5, i, 10, 20);
+      ctx.fillRect(wallX + 25, i + 15, 10, 20);
+    }
+  }
+  
+  // Right wall
+  if (camera.x > WORLD_WIDTH - CANVAS_WIDTH - 200) {
+    const wallX = WORLD_WIDTH - camera.x - wallThickness;
+    ctx.fillStyle = '#1a202c';
+    ctx.fillRect(wallX, 0, wallThickness, CANVAS_HEIGHT);
+    ctx.strokeRect(wallX, 0, wallThickness, CANVAS_HEIGHT);
+    ctx.fillStyle = '#2d3748';
+    for (let i = 0; i < CANVAS_HEIGHT; i += 30) {
+      ctx.fillRect(wallX + 5, i, 10, 20);
+      ctx.fillRect(wallX + 25, i + 15, 10, 20);
+    }
+  }
+  
+  // Top wall
+  if (camera.y < 200) {
+    const wallY = -camera.y;
+    ctx.fillStyle = '#1a202c';
+    ctx.fillRect(0, wallY, CANVAS_WIDTH, wallThickness);
+    ctx.strokeRect(0, wallY, CANVAS_WIDTH, wallThickness);
+  }
+  
+  // Bottom wall
+  if (camera.y > WORLD_HEIGHT - CANVAS_HEIGHT - 200) {
+    const wallY = WORLD_HEIGHT - camera.y - wallThickness;
+    ctx.fillStyle = '#1a202c';
+    ctx.fillRect(0, wallY, CANVAS_WIDTH, wallThickness);
+    ctx.strokeRect(0, wallY, CANVAS_WIDTH, wallThickness);
+  }
+  ctx.restore();
+  
+  // Scattered debris
+  ctx.save();
+  ctx.globalAlpha = 0.4;
+  for (let i = 0; i < 50; i++) {
+    const worldX = (i * 157 + 73) % WORLD_WIDTH;
+    const worldY = (i * 193 + 103) % WORLD_HEIGHT;
     const x = worldX - camera.x;
     const y = worldY - camera.y;
     
     if (x < -30 || x > CANVAS_WIDTH + 30 || y < -30 || y > CANVAS_HEIGHT + 30) continue;
     
-    ctx.fillStyle = i % 3 === 0 ? '#558b2f' : '#689f38';
+    ctx.fillStyle = '#2d3748';
     ctx.beginPath();
-    ctx.ellipse(x, y, 15 + (i % 8), 8 + (i % 5), i * 0.3, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.restore();
-
-  // Dirt patches
-  ctx.save();
-  ctx.globalAlpha = 0.2;
-  for (let i = 0; i < 80; i++) {
-    const worldX = (i * 127 + 53) % WORLD_WIDTH;
-    const worldY = (i * 143 + 71) % WORLD_HEIGHT;
-    const x = worldX - camera.x;
-    const y = worldY - camera.y;
-    
-    if (x < -50 || x > CANVAS_WIDTH + 50 || y < -50 || y > CANVAS_HEIGHT + 50) continue;
-    
-    ctx.fillStyle = '#6d4c41';
-    ctx.beginPath();
-    ctx.arc(x, y, 12 + (i % 6), 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.restore();
-
-  // Trees scattered in world
-  ctx.save();
-  for (let i = 0; i < 30; i++) {
-    const worldX = (i * 237 + 117) % WORLD_WIDTH;
-    const worldY = (i * 193 + 89) % WORLD_HEIGHT;
-    const x = worldX - camera.x;
-    const y = worldY - camera.y;
-    
-    if (x < -60 || x > CANVAS_WIDTH + 60 || y < -60 || y > CANVAS_HEIGHT + 60) continue;
-    
-    ctx.globalAlpha = 0.7;
-    ctx.fillStyle = '#5d4037';
-    ctx.fillRect(x - 8, y - 10, 16, 40);
-    
-    ctx.fillStyle = '#2e7d32';
-    ctx.beginPath();
-    ctx.arc(x, y - 20, 25, 0, Math.PI * 2);
-    ctx.fill();
-    
-    ctx.fillStyle = '#388e3c';
-    ctx.beginPath();
-    ctx.arc(x - 10, y - 15, 18, 0, Math.PI * 2);
-    ctx.arc(x + 10, y - 15, 18, 0, Math.PI * 2);
+    ctx.arc(x, y, 8 + (i % 4), 0, Math.PI * 2);
     ctx.fill();
   }
   ctx.restore();
@@ -1828,7 +1895,57 @@ function drawEnemy(ctx, enemy, camera, frame) {
       ctx.arc(bx, by, 5, 0, Math.PI * 2);
       ctx.fill();
     }
+  } else if (enemy.name === 'zhongdalin') {
+    // Zhongdalin - green tombstone-like stone
+    ctx.fillStyle = '#22c55e';
+    ctx.strokeStyle = '#166534';
+    ctx.lineWidth = 3;
+
+    // Tombstone body
+    ctx.beginPath();
+    ctx.moveTo(x + 15, y + enemy.height);
+    ctx.lineTo(x + 15, y + 15);
+    ctx.quadraticCurveTo(x + 15, y, x + enemy.width / 2, y);
+    ctx.quadraticCurveTo(x + enemy.width - 15, y, x + enemy.width - 15, y + 15);
+    ctx.lineTo(x + enemy.width - 15, y + enemy.height);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Stone texture
+    ctx.fillStyle = '#16a34a';
+    for (let i = 0; i < 5; i++) {
+      const sy = y + 20 + i * 10;
+      ctx.fillRect(x + 18, sy, enemy.width - 36, 6);
+    }
+
+    // Face - simple eyes and mouth
+    ctx.fillStyle = '#166534';
+    ctx.beginPath();
+    ctx.arc(x + 20, y + 25, 3, 0, Math.PI * 2);
+    ctx.arc(x + 30, y + 25, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Angry mouth
+    ctx.strokeStyle = '#166534';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x + 18, y + 40);
+    ctx.lineTo(x + 25, y + 35);
+    ctx.lineTo(x + 32, y + 40);
+    ctx.stroke();
+
+    // Green aura for aggression
+    if (frame % 20 < 10) {
+      ctx.strokeStyle = '#4ade80';
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.5;
+      ctx.beginPath();
+      ctx.arc(x + enemy.width / 2, y + enemy.height / 2, enemy.width / 2 + 5, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
   }
-  
+
   ctx.restore();
-}
+  }
