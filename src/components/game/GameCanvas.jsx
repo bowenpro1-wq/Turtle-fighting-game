@@ -10,8 +10,8 @@ const ZHONGDALIN = {
   width: 50,
   height: 70,
   speed: 1.0,
-  health: 30,
-  damage: 10,
+  health: 20,
+  damage: 5,
   shootInterval: 0, // No ranged attack
   color: '#4ade80',
   behaviorType: 'melee',
@@ -630,7 +630,7 @@ export default function GameCanvas({
 
         // Spawn Zhongdalin based on floor
         if (Date.now() - game.lastEnemySpawn > 3000) {
-          const baseCount = Math.floor(currentFloor / 10) + 2;
+          const baseCount = Math.floor(currentFloor / 10) + 1;
           let spawnCount = baseCount;
 
           // Floor 60: Carnival - more enemies but weaker
