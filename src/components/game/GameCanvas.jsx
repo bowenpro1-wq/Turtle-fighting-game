@@ -1,26 +1,78 @@
-import React, { useEffect, useRef, useCallback, useState } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 
 const CANVAS_WIDTH = typeof window !== 'undefined' ? window.innerWidth : 1200;
 const CANVAS_HEIGHT = typeof window !== 'undefined' ? window.innerHeight : 800;
+const WORLD_WIDTH = 5000;
+const WORLD_HEIGHT = 1200;
+const GRAVITY = 0.6;
+const GROUND_LEVEL = WORLD_HEIGHT - 100;
 
-// Static buildings/structures
-const BUILDINGS = [
-  { x: 150, y: 200, width: 120, height: 150, type: 'tower' },
-  { x: CANVAS_WIDTH - 270, y: 200, width: 120, height: 150, type: 'tower' },
-  { x: 400, y: 450, width: 100, height: 80, type: 'house' },
-  { x: CANVAS_WIDTH - 500, y: 450, width: 100, height: 80, type: 'house' },
-  { x: CANVAS_WIDTH / 2 - 60, y: 150, width: 120, height: 100, type: 'castle' },
-  { x: 200, y: CANVAS_HEIGHT - 250, width: 90, height: 90, type: 'house' },
-  { x: CANVAS_WIDTH - 290, y: CANVAS_HEIGHT - 250, width: 90, height: 90, type: 'house' },
-];
-
-const FENCES = [
-  { x1: 100, y1: 100, x2: 300, y2: 100 },
-  { x1: CANVAS_WIDTH - 300, y1: 100, x2: CANVAS_WIDTH - 100, y2: 100 },
-  { x1: 100, y1: CANVAS_HEIGHT - 100, x2: 400, y2: CANVAS_HEIGHT - 100 },
-  { x1: CANVAS_WIDTH - 400, y1: CANVAS_HEIGHT - 100, x2: CANVAS_WIDTH - 100, y2: CANVAS_HEIGHT - 100 },
-];
+// Enemy types with unique behaviors
+const ENEMY_TYPES = {
+  SOLDIER: {
+    name: 'soldier',
+    width: 40,
+    height: 50,
+    speed: 2,
+    health: 40,
+    damage: 10,
+    shootInterval: 2000,
+    color: '#7c3aed',
+    behaviorType: 'patrol',
+    attacksBuildings: false
+  },
+  TANK: {
+    name: 'tank',
+    width: 80,
+    height: 60,
+    speed: 1,
+    health: 100,
+    damage: 25,
+    shootInterval: 3000,
+    color: '#dc2626',
+    behaviorType: 'assault',
+    attacksBuildings: true
+  },
+  DRONE: {
+    name: 'drone',
+    width: 35,
+    height: 35,
+    speed: 3,
+    health: 25,
+    damage: 8,
+    shootInterval: 1500,
+    color: '#0891b2',
+    behaviorType: 'flying',
+    attacksBuildings: false
+  },
+  ENGINEER: {
+    name: 'engineer',
+    width: 40,
+    height: 50,
+    speed: 1.5,
+    health: 30,
+    damage: 5,
+    shootInterval: 5000,
+    color: '#ea580c',
+    behaviorType: 'support',
+    attacksBuildings: false,
+    deploysObstacles: true
+  },
+  ARTILLERY: {
+    name: 'artillery',
+    width: 70,
+    height: 55,
+    speed: 0.5,
+    health: 80,
+    damage: 40,
+    shootInterval: 4000,
+    color: '#65a30d',
+    behaviorType: 'stationary',
+    attacksBuildings: true,
+    createsHazards: true
+  }
+};
 
 export default function GameCanvas({
   gameState,
@@ -39,64 +91,108 @@ export default function GameCanvas({
 }) {
   const canvasRef = useRef(null);
   const gameRef = useRef({
-    player: { x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2, width: 50, height: 50, speed: 5, angle: 0 },
+    player: {
+      x: 200,
+      y: GROUND_LEVEL - 60,
+      vx: 0,
+      vy: 0,
+      width: 50,
+      height: 60,
+      speed: 6,
+      jumpPower: 15,
+      onGround: false,
+      facingRight: true,
+      angle: 0
+    },
+    camera: { x: 0, y: 0 },
     bullets: [],
     enemyBullets: [],
     enemies: [],
     particles: [],
-    coins: [],
+    obstacles: [],
+    hazardZones: [],
+    buildings: [],
     keys: {},
     lastEnemySpawn: 0,
-    lastCoinSpawn: 0,
-    bossSpawnScore: 500,
-    animationFrame: 0
+    lastObstacleCheck: 0,
+    animationFrame: 0,
+    worldGenerated: false
   });
 
-  const spawnEnemy = useCallback(() => {
-    const side = Math.floor(Math.random() * 4);
-    let x, y;
+  const generateWorld = useCallback(() => {
+    const buildings = [];
     
-    switch (side) {
-      case 0: x = Math.random() * CANVAS_WIDTH; y = -50; break;
-      case 1: x = CANVAS_WIDTH + 50; y = Math.random() * CANVAS_HEIGHT; break;
-      case 2: x = Math.random() * CANVAS_WIDTH; y = CANVAS_HEIGHT + 50; break;
-      default: x = -50; y = Math.random() * CANVAS_HEIGHT; break;
+    // Generate buildings across the world
+    for (let i = 0; i < 15; i++) {
+      const x = 300 + i * 300 + Math.random() * 100;
+      const buildingType = Math.random();
+      
+      if (buildingType < 0.4) {
+        // House
+        buildings.push({
+          x,
+          y: GROUND_LEVEL - 120,
+          width: 100,
+          height: 120,
+          type: 'house',
+          health: 100,
+          maxHealth: 100,
+          important: true
+        });
+      } else if (buildingType < 0.7) {
+        // Tower
+        buildings.push({
+          x,
+          y: GROUND_LEVEL - 180,
+          width: 80,
+          height: 180,
+          type: 'tower',
+          health: 150,
+          maxHealth: 150,
+          important: true
+        });
+      } else {
+        // Bunker
+        buildings.push({
+          x,
+          y: GROUND_LEVEL - 100,
+          width: 120,
+          height: 100,
+          type: 'bunker',
+          health: 200,
+          maxHealth: 200,
+          important: true
+        });
+      }
     }
-
-    const types = ['jellyfish', 'crab', 'fish', 'starfish'];
-    const type = types[Math.floor(Math.random() * types.length)];
     
-    return {
-      x, y,
-      type,
-      health: 30,
-      speed: 1 + Math.random() * 1.5,
-      lastShot: Date.now(),
-      shootInterval: 1500 + Math.random() * 1000,
-      angle: 0,
-      size: 35 + Math.random() * 15
-    };
+    gameRef.current.buildings = buildings;
+    gameRef.current.worldGenerated = true;
   }, []);
 
-  const spawnBossEnemy = useCallback((boss) => {
-    const angle = Math.random() * Math.PI * 2;
-    const distance = 300;
+  const spawnEnemy = useCallback((type = null) => {
+    if (!type) {
+      const types = Object.values(ENEMY_TYPES);
+      type = types[Math.floor(Math.random() * types.length)];
+    }
+
+    const spawnX = gameRef.current.camera.x + CANVAS_WIDTH + 100;
+    const isFlying = type.behaviorType === 'flying';
+    
     return {
-      x: CANVAS_WIDTH / 2 + Math.cos(angle) * distance,
-      y: CANVAS_HEIGHT / 2 + Math.sin(angle) * distance,
-      health: boss.health,
-      maxHealth: boss.health,
-      speed: boss.speed,
-      damage: boss.damage,
-      size: boss.size,
-      color: boss.color,
-      pattern: boss.pattern,
+      ...type,
+      x: spawnX,
+      y: isFlying ? GROUND_LEVEL - 200 - Math.random() * 100 : GROUND_LEVEL - type.height,
+      vx: 0,
+      vy: 0,
+      health: type.health,
+      maxHealth: type.health,
       lastShot: Date.now(),
-      shootInterval: 800,
-      angle: 0,
-      patternTimer: 0,
-      isBoss: true,
-      name: boss.name
+      state: 'patrol',
+      target: null,
+      patrolDirection: -1,
+      stunned: false,
+      isFlying: isFlying
     };
   }, []);
 
@@ -108,31 +204,42 @@ export default function GameCanvas({
     const game = gameRef.current;
     let animationId;
 
-    const handleKeyDown = (e) => {
-    game.keys[e.key.toLowerCase()] = true;
+    if (!game.worldGenerated) {
+      generateWorld();
+    }
 
-    if (e.key.toLowerCase() === 'k') {
-      if (shoot()) {
-        const bullet = {
-          x: game.player.x,
-          y: game.player.y - 20,
-          speed: 12,
-          damage: 10 * upgrades.damage,
-          size: 8,
-          angle: game.player.angle
-        };
-        game.bullets.push(bullet);
+    const handleKeyDown = (e) => {
+      game.keys[e.key.toLowerCase()] = true;
+      
+      if (e.key === ' ' && game.player.onGround) {
+        game.player.vy = -game.player.jumpPower;
+        game.player.onGround = false;
+      }
+      
+      if (e.key.toLowerCase() === 'k') {
+        if (shoot()) {
+          const direction = game.player.facingRight ? 1 : -1;
+          const bullet = {
+            x: game.player.x + (game.player.facingRight ? game.player.width : 0),
+            y: game.player.y + game.player.height / 2,
+            vx: direction * 15,
+            vy: 0,
+            damage: 10 * upgrades.damage,
+            size: 8,
+            fromPlayer: true
+          };
+          game.bullets.push(bullet);
           
-          // Muzzle flash particles
-          for (let i = 0; i < 5; i++) {
+          // Muzzle flash
+          for (let i = 0; i < 8; i++) {
             game.particles.push({
               x: bullet.x,
               y: bullet.y,
-              vx: (Math.random() - 0.5) * 3,
-              vy: -Math.random() * 3,
-              life: 20,
-              color: '#4ade80',
-              size: 4
+              vx: direction * (Math.random() * 3 + 2),
+              vy: (Math.random() - 0.5) * 4,
+              life: 15,
+              color: '#fbbf24',
+              size: 3
             });
           }
         }
@@ -140,16 +247,15 @@ export default function GameCanvas({
       
       if (e.key.toLowerCase() === 'h') {
         if (heal()) {
-          // Heal particles
           for (let i = 0; i < 20; i++) {
             game.particles.push({
-              x: game.player.x + (Math.random() - 0.5) * 50,
-              y: game.player.y + (Math.random() - 0.5) * 50,
-              vx: (Math.random() - 0.5) * 2,
-              vy: -Math.random() * 3,
-              life: 40,
+              x: game.player.x + game.player.width / 2,
+              y: game.player.y + game.player.height / 2,
+              vx: (Math.random() - 0.5) * 4,
+              vy: -Math.random() * 5,
+              life: 30,
               color: '#22c55e',
-              size: 6,
+              size: 4,
               type: 'heal'
             });
           }
@@ -158,17 +264,15 @@ export default function GameCanvas({
       
       if (e.key.toLowerCase() === 'o') {
         if (fly()) {
-          // Fly activation particles
           for (let i = 0; i < 30; i++) {
             game.particles.push({
-              x: game.player.x + (Math.random() - 0.5) * 60,
-              y: game.player.y + (Math.random() - 0.5) * 60,
-              vx: (Math.random() - 0.5) * 4,
-              vy: (Math.random() - 0.5) * 4,
-              life: 50,
+              x: game.player.x + game.player.width / 2,
+              y: game.player.y + game.player.height / 2,
+              vx: (Math.random() - 0.5) * 6,
+              vy: (Math.random() - 0.5) * 6,
+              life: 40,
               color: '#38bdf8',
-              size: 5,
-              type: 'fly'
+              size: 5
             });
           }
         }
@@ -191,222 +295,263 @@ export default function GameCanvas({
       ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
       game.animationFrame++;
 
-      // Draw background (grass/terrain)
-      drawBackground(ctx, game.animationFrame);
-
-      // Draw buildings and fences
-      drawBuildings(ctx, BUILDINGS);
-      drawFences(ctx, FENCES);
-
       // Player movement
-      const baseSpeed = 5 * upgrades.speed;
-      let moveX = 0, moveY = 0;
-      if (game.keys['w'] || game.keys['arrowup']) moveY -= baseSpeed;
-      if (game.keys['s'] || game.keys['arrowdown']) moveY += baseSpeed;
-      if (game.keys['a'] || game.keys['arrowleft']) moveX -= baseSpeed;
-      if (game.keys['d'] || game.keys['arrowright']) moveX += baseSpeed;
-
-      // Calculate player angle based on movement
-      if (moveX !== 0 || moveY !== 0) {
-        game.player.angle = Math.atan2(moveY, moveX);
+      const baseSpeed = 6 * upgrades.speed;
+      if (game.keys['a'] || game.keys['arrowleft']) {
+        game.player.vx = -baseSpeed;
+        game.player.facingRight = false;
+      } else if (game.keys['d'] || game.keys['arrowright']) {
+        game.player.vx = baseSpeed;
+        game.player.facingRight = true;
+      } else {
+        game.player.vx *= 0.8;
       }
 
-      game.player.x += moveX;
-      game.player.y += moveY;
-
-      // Keep player in bounds
-      game.player.x = Math.max(25, Math.min(CANVAS_WIDTH - 25, game.player.x));
-      game.player.y = Math.max(25, Math.min(CANVAS_HEIGHT - 25, game.player.y));
-
-      // Spawn enemies (not during boss fight)
-      if (gameState === 'playing') {
-        if (Date.now() - game.lastEnemySpawn > 2000) {
-          game.enemies.push(spawnEnemy());
-          game.lastEnemySpawn = Date.now();
+      // Gravity
+      if (!isFlying) {
+        game.player.vy += GRAVITY;
+      } else {
+        game.player.vy = 0;
+        if (game.keys['w'] || game.keys['arrowup']) {
+          game.player.y -= 5;
         }
-
-        // Spawn collectible coins
-        if (Date.now() - game.lastCoinSpawn > 5000) {
-          game.coins.push({
-            x: Math.random() * (CANVAS_WIDTH - 100) + 50,
-            y: Math.random() * (CANVAS_HEIGHT - 100) + 50,
-            size: 15,
-            collected: false
-          });
-          game.lastCoinSpawn = Date.now();
-        }
-
-        // Check for boss spawn based on score
-        const bossIndex = Math.floor(score / 500);
-        if (bossIndex < 20 && !defeatedBosses.includes(bossIndex + 1) && score >= (bossIndex + 1) * 500 - 100) {
-          onTriggerBoss(bossIndex);
+        if (game.keys['s'] || game.keys['arrowdown']) {
+          game.player.y += 5;
         }
       }
 
-      // Update and draw coins
-      game.coins = game.coins.filter(coin => {
-        if (!coin.collected) {
-          const dx = game.player.x - coin.x;
-          const dy = game.player.y - coin.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
+      game.player.x += game.player.vx;
+      game.player.y += game.player.vy;
 
-          if (dist < 30) {
-            coin.collected = true;
-            return false;
-          }
+      // Ground collision
+      if (game.player.y >= GROUND_LEVEL - game.player.height) {
+        game.player.y = GROUND_LEVEL - game.player.height;
+        game.player.vy = 0;
+        game.player.onGround = true;
+      } else {
+        game.player.onGround = false;
+      }
 
-          // Draw coin
-          ctx.save();
-          ctx.shadowBlur = 10;
-          ctx.shadowColor = '#fbbf24';
-          ctx.fillStyle = '#fbbf24';
-          ctx.strokeStyle = '#f59e0b';
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.arc(coin.x, coin.y, coin.size, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.stroke();
+      // Keep player in world bounds
+      game.player.x = Math.max(0, Math.min(WORLD_WIDTH - game.player.width, game.player.x));
+      game.player.y = Math.max(0, game.player.y);
+
+      // Camera follows player
+      game.camera.x = Math.max(0, Math.min(
+        WORLD_WIDTH - CANVAS_WIDTH,
+        game.player.x - CANVAS_WIDTH / 3
+      ));
+      game.camera.y = Math.max(0, Math.min(
+        WORLD_HEIGHT - CANVAS_HEIGHT,
+        game.player.y - CANVAS_HEIGHT / 2
+      ));
+
+      // Draw background
+      drawBackground(ctx, game.camera, game.animationFrame);
+
+      // Draw buildings
+      game.buildings.forEach(building => {
+        if (building.x + building.width < game.camera.x || building.x > game.camera.x + CANVAS_WIDTH) return;
+        
+        drawBuilding(ctx, building, game.camera);
+        
+        // Building health bar
+        if (building.health < building.maxHealth) {
+          const screenX = building.x - game.camera.x;
+          const screenY = building.y - game.camera.y - 15;
           
-          // Inner shine
-          ctx.fillStyle = '#fef3c7';
-          ctx.beginPath();
-          ctx.arc(coin.x - 3, coin.y - 3, coin.size / 3, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
-
-          return true;
+          ctx.fillStyle = 'rgba(0,0,0,0.7)';
+          ctx.fillRect(screenX, screenY, building.width, 8);
+          
+          const healthPercent = building.health / building.maxHealth;
+          ctx.fillStyle = healthPercent > 0.5 ? '#22c55e' : healthPercent > 0.25 ? '#f59e0b' : '#ef4444';
+          ctx.fillRect(screenX, screenY, building.width * healthPercent, 8);
         }
-        return false;
       });
 
-      // Spawn boss
-      if (gameState === 'boss' && currentBoss && !game.enemies.find(e => e.isBoss)) {
-        game.enemies = game.enemies.filter(e => !e.isBoss);
-        game.enemies.push(spawnBossEnemy(currentBoss));
+      // Remove destroyed buildings
+      game.buildings = game.buildings.filter(b => b.health > 0);
+
+      // Spawn enemies
+      if (Date.now() - game.lastEnemySpawn > 3000) {
+        game.enemies.push(spawnEnemy());
+        game.lastEnemySpawn = Date.now();
       }
 
-      // Update and draw enemies
+      // Update enemies
       game.enemies = game.enemies.filter(enemy => {
-        // Move towards player
-        const dx = game.player.x - enemy.x;
-        const dy = game.player.y - enemy.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        
-        if (enemy.isBoss) {
-          // Boss movement patterns
-          enemy.patternTimer++;
-          const patternMove = getBossMovement(enemy, game.player, enemy.patternTimer);
-          enemy.x += patternMove.x;
-          enemy.y += patternMove.y;
-        } else {
-          enemy.x += (dx / dist) * enemy.speed;
-          enemy.y += (dy / dist) * enemy.speed;
+        // AI behavior
+        if (enemy.behaviorType === 'patrol') {
+          enemy.vx = enemy.patrolDirection * enemy.speed;
+          
+          // Find nearest building or player
+          const targetBuilding = game.buildings
+            .filter(b => Math.abs(b.x - enemy.x) < 300)
+            .sort((a, b) => Math.abs(a.x - enemy.x) - Math.abs(b.x - enemy.x))[0];
+          
+          const distToPlayer = Math.abs(game.player.x - enemy.x);
+          
+          if (distToPlayer < 400) {
+            enemy.state = 'attack';
+            enemy.patrolDirection = game.player.x > enemy.x ? 1 : -1;
+          }
+        } else if (enemy.behaviorType === 'assault') {
+          // Tanks target buildings first
+          const nearestBuilding = game.buildings
+            .filter(b => b.important)
+            .sort((a, b) => Math.abs(a.x - enemy.x) - Math.abs(b.x - enemy.x))[0];
+          
+          if (nearestBuilding && Math.abs(nearestBuilding.x - enemy.x) < 500) {
+            enemy.target = nearestBuilding;
+            enemy.vx = (nearestBuilding.x - enemy.x) > 0 ? enemy.speed : -enemy.speed;
+          } else {
+            enemy.vx = -enemy.speed;
+          }
+        } else if (enemy.behaviorType === 'flying') {
+          // Drones fly in waves
+          enemy.y += Math.sin(game.animationFrame * 0.05 + enemy.x) * 2;
+          enemy.vx = -enemy.speed;
+        } else if (enemy.behaviorType === 'support') {
+          // Engineers deploy obstacles
+          enemy.vx = -enemy.speed * 0.5;
+          
+          if (Date.now() - game.lastObstacleCheck > 8000 && Math.random() < 0.3) {
+            game.obstacles.push({
+              x: enemy.x,
+              y: GROUND_LEVEL - 40,
+              width: 60,
+              height: 40,
+              type: 'barrier',
+              health: 50
+            });
+            game.lastObstacleCheck = Date.now();
+          }
+        } else if (enemy.behaviorType === 'stationary') {
+          enemy.vx = 0;
+          
+          // Artillery creates hazard zones
+          if (enemy.createsHazards && Date.now() - enemy.lastShot > enemy.shootInterval - 500) {
+            const targetX = game.player.x + (Math.random() - 0.5) * 200;
+            game.hazardZones.push({
+              x: targetX,
+              y: GROUND_LEVEL - 100,
+              radius: 80,
+              damage: 20,
+              life: 100,
+              warning: 50
+            });
+          }
         }
 
-        enemy.angle = Math.atan2(dy, dx);
+        enemy.x += enemy.vx;
+        
+        if (!enemy.isFlying) {
+          enemy.vy += GRAVITY;
+          enemy.y += enemy.vy;
+          
+          if (enemy.y >= GROUND_LEVEL - enemy.height) {
+            enemy.y = GROUND_LEVEL - enemy.height;
+            enemy.vy = 0;
+          }
+        }
 
         // Enemy shooting
         if (Date.now() - enemy.lastShot > enemy.shootInterval) {
-          const bulletSpeed = enemy.isBoss ? 6 : 4;
-          const bulletDamage = enemy.isBoss ? enemy.damage : 10;
+          const target = enemy.target || game.player;
+          const dx = (target.x || target.x) - enemy.x;
+          const dy = ((target.y || target.y) + (target.height || 0) / 2) - (enemy.y + enemy.height / 2);
+          const dist = Math.sqrt(dx * dx + dy * dy);
           
-          if (enemy.isBoss && enemy.pattern === 'burst') {
-            // Burst pattern - multiple bullets
-            for (let i = 0; i < 8; i++) {
-              const angle = (Math.PI * 2 / 8) * i;
-              game.enemyBullets.push({
-                x: enemy.x,
-                y: enemy.y,
-                vx: Math.cos(angle) * bulletSpeed,
-                vy: Math.sin(angle) * bulletSpeed,
-                damage: bulletDamage,
-                size: 6,
-                color: enemy.color || '#ef4444'
-              });
-            }
-          } else {
-            game.enemyBullets.push({
-              x: enemy.x,
-              y: enemy.y,
-              vx: (dx / dist) * bulletSpeed,
-              vy: (dy / dist) * bulletSpeed,
-              damage: bulletDamage,
-              size: enemy.isBoss ? 8 : 5,
-              color: enemy.color || '#ef4444'
-            });
-          }
+          game.enemyBullets.push({
+            x: enemy.x + enemy.width / 2,
+            y: enemy.y + enemy.height / 2,
+            vx: (dx / dist) * 8,
+            vy: (dy / dist) * 8,
+            damage: enemy.damage,
+            size: 6,
+            color: enemy.color,
+            targetBuilding: enemy.attacksBuildings && enemy.target
+          });
+          
           enemy.lastShot = Date.now();
         }
 
         // Draw enemy
-        drawEnemy(ctx, enemy, game.animationFrame);
+        if (enemy.x + enemy.width > game.camera.x && enemy.x < game.camera.x + CANVAS_WIDTH) {
+          drawEnemy(ctx, enemy, game.camera, game.animationFrame);
+        }
 
-        // Keep enemy
-        return enemy.health > 0;
+        return enemy.health > 0 && enemy.x > -200;
       });
 
       // Update bullets
       game.bullets = game.bullets.filter(bullet => {
-        bullet.y -= bullet.speed;
+        bullet.x += bullet.vx;
+        bullet.y += bullet.vy;
 
-        // Check collision with enemies
+        // Check enemy collision
         for (let enemy of game.enemies) {
-          const dx = bullet.x - enemy.x;
-          const dy = bullet.y - enemy.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-
-          if (dist < enemy.size / 2 + bullet.size) {
+          if (bullet.x > enemy.x && bullet.x < enemy.x + enemy.width &&
+              bullet.y > enemy.y && bullet.y < enemy.y + enemy.height) {
             enemy.health -= bullet.damage;
             
             // Hit particles
-            for (let i = 0; i < 8; i++) {
+            for (let i = 0; i < 10; i++) {
               game.particles.push({
                 x: bullet.x,
                 y: bullet.y,
-                vx: (Math.random() - 0.5) * 6,
-                vy: (Math.random() - 0.5) * 6,
-                life: 25,
-                color: enemy.isBoss ? enemy.color : '#fbbf24',
-                size: 4
+                vx: (Math.random() - 0.5) * 8,
+                vy: (Math.random() - 0.5) * 8,
+                life: 20,
+                color: '#fbbf24',
+                size: 3
               });
             }
 
             if (enemy.health <= 0) {
-              // Death explosion
-              for (let i = 0; i < 20; i++) {
-                game.particles.push({
-                  x: enemy.x,
-                  y: enemy.y,
-                  vx: (Math.random() - 0.5) * 10,
-                  vy: (Math.random() - 0.5) * 10,
-                  life: 40,
-                  color: enemy.isBoss ? enemy.color : '#f97316',
-                  size: 6
-                });
-              }
+              onEnemyKill();
               
-              if (enemy.isBoss) {
-                onBossDamage(enemy.maxHealth);
-              } else {
-                onEnemyKill();
+              // Death explosion
+              for (let i = 0; i < 25; i++) {
+                game.particles.push({
+                  x: enemy.x + enemy.width / 2,
+                  y: enemy.y + enemy.height / 2,
+                  vx: (Math.random() - 0.5) * 12,
+                  vy: (Math.random() - 0.5) * 12,
+                  life: 35,
+                  color: enemy.color,
+                  size: 5
+                });
               }
             }
 
+            return false;
+          }
+        }
+
+        // Check obstacle collision
+        for (let obstacle of game.obstacles) {
+          if (bullet.x > obstacle.x && bullet.x < obstacle.x + obstacle.width &&
+              bullet.y > obstacle.y && bullet.y < obstacle.y + obstacle.height) {
+            obstacle.health -= bullet.damage;
             return false;
           }
         }
 
         // Draw bullet
+        const screenX = bullet.x - game.camera.x;
+        const screenY = bullet.y - game.camera.y;
+        
         ctx.save();
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = '#4ade80';
-        ctx.fillStyle = '#4ade80';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#fbbf24';
+        ctx.fillStyle = '#fbbf24';
         ctx.beginPath();
-        ctx.arc(bullet.x, bullet.y, bullet.size, 0, Math.PI * 2);
+        ctx.arc(screenX, screenY, bullet.size, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
 
-        return bullet.y > -20;
+        return bullet.x > -50 && bullet.x < WORLD_WIDTH + 50;
       });
 
       // Update enemy bullets
@@ -414,55 +559,145 @@ export default function GameCanvas({
         bullet.x += bullet.vx;
         bullet.y += bullet.vy;
 
-        // Check collision with player
-        const dx = bullet.x - game.player.x;
-        const dy = bullet.y - game.player.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-
-        if (dist < 25 + bullet.size) {
+        // Check player collision
+        if (!isFlying &&
+            bullet.x > game.player.x && bullet.x < game.player.x + game.player.width &&
+            bullet.y > game.player.y && bullet.y < game.player.y + game.player.height) {
           onPlayerDamage(bullet.damage);
           
-          // Hit particles
-          for (let i = 0; i < 10; i++) {
+          for (let i = 0; i < 8; i++) {
             game.particles.push({
               x: bullet.x,
               y: bullet.y,
-              vx: (Math.random() - 0.5) * 5,
-              vy: (Math.random() - 0.5) * 5,
-              life: 20,
+              vx: (Math.random() - 0.5) * 6,
+              vy: (Math.random() - 0.5) * 6,
+              life: 15,
               color: '#ef4444',
-              size: 4
+              size: 3
             });
           }
           return false;
         }
 
-        // Draw enemy bullet
+        // Check building collision
+        if (bullet.targetBuilding) {
+          for (let building of game.buildings) {
+            if (bullet.x > building.x && bullet.x < building.x + building.width &&
+                bullet.y > building.y && bullet.y < building.y + building.height) {
+              building.health -= bullet.damage;
+              
+              for (let i = 0; i < 5; i++) {
+                game.particles.push({
+                  x: bullet.x,
+                  y: bullet.y,
+                  vx: (Math.random() - 0.5) * 4,
+                  vy: -Math.random() * 4,
+                  life: 20,
+                  color: '#78716c',
+                  size: 4
+                });
+              }
+              return false;
+            }
+          }
+        }
+
+        // Draw bullet
+        const screenX = bullet.x - game.camera.x;
+        const screenY = bullet.y - game.camera.y;
+        
         ctx.save();
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = 8;
         ctx.shadowColor = bullet.color;
         ctx.fillStyle = bullet.color;
         ctx.beginPath();
-        ctx.arc(bullet.x, bullet.y, bullet.size, 0, Math.PI * 2);
+        ctx.arc(screenX, screenY, bullet.size, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
 
-        return bullet.x > -20 && bullet.x < CANVAS_WIDTH + 20 && 
-               bullet.y > -20 && bullet.y < CANVAS_HEIGHT + 20;
+        return bullet.x > -50 && bullet.x < WORLD_WIDTH + 50;
+      });
+
+      // Update hazard zones
+      game.hazardZones = game.hazardZones.filter(zone => {
+        zone.life--;
+        
+        const screenX = zone.x - game.camera.x;
+        const screenY = zone.y - game.camera.y;
+        
+        if (zone.life > zone.warning) {
+          // Warning indicator
+          ctx.save();
+          ctx.strokeStyle = '#ef4444';
+          ctx.lineWidth = 3;
+          ctx.setLineDash([5, 5]);
+          ctx.beginPath();
+          ctx.arc(screenX, screenY, zone.radius, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        } else if (zone.life > 0) {
+          // Active hazard
+          ctx.save();
+          const alpha = zone.life / zone.warning;
+          ctx.fillStyle = `rgba(239, 68, 68, ${alpha * 0.4})`;
+          ctx.beginPath();
+          ctx.arc(screenX, screenY, zone.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+          
+          // Damage player
+          const dx = game.player.x - zone.x;
+          const dy = game.player.y - zone.y;
+          if (Math.sqrt(dx * dx + dy * dy) < zone.radius && !isFlying) {
+            if (game.animationFrame % 30 === 0) {
+              onPlayerDamage(zone.damage / 5);
+            }
+          }
+        }
+        
+        return zone.life > 0;
+      });
+
+      // Update obstacles
+      game.obstacles = game.obstacles.filter(obstacle => {
+        if (obstacle.health <= 0) return false;
+        
+        const screenX = obstacle.x - game.camera.x;
+        const screenY = obstacle.y - game.camera.y;
+        
+        ctx.save();
+        ctx.fillStyle = '#57534e';
+        ctx.strokeStyle = '#292524';
+        ctx.lineWidth = 3;
+        ctx.fillRect(screenX, screenY, obstacle.width, obstacle.height);
+        ctx.strokeRect(screenX, screenY, obstacle.width, obstacle.height);
+        
+        // Metal bars pattern
+        ctx.fillStyle = '#78716c';
+        for (let i = 0; i < 3; i++) {
+          ctx.fillRect(screenX + i * 20 + 5, screenY, 8, obstacle.height);
+        }
+        ctx.restore();
+        
+        return true;
       });
 
       // Update particles
       game.particles = game.particles.filter(particle => {
         particle.x += particle.vx;
         particle.y += particle.vy;
+        particle.vy += 0.3;
         particle.life--;
 
-        const alpha = particle.life / 50;
+        const screenX = particle.x - game.camera.x;
+        const screenY = particle.y - game.camera.y;
+        
+        const alpha = particle.life / 40;
         ctx.save();
         ctx.globalAlpha = alpha;
         ctx.fillStyle = particle.color;
         ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.size * alpha, 0, Math.PI * 2);
+        ctx.arc(screenX, screenY, particle.size * alpha, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
 
@@ -470,7 +705,7 @@ export default function GameCanvas({
       });
 
       // Draw player
-      drawPlayer(ctx, game.player, isFlying, game.animationFrame);
+      drawPlayer(ctx, game.player, isFlying, game.camera, game.animationFrame);
 
       animationId = requestAnimationFrame(gameLoop);
     };
@@ -482,7 +717,7 @@ export default function GameCanvas({
       window.removeEventListener('keyup', handleKeyUp);
       cancelAnimationFrame(animationId);
     };
-  }, [gameState, isFlying, shoot, heal, fly, onPlayerDamage, onEnemyKill, onBossDamage, onTriggerBoss, spawnEnemy, spawnBossEnemy, currentBoss, defeatedBosses, score, upgrades]);
+  }, [gameState, isFlying, shoot, heal, fly, onPlayerDamage, onEnemyKill, onBossDamage, upgrades, generateWorld, spawnEnemy]);
 
   return (
     <motion.canvas
@@ -496,601 +731,421 @@ export default function GameCanvas({
   );
 }
 
-function drawBackground(ctx, frame) {
-  // Grass/terrain base
-  const gradient = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
-  gradient.addColorStop(0, '#7cb342');
-  gradient.addColorStop(0.5, '#8bc34a');
-  gradient.addColorStop(1, '#689f38');
-  ctx.fillStyle = gradient;
+function drawBackground(ctx, camera, frame) {
+  // Sky gradient
+  const skyGradient = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
+  skyGradient.addColorStop(0, '#87CEEB');
+  skyGradient.addColorStop(0.6, '#B0E0E6');
+  skyGradient.addColorStop(1, '#98D8C8');
+  ctx.fillStyle = skyGradient;
   ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-  // Grass patches
+  // Clouds
   ctx.save();
-  ctx.globalAlpha = 0.3;
-  for (let i = 0; i < 50; i++) {
-    const x = (i * 77 + Math.sin(i) * 50) % CANVAS_WIDTH;
-    const y = (i * 93 + Math.cos(i) * 30) % CANVAS_HEIGHT;
+  ctx.globalAlpha = 0.6;
+  for (let i = 0; i < 8; i++) {
+    const x = ((i * 400 - camera.x * 0.3 + frame * 0.2) % (CANVAS_WIDTH + 200)) - 100;
+    const y = 50 + i * 40;
     
-    ctx.fillStyle = i % 3 === 0 ? '#558b2f' : '#7cb342';
+    ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.ellipse(x, y, 20 + (i % 10), 10 + (i % 5), i * 0.3, 0, Math.PI * 2);
+    ctx.ellipse(x, y, 60, 25, 0, 0, Math.PI * 2);
+    ctx.ellipse(x + 30, y - 10, 50, 30, 0, 0, Math.PI * 2);
+    ctx.ellipse(x + 60, y, 55, 28, 0, 0, Math.PI * 2);
     ctx.fill();
   }
   ctx.restore();
 
-  // Dirt paths
+  // Ground - grass layer
+  const groundY = GROUND_LEVEL - camera.y;
+  const grassGradient = ctx.createLinearGradient(0, groundY, 0, CANVAS_HEIGHT);
+  grassGradient.addColorStop(0, '#7cb342');
+  grassGradient.addColorStop(0.3, '#689f38');
+  grassGradient.addColorStop(1, '#558b2f');
+  ctx.fillStyle = grassGradient;
+  ctx.fillRect(0, groundY, CANVAS_WIDTH, CANVAS_HEIGHT - groundY);
+
+  // Grass texture
   ctx.save();
-  ctx.globalAlpha = 0.2;
-  ctx.fillStyle = '#8d6e63';
-  ctx.fillRect(CANVAS_WIDTH / 2 - 40, 0, 80, CANVAS_HEIGHT);
-  ctx.fillRect(0, CANVAS_HEIGHT / 2 - 40, CANVAS_WIDTH, 80);
+  ctx.globalAlpha = 0.4;
+  for (let i = 0; i < 100; i++) {
+    const x = ((i * 47) % WORLD_WIDTH) - camera.x;
+    if (x < -20 || x > CANVAS_WIDTH + 20) continue;
+    
+    const grassY = groundY + (i % 3) * 3;
+    ctx.fillStyle = i % 2 === 0 ? '#558b2f' : '#689f38';
+    
+    // Grass blade
+    ctx.beginPath();
+    ctx.moveTo(x, grassY + 15);
+    ctx.quadraticCurveTo(x - 3, grassY + 7, x, grassY);
+    ctx.quadraticCurveTo(x + 3, grassY + 7, x, grassY + 15);
+    ctx.fill();
+  }
   ctx.restore();
 
-  // Trees (simple)
-  const trees = [
-    { x: 80, y: 80 },
-    { x: CANVAS_WIDTH - 80, y: 80 },
-    { x: 80, y: CANVAS_HEIGHT - 80 },
-    { x: CANVAS_WIDTH - 80, y: CANVAS_HEIGHT - 80 },
-    { x: 300, y: 300 },
-    { x: CANVAS_WIDTH - 300, y: 300 },
-  ];
-
-  trees.forEach(tree => {
-    // Trunk
+  // Dirt/rocks on ground
+  ctx.save();
+  ctx.globalAlpha = 0.3;
+  for (let i = 0; i < 50; i++) {
+    const x = ((i * 123 + 37) % WORLD_WIDTH) - camera.x;
+    if (x < -30 || x > CANVAS_WIDTH + 30) continue;
+    
+    const y = groundY + 20 + (i % 5) * 5;
     ctx.fillStyle = '#6d4c41';
-    ctx.fillRect(tree.x - 8, tree.y, 16, 40);
+    ctx.beginPath();
+    ctx.arc(x, y, 8 + (i % 3) * 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // Distant trees
+  ctx.save();
+  ctx.globalAlpha = 0.4;
+  for (let i = 0; i < 20; i++) {
+    const x = ((i * 234) % WORLD_WIDTH) - camera.x * 0.7;
+    if (x < -50 || x > CANVAS_WIDTH + 50) continue;
+    
+    const treeY = groundY - 80;
+    
+    // Trunk
+    ctx.fillStyle = '#5d4037';
+    ctx.fillRect(x - 8, treeY, 16, 60);
     
     // Foliage
     ctx.fillStyle = '#2e7d32';
     ctx.beginPath();
-    ctx.arc(tree.x, tree.y - 10, 25, 0, Math.PI * 2);
+    ctx.arc(x, treeY - 10, 30, 0, Math.PI * 2);
     ctx.fill();
-    
-    ctx.fillStyle = '#388e3c';
-    ctx.beginPath();
-    ctx.arc(tree.x - 10, tree.y - 5, 20, 0, Math.PI * 2);
-    ctx.arc(tree.x + 10, tree.y - 5, 20, 0, Math.PI * 2);
-    ctx.fill();
-  });
-}
-
-function drawBuildings(ctx, buildings) {
-  buildings.forEach(building => {
-    ctx.save();
-    
-    if (building.type === 'tower') {
-      // Stone tower
-      ctx.fillStyle = '#757575';
-      ctx.fillRect(building.x, building.y, building.width, building.height);
-      
-      // Stones texture
-      ctx.strokeStyle = '#616161';
-      ctx.lineWidth = 2;
-      for (let i = 0; i < building.height; i += 30) {
-        for (let j = 0; j < building.width; j += 40) {
-          ctx.strokeRect(building.x + j, building.y + i, 40, 30);
-        }
-      }
-      
-      // Top battlements
-      ctx.fillStyle = '#616161';
-      for (let i = 0; i < building.width; i += 30) {
-        ctx.fillRect(building.x + i, building.y - 20, 20, 20);
-      }
-      
-      // Windows
-      ctx.fillStyle = '#424242';
-      ctx.fillRect(building.x + building.width / 2 - 15, building.y + 40, 30, 40);
-      ctx.fillRect(building.x + building.width / 2 - 15, building.y + 100, 30, 40);
-      
-    } else if (building.type === 'house') {
-      // Walls
-      ctx.fillStyle = '#d7ccc8';
-      ctx.fillRect(building.x, building.y + 30, building.width, building.height - 30);
-      
-      // Roof
-      ctx.fillStyle = '#8d6e63';
-      ctx.beginPath();
-      ctx.moveTo(building.x - 10, building.y + 30);
-      ctx.lineTo(building.x + building.width / 2, building.y);
-      ctx.lineTo(building.x + building.width + 10, building.y + 30);
-      ctx.closePath();
-      ctx.fill();
-      
-      // Door
-      ctx.fillStyle = '#5d4037';
-      ctx.fillRect(building.x + building.width / 2 - 15, building.y + 60, 30, 50);
-      
-      // Windows
-      ctx.fillStyle = '#81d4fa';
-      ctx.fillRect(building.x + 15, building.y + 50, 25, 25);
-      ctx.fillRect(building.x + building.width - 40, building.y + 50, 25, 25);
-      
-      // Window frames
-      ctx.strokeStyle = '#5d4037';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(building.x + 15, building.y + 50, 25, 25);
-      ctx.strokeRect(building.x + building.width - 40, building.y + 50, 25, 25);
-      
-    } else if (building.type === 'castle') {
-      // Main structure
-      ctx.fillStyle = '#9e9e9e';
-      ctx.fillRect(building.x, building.y + 20, building.width, building.height - 20);
-      
-      // Towers on sides
-      ctx.fillStyle = '#757575';
-      ctx.fillRect(building.x - 20, building.y, 25, building.height + 20);
-      ctx.fillRect(building.x + building.width - 5, building.y, 25, building.height + 20);
-      
-      // Battlements
-      ctx.fillStyle = '#616161';
-      for (let i = 0; i < building.width; i += 25) {
-        ctx.fillRect(building.x + i, building.y - 10, 18, 15);
-      }
-      
-      // Gate
-      ctx.fillStyle = '#4e342e';
-      ctx.fillRect(building.x + building.width / 2 - 25, building.y + 50, 50, 70);
-      
-      // Gate arch
-      ctx.beginPath();
-      ctx.arc(building.x + building.width / 2, building.y + 50, 25, 0, Math.PI, true);
-      ctx.fill();
-    }
-    
-    ctx.restore();
-  });
-}
-
-function drawFences(ctx, fences) {
-  fences.forEach(fence => {
-    ctx.save();
-    ctx.strokeStyle = '#795548';
-    ctx.lineWidth = 6;
-    ctx.lineCap = 'round';
-    
-    // Horizontal rails
-    ctx.beginPath();
-    ctx.moveTo(fence.x1, fence.y1);
-    ctx.lineTo(fence.x2, fence.y2);
-    ctx.stroke();
-    
-    ctx.beginPath();
-    ctx.moveTo(fence.x1, fence.y1 + 20);
-    ctx.lineTo(fence.x2, fence.y2 + 20);
-    ctx.stroke();
-    
-    // Vertical posts
-    const numPosts = Math.floor(Math.abs(fence.x2 - fence.x1) / 40);
-    for (let i = 0; i <= numPosts; i++) {
-      const x = fence.x1 + (fence.x2 - fence.x1) * (i / numPosts);
-      ctx.fillStyle = '#6d4c41';
-      ctx.fillRect(x - 4, fence.y1 - 10, 8, 40);
-    }
-    
-    ctx.restore();
-  });
-}
-
-function drawPlayer(ctx, player, isFlying, frame) {
-  ctx.save();
-  ctx.translate(player.x, player.y);
-  ctx.rotate(player.angle + Math.PI / 2);
-
-  const scale = 1;
-  
-  // Flying glow effect
-  if (isFlying) {
-    ctx.shadowBlur = 30;
-    ctx.shadowColor = '#38bdf8';
-    
-    ctx.globalAlpha = 0.5;
-    for (let i = 0; i < 5; i++) {
-      const angle = (frame * 0.1 + i * (Math.PI * 2 / 5));
-      const dist = 40 + Math.sin(frame * 0.2 + i) * 10;
-      ctx.fillStyle = '#38bdf8';
-      ctx.beginPath();
-      ctx.arc(Math.cos(angle) * dist, Math.sin(angle) * dist, 5, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1;
   }
+  ctx.restore();
+}
 
-  const bobOffset = Math.sin(frame * 0.1) * 2;
+function drawBuilding(ctx, building, camera) {
+  const x = building.x - camera.x;
+  const y = building.y - camera.y;
   
-  // Shadow
-  ctx.fillStyle = 'rgba(0,0,0,0.2)';
-  ctx.beginPath();
-  ctx.ellipse(2, 2 + bobOffset, 25 * scale, 20 * scale, 0, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.save();
+  
+  if (building.type === 'house') {
+    // Walls
+    ctx.fillStyle = '#e7e5e4';
+    ctx.strokeStyle = '#78716c';
+    ctx.lineWidth = 3;
+    ctx.fillRect(x, y + 40, building.width, building.height - 40);
+    ctx.strokeRect(x, y + 40, building.width, building.height - 40);
+    
+    // Roof
+    ctx.fillStyle = '#b91c1c';
+    ctx.strokeStyle = '#7f1d1d';
+    ctx.beginPath();
+    ctx.moveTo(x - 10, y + 40);
+    ctx.lineTo(x + building.width / 2, y);
+    ctx.lineTo(x + building.width + 10, y + 40);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    
+    // Door
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(x + building.width / 2 - 15, y + 75, 30, 45);
+    ctx.strokeRect(x + building.width / 2 - 15, y + 75, 30, 45);
+    
+    // Windows
+    ctx.fillStyle = '#93c5fd';
+    ctx.strokeStyle = '#1e3a8a';
+    ctx.fillRect(x + 15, y + 60, 25, 25);
+    ctx.strokeRect(x + 15, y + 60, 25, 25);
+    ctx.fillRect(x + building.width - 40, y + 60, 25, 25);
+    ctx.strokeRect(x + building.width - 40, y + 60, 25, 25);
+    
+  } else if (building.type === 'tower') {
+    // Main structure
+    ctx.fillStyle = '#9ca3af';
+    ctx.strokeStyle = '#4b5563';
+    ctx.lineWidth = 4;
+    ctx.fillRect(x, y, building.width, building.height);
+    ctx.strokeRect(x, y, building.width, building.height);
+    
+    // Stone bricks
+    ctx.strokeStyle = '#6b7280';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < building.height; i += 25) {
+      for (let j = 0; j < building.width; j += 30) {
+        ctx.strokeRect(x + j, y + i, 30, 25);
+      }
+    }
+    
+    // Windows
+    ctx.fillStyle = '#1e293b';
+    for (let i = 30; i < building.height - 30; i += 50) {
+      ctx.fillRect(x + building.width / 2 - 12, y + i, 24, 35);
+    }
+    
+    // Top
+    ctx.fillStyle = '#6b7280';
+    for (let i = 0; i < building.width; i += 20) {
+      ctx.fillRect(x + i, y - 15, 15, 15);
+    }
+    
+  } else if (building.type === 'bunker') {
+    // Base
+    ctx.fillStyle = '#78716c';
+    ctx.strokeStyle = '#292524';
+    ctx.lineWidth = 4;
+    ctx.fillRect(x, y + 20, building.width, building.height - 20);
+    ctx.strokeRect(x, y + 20, building.width, building.height - 20);
+    
+    // Top dome
+    ctx.fillStyle = '#57534e';
+    ctx.strokeStyle = '#292524';
+    ctx.beginPath();
+    ctx.arc(x + building.width / 2, y + 20, building.width / 2, Math.PI, 0);
+    ctx.fill();
+    ctx.stroke();
+    
+    // Entrance
+    ctx.fillStyle = '#1c1917';
+    ctx.fillRect(x + building.width / 2 - 20, y + 60, 40, 40);
+    ctx.strokeRect(x + building.width / 2 - 20, y + 60, 40, 40);
+    
+    // Metal plates
+    ctx.strokeStyle = '#44403c';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < building.width; i += 40) {
+      ctx.strokeRect(x + i, y + 30, 40, 35);
+    }
+  }
+  
+  ctx.restore();
+}
 
-  // Shell base (darker green)
+function drawPlayer(ctx, player, isFlying, camera, frame) {
+  const x = player.x - camera.x;
+  const y = player.y - camera.y;
+  
+  ctx.save();
+  ctx.translate(x + player.width / 2, y + player.height / 2);
+  if (!player.facingRight) {
+    ctx.scale(-1, 1);
+  }
+  
+  // Flying glow
+  if (isFlying) {
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = '#38bdf8';
+  }
+  
+  const bobOffset = player.onGround ? Math.sin(frame * 0.15) * 2 : 0;
+  
+  // Shell
   ctx.fillStyle = '#2d5016';
   ctx.strokeStyle = '#1a3010';
   ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.ellipse(0, bobOffset, 25 * scale, 20 * scale, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, bobOffset - 15, 22, 18, 0.2, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
-
-  // Shell pattern (hexagons)
+  
+  // Shell pattern
   ctx.fillStyle = '#4a7c2f';
-  const hexSize = 6 * scale;
-  for (let i = -1; i <= 1; i++) {
-    for (let j = -1; j <= 1; j++) {
-      const hx = i * hexSize * 1.5;
-      const hy = j * hexSize * 1.8 + bobOffset;
-      ctx.beginPath();
-      for (let k = 0; k < 6; k++) {
-        const angle = (Math.PI / 3) * k;
-        const px = hx + Math.cos(angle) * hexSize;
-        const py = hy + Math.sin(angle) * hexSize;
-        if (k === 0) ctx.moveTo(px, py);
-        else ctx.lineTo(px, py);
-      }
-      ctx.closePath();
-      ctx.fill();
-      ctx.strokeStyle = '#1a3010';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    }
+  for (let i = 0; i < 5; i++) {
+    const angle = (Math.PI * 2 / 5) * i;
+    const px = Math.cos(angle) * 12;
+    const py = Math.sin(angle) * 10 + bobOffset - 15;
+    ctx.beginPath();
+    ctx.arc(px, py, 5, 0, Math.PI * 2);
+    ctx.fill();
   }
-
-  // Shell highlight
-  ctx.fillStyle = 'rgba(255,255,255,0.2)';
-  ctx.beginPath();
-  ctx.ellipse(-8, -8 + bobOffset, 10 * scale, 8 * scale, -0.3, 0, Math.PI * 2);
-  ctx.fill();
-
+  
   // Head
   ctx.fillStyle = '#6b9b4c';
   ctx.strokeStyle = '#4a7c2f';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.ellipse(0, -28 + bobOffset, 10 * scale, 9 * scale, 0, 0, Math.PI * 2);
+  ctx.ellipse(15, bobOffset - 20, 8, 7, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
-
+  
   // Eyes
   ctx.fillStyle = '#fff';
   ctx.beginPath();
-  ctx.arc(-4, -29 + bobOffset, 3.5, 0, Math.PI * 2);
-  ctx.arc(4, -29 + bobOffset, 3.5, 0, Math.PI * 2);
+  ctx.arc(17, bobOffset - 22, 3, 0, Math.PI * 2);
   ctx.fill();
-
   ctx.fillStyle = '#000';
   ctx.beginPath();
-  ctx.arc(-4, -28 + bobOffset, 2, 0, Math.PI * 2);
-  ctx.arc(4, -28 + bobOffset, 2, 0, Math.PI * 2);
+  ctx.arc(18, bobOffset - 22, 1.5, 0, Math.PI * 2);
   ctx.fill();
-
-  // Eye shine
-  ctx.fillStyle = '#fff';
-  ctx.beginPath();
-  ctx.arc(-3.5, -29 + bobOffset, 1, 0, Math.PI * 2);
-  ctx.arc(4.5, -29 + bobOffset, 1, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Mouth
-  ctx.strokeStyle = '#000';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.arc(0, -25 + bobOffset, 4, 0.2, Math.PI - 0.2);
-  ctx.stroke();
-
-  // Flippers (legs)
-  const flipperAngle = Math.sin(frame * 0.15) * 0.2;
+  
+  // Legs
+  const legBob = Math.sin(frame * 0.2) * 3;
   ctx.fillStyle = '#6b9b4c';
   ctx.strokeStyle = '#4a7c2f';
   ctx.lineWidth = 2;
   
-  // Left front flipper
-  ctx.save();
-  ctx.translate(-20, -5 + bobOffset);
-  ctx.rotate(-0.3 + flipperAngle);
+  // Front legs
   ctx.beginPath();
-  ctx.ellipse(0, 0, 12 * scale, 6 * scale, 0, 0, Math.PI * 2);
+  ctx.ellipse(10, bobOffset + 5, 5, 10, legBob * 0.1, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
-  ctx.restore();
-
-  // Right front flipper
-  ctx.save();
-  ctx.translate(20, -5 + bobOffset);
-  ctx.rotate(0.3 - flipperAngle);
+  
+  // Back legs
   ctx.beginPath();
-  ctx.ellipse(0, 0, 12 * scale, 6 * scale, 0, 0, Math.PI * 2);
+  ctx.ellipse(-8, bobOffset + 5, 5, 10, -legBob * 0.1, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
-  ctx.restore();
-
-  // Back flippers
-  ctx.save();
-  ctx.translate(-18, 15 + bobOffset);
-  ctx.rotate(-0.5 - flipperAngle);
-  ctx.beginPath();
-  ctx.ellipse(0, 0, 10 * scale, 5 * scale, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-  ctx.restore();
-
-  ctx.save();
-  ctx.translate(18, 15 + bobOffset);
-  ctx.rotate(0.5 + flipperAngle);
-  ctx.beginPath();
-  ctx.ellipse(0, 0, 10 * scale, 5 * scale, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-  ctx.restore();
-
-  // Tail
-  ctx.fillStyle = '#6b9b4c';
-  ctx.strokeStyle = '#4a7c2f';
-  ctx.beginPath();
-  ctx.moveTo(0, 20 + bobOffset);
-  ctx.lineTo(-5, 28 + bobOffset);
-  ctx.lineTo(5, 28 + bobOffset);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
+  
   ctx.restore();
 }
 
-function drawEnemy(ctx, enemy, frame) {
+function drawEnemy(ctx, enemy, camera, frame) {
+  const x = enemy.x - camera.x;
+  const y = enemy.y - camera.y;
+  
   ctx.save();
-  ctx.translate(enemy.x, enemy.y);
-
-  if (enemy.isBoss) {
-    // Boss glow
-    ctx.shadowBlur = 30;
-    ctx.shadowColor = enemy.color;
-
-    const pulse = 1 + Math.sin(frame * 0.1) * 0.1;
-    
-    // Boss body - mechanical/armored look
+  
+  if (enemy.name === 'soldier') {
+    // Robot soldier
     ctx.fillStyle = enemy.color;
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    
+    // Body
+    ctx.fillRect(x + 10, y + 15, 20, 25);
+    ctx.strokeRect(x + 10, y + 15, 20, 25);
+    
+    // Head
+    ctx.fillRect(x + 12, y, 16, 15);
+    ctx.strokeRect(x + 12, y, 16, 15);
+    
+    // Eye
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(x + 17, y + 5, 6, 4);
+    
+    // Arms
+    ctx.fillStyle = enemy.color;
+    ctx.fillRect(x + 5, y + 20, 5, 15);
+    ctx.fillRect(x + 30, y + 20, 5, 15);
+    
+    // Legs
+    ctx.fillRect(x + 13, y + 40, 6, 10);
+    ctx.fillRect(x + 21, y + 40, 6, 10);
+    
+  } else if (enemy.name === 'tank') {
+    // Tank
+    ctx.fillStyle = enemy.color;
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 3;
+    
+    // Treads
+    ctx.fillStyle = '#1c1917';
+    ctx.fillRect(x + 5, y + 40, 70, 15);
+    ctx.strokeRect(x + 5, y + 40, 70, 15);
+    
+    // Body
+    ctx.fillStyle = enemy.color;
+    ctx.fillRect(x + 10, y + 20, 60, 20);
+    ctx.strokeRect(x + 10, y + 20, 60, 20);
+    
+    // Turret
+    ctx.beginPath();
+    ctx.arc(x + 40, y + 20, 15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    
+    // Cannon
+    ctx.fillRect(x + 50, y + 16, 25, 8);
+    ctx.strokeRect(x + 50, y + 16, 25, 8);
+    
+  } else if (enemy.name === 'drone') {
+    // Flying drone
+    const hover = Math.sin(frame * 0.1) * 3;
+    
+    ctx.fillStyle = enemy.color;
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    
+    // Body
+    ctx.beginPath();
+    ctx.arc(x + 17, y + 17 + hover, 12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    
+    // Propellers
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 4; i++) {
+      const angle = (Math.PI / 2) * i + frame * 0.2;
+      const px = x + 17 + Math.cos(angle) * 15;
+      const py = y + 17 + hover + Math.sin(angle) * 15;
+      
+      ctx.beginPath();
+      ctx.arc(px, py, 5, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    
+    // Camera/eye
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.arc(x + 17, y + 17 + hover, 5, 0, Math.PI * 2);
+    ctx.fill();
+    
+  } else if (enemy.name === 'engineer') {
+    // Engineer robot
+    ctx.fillStyle = enemy.color;
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    
+    // Body
+    ctx.fillRect(x + 10, y + 15, 20, 25);
+    ctx.strokeRect(x + 10, y + 15, 20, 25);
+    
+    // Head with antenna
+    ctx.fillRect(x + 12, y, 16, 15);
+    ctx.strokeRect(x + 12, y, 16, 15);
+    
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x + 20, y);
+    ctx.lineTo(x + 20, y - 8);
+    ctx.stroke();
+    
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.arc(x + 20, y - 10, 3, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Tool arm
     ctx.strokeStyle = '#000';
     ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.arc(0, 0, enemy.size / 2 * pulse, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.moveTo(x + 30, y + 25);
+    ctx.lineTo(x + 40, y + 20);
     ctx.stroke();
-
-    // Armor plates
-    for (let i = 0; i < 8; i++) {
-      const angle = (Math.PI * 2 / 8) * i;
-      const x = Math.cos(angle) * enemy.size / 3;
-      const y = Math.sin(angle) * enemy.size / 3;
-      
-      ctx.fillStyle = 'rgba(0,0,0,0.3)';
-      ctx.beginPath();
-      ctx.arc(x, y, enemy.size / 10, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // Core glow
-    ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.beginPath();
-    ctx.arc(0, 0, enemy.size / 4 * pulse, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Boss eyes - glowing
-    ctx.fillStyle = '#ff0000';
-    ctx.shadowBlur = 15;
-    ctx.shadowColor = '#ff0000';
-    ctx.beginPath();
-    ctx.arc(-enemy.size / 6, -enemy.size / 8, enemy.size / 12, 0, Math.PI * 2);
-    ctx.arc(enemy.size / 6, -enemy.size / 8, enemy.size / 12, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Health bar
-    ctx.shadowBlur = 0;
-    const barWidth = enemy.size;
-    const barHeight = 8;
-    ctx.fillStyle = 'rgba(0,0,0,0.7)';
-    ctx.fillRect(-barWidth / 2, enemy.size / 2 + 12, barWidth, barHeight);
     
-    const healthPercent = enemy.health / enemy.maxHealth;
-    ctx.fillStyle = healthPercent > 0.5 ? '#22c55e' : healthPercent > 0.25 ? '#f59e0b' : '#ef4444';
-    ctx.fillRect(-barWidth / 2, enemy.size / 2 + 12, barWidth * healthPercent, barHeight);
-  } else {
-    // Regular enemies - robots/drones
-    const wobble = Math.sin(frame * 0.1 + enemy.x) * 3;
+  } else if (enemy.name === 'artillery') {
+    // Artillery unit
+    ctx.fillStyle = enemy.color;
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 3;
     
-    ctx.shadowBlur = 8;
-    ctx.shadowColor = '#dc2626';
-
-    switch (enemy.type) {
-      case 'jellyfish':
-        // Drone type 1
-        ctx.fillStyle = '#7c3aed';
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 2;
-        
-        // Body
-        ctx.beginPath();
-        ctx.arc(0, wobble, enemy.size / 2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        
-        // Propellers
-        for (let i = 0; i < 3; i++) {
-          const angle = (Math.PI * 2 / 3) * i + frame * 0.1;
-          const x = Math.cos(angle) * enemy.size / 2.5;
-          const y = Math.sin(angle) * enemy.size / 2.5 + wobble;
-          
-          ctx.strokeStyle = '#a78bfa';
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.moveTo(x - 8, y);
-          ctx.lineTo(x + 8, y);
-          ctx.stroke();
-        }
-        
-        // Eye/sensor
-        ctx.fillStyle = '#ef4444';
-        ctx.beginPath();
-        ctx.arc(0, wobble - 5, 6, 0, Math.PI * 2);
-        ctx.fill();
-        break;
-        
-      case 'crab':
-        // Tank type
-        ctx.fillStyle = '#991b1b';
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 2;
-        
-        // Body
-        ctx.fillRect(-enemy.size / 2, wobble - enemy.size / 3, enemy.size, enemy.size / 1.5);
-        ctx.strokeRect(-enemy.size / 2, wobble - enemy.size / 3, enemy.size, enemy.size / 1.5);
-        
-        // Turret
-        ctx.beginPath();
-        ctx.arc(0, wobble, enemy.size / 3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        
-        // Cannon
-        ctx.fillRect(-4, wobble - enemy.size / 2, 8, enemy.size / 2);
-        
-        // Treads
-        ctx.fillStyle = '#000';
-        ctx.fillRect(-enemy.size / 2 - 5, wobble + enemy.size / 4, 10, 8);
-        ctx.fillRect(enemy.size / 2 - 5, wobble + enemy.size / 4, 10, 8);
-        break;
-        
-      case 'fish':
-        // Fighter type
-        ctx.fillStyle = '#dc2626';
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 2;
-        
-        // Fuselage
-        ctx.beginPath();
-        ctx.ellipse(0, wobble, enemy.size / 2, enemy.size / 3, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        
-        // Wings
-        ctx.beginPath();
-        ctx.moveTo(-enemy.size / 2, wobble);
-        ctx.lineTo(-enemy.size, wobble - 10);
-        ctx.lineTo(-enemy.size / 2, wobble + 10);
-        ctx.fill();
-        ctx.stroke();
-        
-        ctx.beginPath();
-        ctx.moveTo(enemy.size / 2, wobble);
-        ctx.lineTo(enemy.size, wobble - 10);
-        ctx.lineTo(enemy.size / 2, wobble + 10);
-        ctx.fill();
-        ctx.stroke();
-        
-        // Cockpit
-        ctx.fillStyle = '#60a5fa';
-        ctx.beginPath();
-        ctx.arc(0, wobble - 5, 8, 0, Math.PI * 2);
-        ctx.fill();
-        break;
-        
-      default: // starfish - Mine type
-        ctx.fillStyle = '#ca8a04';
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 2;
-        
-        // Core
-        ctx.beginPath();
-        ctx.arc(0, wobble, enemy.size / 3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        
-        // Spikes
-        for (let i = 0; i < 8; i++) {
-          const angle = (Math.PI * 2 / 8) * i;
-          const x1 = Math.cos(angle) * enemy.size / 3;
-          const y1 = Math.sin(angle) * enemy.size / 3 + wobble;
-          const x2 = Math.cos(angle) * enemy.size / 2;
-          const y2 = Math.sin(angle) * enemy.size / 2 + wobble;
-          
-          ctx.beginPath();
-          ctx.moveTo(x1, y1);
-          ctx.lineTo(x2, y2);
-          ctx.lineWidth = 4;
-          ctx.stroke();
-        }
-        
-        // Danger light
-        ctx.fillStyle = frame % 20 < 10 ? '#ef4444' : '#000';
-        ctx.beginPath();
-        ctx.arc(0, wobble, 5, 0, Math.PI * 2);
-        ctx.fill();
-    }
+    // Base
+    ctx.fillRect(x + 5, y + 35, 60, 20);
+    ctx.strokeRect(x + 5, y + 35, 60, 20);
+    
+    // Platform
+    ctx.fillRect(x + 15, y + 20, 40, 15);
+    ctx.strokeRect(x + 15, y + 20, 40, 15);
+    
+    // Barrel
+    ctx.save();
+    ctx.translate(x + 35, y + 27);
+    ctx.rotate(-0.3);
+    ctx.fillRect(0, -4, 35, 8);
+    ctx.strokeRect(0, -4, 35, 8);
+    ctx.restore();
   }
-
-  ctx.restore();
-}
-
-function getBossMovement(boss, player, timer) {
-  const dx = player.x - boss.x;
-  const dy = player.y - boss.y;
-  const dist = Math.sqrt(dx * dx + dy * dy);
   
-  switch (boss.pattern) {
-    case 'circle':
-      return {
-        x: Math.cos(timer * 0.02) * boss.speed * 2,
-        y: Math.sin(timer * 0.02) * boss.speed * 2
-      };
-    case 'zigzag':
-      return {
-        x: Math.sin(timer * 0.05) * boss.speed * 3,
-        y: (dy / dist) * boss.speed * 0.5
-      };
-    case 'chase':
-      return {
-        x: (dx / dist) * boss.speed,
-        y: (dy / dist) * boss.speed
-      };
-    case 'teleport':
-      if (timer % 120 === 0) {
-        return {
-          x: (Math.random() - 0.5) * 200,
-          y: (Math.random() - 0.5) * 200
-        };
-      }
-      return { x: 0, y: 0 };
-    case 'dash':
-      if (timer % 100 < 20) {
-        return {
-          x: (dx / dist) * boss.speed * 4,
-          y: (dy / dist) * boss.speed * 4
-        };
-      }
-      return { x: 0, y: 0 };
-    case 'spiral':
-      const spiralAngle = timer * 0.03;
-      const spiralDist = 100 + Math.sin(timer * 0.01) * 50;
-      return {
-        x: (player.x + Math.cos(spiralAngle) * spiralDist - boss.x) * 0.02,
-        y: (player.y + Math.sin(spiralAngle) * spiralDist - boss.y) * 0.02
-      };
-    case 'bounce':
-      return {
-        x: Math.sin(timer * 0.04) * boss.speed * 2,
-        y: Math.cos(timer * 0.03) * boss.speed * 2
-      };
-    case 'wave':
-      return {
-        x: (dx / dist) * boss.speed * 0.5,
-        y: Math.sin(timer * 0.05) * boss.speed * 3
-      };
-    default:
-      return {
-        x: (dx / dist) * boss.speed * 0.8,
-        y: (dy / dist) * boss.speed * 0.8
-      };
-  }
+  ctx.restore();
 }
