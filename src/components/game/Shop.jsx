@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { X, Zap, Heart, TrendingUp, Target } from 'lucide-react';
+import { X, Zap, Heart, TrendingUp, Target, Shield } from 'lucide-react';
 
 export default function Shop({ coins, upgrades, onPurchase, onClose }) {
   const items = [
@@ -40,6 +40,15 @@ export default function Shop({ coins, upgrades, onPurchase, onClose }) {
       level: upgrades.maxHealth,
       cost: upgrades.maxHealth * 100,
       color: 'from-green-500 to-emerald-500'
+    },
+    {
+      id: 'structureArmor',
+      name: '基地护甲',
+      icon: Shield,
+      description: '减少基地受到的伤害',
+      level: upgrades.structureArmor,
+      cost: upgrades.structureArmor * 120,
+      color: 'from-purple-500 to-pink-500'
     }
   ];
 
@@ -75,7 +84,7 @@ export default function Shop({ coins, upgrades, onPurchase, onClose }) {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {items.map((item) => {
             const Icon = item.icon;
             const canAfford = coins >= item.cost;

@@ -34,11 +34,15 @@ export default function StartScreen({ onStart }) {
         <h3 className="text-cyan-300 text-2xl font-semibold mb-6 text-center">操作指南</h3>
         <div className="grid grid-cols-2 gap-6 text-white/90 text-lg">
           <div className="flex items-center gap-3">
-            <kbd className="px-4 py-2 bg-white/20 rounded-lg font-mono font-bold">W A S D</kbd>
-            <span>移动</span>
+            <kbd className="px-4 py-2 bg-white/20 rounded-lg font-mono font-bold">A / D</kbd>
+            <span>左右移动</span>
           </div>
           <div className="flex items-center gap-3">
-            <kbd className="px-4 py-2 bg-red-500/40 rounded-lg font-mono font-bold">K</kbd>
+            <kbd className="px-4 py-2 bg-white/20 rounded-lg font-mono font-bold">空格</kbd>
+            <span>跳跃</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <kbd className="px-4 py-2 bg-red-500/40 rounded-lg font-mono font-bold">J</kbd>
             <span>射击</span>
           </div>
           <div className="flex items-center gap-3">
@@ -46,10 +50,10 @@ export default function StartScreen({ onStart }) {
             <span>恢复生命</span>
           </div>
           <div className="flex items-center gap-3">
-            <kbd className="px-4 py-2 bg-blue-500/40 rounded-lg font-mono font-bold">O</kbd>
-            <span>飞行 3秒</span>
+            <kbd className="px-4 py-2 bg-blue-500/40 rounded-lg font-mono font-bold">K</kbd>
+            <span>快速冲刺</span>
           </div>
-          <div className="flex items-center gap-3 col-span-2 justify-center">
+          <div className="flex items-center gap-3">
             <kbd className="px-4 py-2 bg-yellow-500/40 rounded-lg font-mono font-bold">B</kbd>
             <span>打开商店</span>
           </div>
