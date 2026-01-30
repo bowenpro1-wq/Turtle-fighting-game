@@ -83,8 +83,10 @@ export default function GameCanvas({
   fly,
   largeAttack,
   allOutAttack,
+  meleeAttack,
   isFlying,
   isAllOutAttack,
+  isMeleeAttacking,
   currentBoss,
   defeatedBosses,
   score,
@@ -327,6 +329,24 @@ export default function GameCanvas({
         }
       }
 
+      if (e.key.toLowerCase() === 'j') {
+        if (meleeAttack()) {
+          // Melee particles
+          for (let i = 0; i < 30; i++) {
+            const angle = game.player.angle + (Math.random() - 0.5) * Math.PI / 2;
+            game.particles.push({
+              x: game.player.x + game.player.width / 2,
+              y: game.player.y + game.player.height / 2,
+              vx: Math.cos(angle) * (Math.random() * 8 + 5),
+              vy: Math.sin(angle) * (Math.random() * 8 + 5),
+              life: 25,
+              color: '#60a5fa',
+              size: 6
+            });
+          }
+        }
+      }
+
       if (e.key.toLowerCase() === 'p') {
         if (allOutAttack()) {
           // Kill all enemies instantly
@@ -453,6 +473,38 @@ export default function GameCanvas({
       if (Date.now() - game.lastEnemySpawn > 3000) {
         game.enemies.push(spawnEnemy());
         game.lastEnemySpawn = Date.now();
+      }
+
+      // Melee attack damage
+      if (isMeleeAttacking) {
+        const meleeRange = 80;
+        const meleeDamage = 50 * upgrades.damage;
+
+        game.enemies.forEach(enemy => {
+          const dx = enemy.x + enemy.width / 2 - (game.player.x + game.player.width / 2);
+          const dy = enemy.y + enemy.height / 2 - (game.player.y + game.player.height / 2);
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const angleToEnemy = Math.atan2(dy, dx);
+          const angleDiff = Math.abs(angleToEnemy - game.player.angle);
+
+          if (dist < meleeRange && angleDiff < Math.PI / 3) {
+            enemy.health -= meleeDamage;
+            enemy.stunned = true;
+
+            // Melee hit particles
+            for (let i = 0; i < 15; i++) {
+              game.particles.push({
+                x: enemy.x + enemy.width / 2,
+                y: enemy.y + enemy.height / 2,
+                vx: (Math.random() - 0.5) * 10,
+                vy: (Math.random() - 0.5) * 10,
+                life: 30,
+                color: '#60a5fa',
+                size: 5
+              });
+            }
+          }
+        });
       }
 
       // Update enemies
@@ -965,6 +1017,28 @@ export default function GameCanvas({
 
       // Draw player
       drawPlayer(ctx, game.player, isFlying, game.camera, game.animationFrame);
+
+      // Draw melee attack arc
+      if (isMeleeAttacking) {
+        const screenX = game.player.x - game.camera.x + game.player.width / 2;
+        const screenY = game.player.y - game.camera.y + game.player.height / 2;
+
+        ctx.save();
+        ctx.strokeStyle = '#60a5fa';
+        ctx.lineWidth = 6;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#60a5fa';
+        ctx.beginPath();
+        ctx.arc(
+          screenX,
+          screenY,
+          70,
+          game.player.angle - Math.PI / 6,
+          game.player.angle + Math.PI / 6
+        );
+        ctx.stroke();
+        ctx.restore();
+      }
 
       animationId = requestAnimationFrame(gameLoop);
     };

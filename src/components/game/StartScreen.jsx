@@ -42,6 +42,10 @@ export default function StartScreen({ onStart }) {
             <span>射击</span>
           </div>
           <div className="flex items-center gap-3">
+            <kbd className="px-4 py-2 bg-cyan-500/40 rounded-lg font-mono font-bold">J</kbd>
+            <span>近战攻击</span>
+          </div>
+          <div className="flex items-center gap-3">
             <kbd className="px-4 py-2 bg-green-500/40 rounded-lg font-mono font-bold">H</kbd>
             <span>恢复生命</span>
           </div>

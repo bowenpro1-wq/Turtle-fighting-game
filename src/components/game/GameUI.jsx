@@ -12,6 +12,7 @@ export default function GameUI({
   flyCooldown,
   largeAttackCooldown,
   allOutAttackCooldown,
+  meleeCooldown,
   isFlying,
   isAllOutAttack,
   bossHealth,
@@ -128,6 +129,11 @@ export default function GameUI({
           color="red"
         />
         <CooldownButton
+          label="J - 近战"
+          cooldown={meleeCooldown}
+          color="cyan"
+        />
+        <CooldownButton
           label="H - 恢复"
           cooldown={healCooldown}
           color="green"
@@ -165,6 +171,7 @@ function CooldownButton({ label, cooldown, color, active, large }) {
   
   const colorClasses = {
     red: 'from-red-600 to-red-500 border-red-400',
+    cyan: 'from-cyan-600 to-cyan-500 border-cyan-400',
     green: 'from-green-600 to-green-500 border-green-400',
     blue: 'from-blue-600 to-blue-500 border-blue-400',
     orange: 'from-orange-600 to-orange-500 border-orange-400',
