@@ -162,7 +162,7 @@ export default function GameCanvas({
   const canvasRef = useRef(null);
   const WORLD_WIDTH = gameMode === 'tower' ? 1800 : 4000;
   const WORLD_HEIGHT = gameMode === 'tower' ? 2000 : 3000;
-
+  
   const gameRef = useRef({
     player: {
       x: 200,
@@ -268,11 +268,13 @@ export default function GameCanvas({
     if (gameMode === 'tower') {
       const angle = Math.random() * Math.PI * 2;
       const distance = 300 + Math.random() * 200;
-      spawnX = game.player.x + Math.cos(angle) * distance;
-      spawnY = game.player.y + Math.sin(angle) * distance;
+      spawnX = gameRef.current.player.x + Math.cos(angle) * distance;
+      spawnY = gameRef.current.player.y + Math.sin(angle) * distance;
       // Keep in bounds
-      spawnX = Math.max(50, Math.min(WORLD_WIDTH - 50, spawnX));
-      spawnY = Math.max(50, Math.min(WORLD_HEIGHT - 50, spawnY));
+      const TOWER_WIDTH = 1800;
+      const TOWER_HEIGHT = 2000;
+      spawnX = Math.max(50, Math.min(TOWER_WIDTH - 50, spawnX));
+      spawnY = Math.max(50, Math.min(TOWER_HEIGHT - 50, spawnY));
     } else {
       const side = Math.floor(Math.random() * 4);
       switch(side) {
@@ -298,7 +300,7 @@ export default function GameCanvas({
       stunned: false,
       floorMultiplier: gameMode === 'tower' ? Math.floor(currentFloor / 10) + 1 : 1
     };
-  }, [gameMode, currentFloor, game]);
+  }, [gameMode, currentFloor]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -843,9 +845,9 @@ export default function GameCanvas({
         enemy.x += enemy.vx;
         enemy.y += enemy.vy;
 
-        // Enemy shooting (snipers have longer range)
+        // Enemy shooting (snipers have longer range) - skip for melee enemies
         const shootRange = enemy.longRange ? 800 : 600;
-        if (Date.now() - enemy.lastShot > enemy.shootInterval && distToPlayer < shootRange) {
+        if (enemy.behaviorType !== 'melee' && Date.now() - enemy.lastShot > enemy.shootInterval && distToPlayer < shootRange) {
           const target = enemy.target || game.player;
           const dx = (target.x || target.x) - enemy.x;
           const dy = ((target.y || target.y) + (target.height || 0) / 2) - (enemy.y + enemy.height / 2);
