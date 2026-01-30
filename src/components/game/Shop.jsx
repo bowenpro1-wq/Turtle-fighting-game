@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { X, Zap, Heart, TrendingUp, Target, Sparkles, Shield, CircleDot, Coins } from 'lucide-react';
+import { X, Zap, Heart, TrendingUp, Target, Sparkles, Shield, CircleDot, Coins, Crosshair } from 'lucide-react';
 
-export default function Shop({ coins, upgrades, onPurchase, onClose }) {
+export default function Shop({ coins, upgrades, hasHomingBullets, onPurchase, onClose }) {
   const [lastPurchased, setLastPurchased] = useState(null);
   
   const handlePurchase = (id, cost) => {
@@ -57,6 +57,20 @@ export default function Shop({ coins, upgrades, onPurchase, onClose }) {
     }
   ];
 
+  const specialItems = hasHomingBullets ? [] : [
+    {
+      id: 'homingBullets',
+      name: '追踪炮弹',
+      icon: Crosshair,
+      description: '子弹自动追踪敌人，射程减半',
+      level: 0,
+      cost: 500,
+      color: 'from-purple-500 to-pink-500',
+      stats: '自动追踪 | 射程-50%',
+      special: true
+    }
+  ];
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -89,6 +103,86 @@ export default function Shop({ coins, upgrades, onPurchase, onClose }) {
           </Button>
         </div>
 
+        {specialItems.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 mb-4">
+              特殊升级
+            </h3>
+            <div className="grid grid-cols-1 gap-6">
+              {specialItems.map((item) => {
+                const Icon = item.icon;
+                const canAfford = coins >= item.cost;
+                const isPurchased = lastPurchased === item.id;
+                
+                return (
+                  <motion.div
+                    key={item.id}
+                    whileHover={{ scale: canAfford ? 1.02 : 1 }}
+                    className={`relative bg-gradient-to-br ${item.color} p-1 rounded-xl ${
+                      !canAfford && 'opacity-50'
+                    }`}
+                  >
+                    <AnimatePresence>
+                      {isPurchased && (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: [0, 1.5, 1] }}
+                          exit={{ opacity: 0 }}
+                          className="absolute inset-0 z-10 flex items-center justify-center"
+                        >
+                          <div className="bg-purple-500 rounded-full p-4">
+                            <Sparkles className="w-12 h-12 text-white" />
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    <div className="bg-slate-900 rounded-lg p-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <motion.div 
+                            className={`w-16 h-16 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center shadow-lg`}
+                            animate={isPurchased ? { 
+                              scale: [1, 1.2, 1],
+                              rotate: [0, 360]
+                            } : {}}
+                            transition={{ duration: 0.5 }}
+                          >
+                            <Icon className="w-10 h-10 text-white" />
+                          </motion.div>
+                          <div>
+                            <h3 className="text-2xl font-bold text-white mb-1">{item.name}</h3>
+                            <p className="text-gray-400 text-sm mb-2">{item.description}</p>
+                            <div className="flex items-center gap-2">
+                              <CircleDot className="w-4 h-4 text-purple-400" />
+                              <span className="text-purple-300 font-semibold text-sm">{item.stats}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <Button
+                          onClick={() => handlePurchase(item.id, item.cost)}
+                          disabled={!canAfford}
+                          className={`${
+                            canAfford
+                              ? `bg-gradient-to-r ${item.color} hover:opacity-90 shadow-lg`
+                              : 'bg-gray-600 cursor-not-allowed'
+                          } font-bold text-xl px-8 py-4`}
+                        >
+                          <Coins className="w-6 h-6 mr-2" />
+                          {item.cost}
+                        </Button>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 mb-4">
+          永久升级
+        </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {items.map((item) => {
             const Icon = item.icon;

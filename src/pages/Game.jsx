@@ -27,7 +27,7 @@ const BOSSES = [
   { id: 17, name: "幻影海豚", health: 650, damage: 60, speed: 3.5, size: 105, color: "#818cf8", pattern: "clone" },
   { id: 18, name: "末日海怪", health: 1200, damage: 70, speed: 1.8, size: 180, color: "#dc2626", pattern: "chaos" },
   { id: 19, name: "深渊领主", health: 1500, damage: 80, speed: 2, size: 190, color: "#1e1b4b", pattern: "void" },
-  { id: 20, name: "海洋霸主", health: 2000, damage: 100, speed: 2.5, size: 200, color: "#fcd34d", pattern: "ultimate" }
+  { id: 20, name: "广智", health: 2500, damage: 120, speed: 2, size: 220, color: "#ff4500", pattern: "flame" }
 ];
 
 export default function Game() {
@@ -50,6 +50,11 @@ export default function Game() {
   const [allOutAttackCooldown, setAllOutAttackCooldown] = useState(0);
   const [isFlying, setIsFlying] = useState(false);
   const [isAllOutAttack, setIsAllOutAttack] = useState(false);
+
+  // Tank kills and bullet upgrades
+  const [tankKills, setTankKills] = useState(0);
+  const [hasCannonUpgrade, setHasCannonUpgrade] = useState(false);
+  const [hasHomingBullets, setHasHomingBullets] = useState(false);
 
   // Upgrades
   const [upgrades, setUpgrades] = useState({
@@ -121,11 +126,22 @@ export default function Game() {
     });
   }, [isFlying]);
 
-  const handleEnemyKill = useCallback(() => {
+  const handleEnemyKill = useCallback((enemyType) => {
     setScore(prev => prev + 100);
     setCoins(prev => prev + 10);
     setPlayerHealth(prev => Math.min(maxHealth, prev + 10));
-  }, [maxHealth]);
+    
+    // Track tank kills
+    if (enemyType === 'tank') {
+      setTankKills(prev => {
+        const newCount = prev + 1;
+        if (newCount >= 5 && !hasCannonUpgrade) {
+          setHasCannonUpgrade(true);
+        }
+        return newCount;
+      });
+    }
+  }, [maxHealth, hasCannonUpgrade]);
 
   const handleBossDamage = useCallback((damage) => {
     setBossHealth(prev => {
@@ -186,14 +202,19 @@ export default function Game() {
   const handlePurchase = (upgrade, cost) => {
     if (coins >= cost) {
       setCoins(prev => prev - cost);
-      setUpgrades(prev => ({
-        ...prev,
-        [upgrade]: prev[upgrade] + 1
-      }));
-      if (upgrade === 'maxHealth') {
-        const newMax = 100 * (upgrades.maxHealth + 1);
-        setMaxHealth(newMax);
-        setPlayerHealth(prev => Math.min(newMax, prev + 50));
+      
+      if (upgrade === 'homingBullets') {
+        setHasHomingBullets(true);
+      } else {
+        setUpgrades(prev => ({
+          ...prev,
+          [upgrade]: prev[upgrade] + 1
+        }));
+        if (upgrade === 'maxHealth') {
+          const newMax = 100 * (upgrades.maxHealth + 1);
+          setMaxHealth(newMax);
+          setPlayerHealth(prev => Math.min(newMax, prev + 50));
+        }
       }
       return true;
     }
@@ -251,6 +272,8 @@ export default function Game() {
               defeatedBosses={defeatedBosses}
               score={score}
               upgrades={upgrades}
+              hasCannonUpgrade={hasCannonUpgrade}
+              hasHomingBullets={hasHomingBullets}
             />
             
             <GameUI
@@ -269,6 +292,9 @@ export default function Game() {
               bossMaxHealth={bossMaxHealth}
               bossName={currentBoss?.name}
               defeatedBosses={defeatedBosses.length}
+              tankKills={tankKills}
+              hasCannonUpgrade={hasCannonUpgrade}
+              hasHomingBullets={hasHomingBullets}
             />
             
             <AnimatePresence>
@@ -282,6 +308,7 @@ export default function Game() {
                 <Shop
                   coins={coins}
                   upgrades={upgrades}
+                  hasHomingBullets={hasHomingBullets}
                   onPurchase={handlePurchase}
                   onClose={() => setShowShop(false)}
                 />

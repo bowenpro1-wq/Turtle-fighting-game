@@ -17,7 +17,10 @@ export default function GameUI({
   bossHealth,
   bossMaxHealth,
   bossName,
-  defeatedBosses
+  defeatedBosses,
+  tankKills,
+  hasCannonUpgrade,
+  hasHomingBullets
 }) {
   return (
     <div className="absolute inset-0 pointer-events-none">
@@ -53,7 +56,33 @@ export default function GameUI({
           <div className="text-orange-400 text-sm font-semibold">
             BOSS: {defeatedBosses} / 20
           </div>
-        </div>
+
+          {!hasCannonUpgrade && (
+            <div className="text-cyan-400 text-sm font-semibold">
+              坦克: {tankKills} / 5 🎯
+            </div>
+          )}
+
+          {hasCannonUpgrade && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="px-3 py-1 bg-gradient-to-r from-orange-500/80 to-red-500/80 rounded-full text-white text-xs font-bold"
+            >
+              🎯 大炮已解锁
+            </motion.div>
+          )}
+
+          {hasHomingBullets && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="px-3 py-1 bg-gradient-to-r from-purple-500/80 to-pink-500/80 rounded-full text-white text-xs font-bold"
+            >
+              🎯 追踪弹
+            </motion.div>
+          )}
+          </div>
 
         {isFlying && (
           <motion.div
