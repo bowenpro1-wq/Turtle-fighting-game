@@ -586,8 +586,8 @@ export default function GameCanvas({
       // Remove destroyed buildings
       game.buildings = game.buildings.filter(b => b.health > 0);
 
-      // Spawn enemies every 5 seconds in normal mode
-      if (gameState === 'playing' && Date.now() - game.lastEnemySpawn > 5000) {
+      // Spawn enemies every 5 seconds in normal mode (not tower mode)
+      if (gameMode !== 'tower' && gameState === 'playing' && Date.now() - game.lastEnemySpawn > 5000) {
         const spawnCount = Math.floor(Math.random() * 2) + 2;
         for (let i = 0; i < spawnCount; i++) {
           game.enemies.push(spawnEnemy());
@@ -595,8 +595,8 @@ export default function GameCanvas({
         game.lastEnemySpawn = Date.now();
       }
 
-      // Boss mode: spawn 3 enemies every 2 seconds
-      if (gameState === 'boss') {
+      // Boss mode: spawn 3 enemies every 2 seconds (not in tower mode)
+      if (gameMode !== 'tower' && gameState === 'boss') {
         // Initial spawn of 10-20 enemies when boss appears
         if (game.lastBossEnemySpawn === 0) {
           const initialCount = Math.floor(Math.random() * 11) + 10;
@@ -611,7 +611,7 @@ export default function GameCanvas({
           }
           game.lastBossEnemySpawn = Date.now();
         }
-      } else {
+      } else if (gameMode !== 'tower') {
         game.lastBossEnemySpawn = 0;
       }
 
@@ -1461,8 +1461,8 @@ function drawBackground(ctx, camera, frame, gameMode) {
   ctx.save();
   ctx.globalAlpha = 0.4;
   for (let i = 0; i < 50; i++) {
-    const worldX = (i * 157 + 73) % WORLD_WIDTH;
-    const worldY = (i * 193 + 103) % WORLD_HEIGHT;
+    const worldX = (i * 157 + 73) % 1800;
+    const worldY = (i * 193 + 103) % 2000;
     const x = worldX - camera.x;
     const y = worldY - camera.y;
     
@@ -1471,6 +1471,34 @@ function drawBackground(ctx, camera, frame, gameMode) {
     ctx.fillStyle = '#2d3748';
     ctx.beginPath();
     ctx.arc(x, y, 8 + (i % 4), 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+    return;
+  }
+  
+  // Original background for other modes
+  const grassGradient = ctx.createRadialGradient(
+    CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 0,
+    CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, CANVAS_WIDTH
+  );
+  grassGradient.addColorStop(0, '#7cb342');
+  grassGradient.addColorStop(0.6, '#689f38');
+  grassGradient.addColorStop(1, '#558b2f');
+  ctx.fillStyle = grassGradient;
+  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+  ctx.save();
+  ctx.globalAlpha = 0.3;
+  for (let i = 0; i < 200; i++) {
+    const worldX = (i * 67 + 23) % 4000;
+    const worldY = (i * 91 + 41) % 3000;
+    const x = worldX - camera.x;
+    const y = worldY - camera.y;
+    if (x < -30 || x > CANVAS_WIDTH + 30 || y < -30 || y > CANVAS_HEIGHT + 30) continue;
+    ctx.fillStyle = i % 3 === 0 ? '#558b2f' : '#689f38';
+    ctx.beginPath();
+    ctx.ellipse(x, y, 15 + (i % 8), 8 + (i % 5), i * 0.3, 0, Math.PI * 2);
     ctx.fill();
   }
   ctx.restore();
