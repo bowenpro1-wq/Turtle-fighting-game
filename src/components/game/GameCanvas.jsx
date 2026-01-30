@@ -88,7 +88,9 @@ export default function GameCanvas({
   currentBoss,
   defeatedBosses,
   score,
-  upgrades
+  upgrades,
+  hasCannonUpgrade,
+  hasHomingBullets
 }) {
   const canvasRef = useRef(null);
   const gameRef = useRef({
@@ -110,6 +112,8 @@ export default function GameCanvas({
     obstacles: [],
     hazardZones: [],
     buildings: [],
+    explosions: [],
+    flameAttacks: [],
     keys: {},
     lastEnemySpawn: 0,
     lastObstacleCheck: 0,
@@ -215,27 +219,37 @@ export default function GameCanvas({
       if (e.key.toLowerCase() === 'k') {
         if (shoot()) {
           const angle = game.player.angle;
+          const baseSpeed = hasHomingBullets ? 10 : 15;
+          const bulletDamage = hasCannonUpgrade ? 25 * upgrades.damage : 10 * upgrades.damage;
+          const bulletSize = hasCannonUpgrade ? 12 : 8;
+
           const bullet = {
             x: game.player.x + game.player.width / 2,
             y: game.player.y + game.player.height / 2,
-            vx: Math.cos(angle) * 15,
-            vy: Math.sin(angle) * 15,
-            damage: 10 * upgrades.damage,
-            size: 8,
-            fromPlayer: true
+            vx: Math.cos(angle) * baseSpeed,
+            vy: Math.sin(angle) * baseSpeed,
+            damage: bulletDamage,
+            size: bulletSize,
+            fromPlayer: true,
+            isCannon: hasCannonUpgrade,
+            isHoming: hasHomingBullets,
+            distanceTraveled: 0,
+            maxDistance: hasHomingBullets ? 400 : 800
           };
           game.bullets.push(bullet);
-          
+
           // Muzzle flash
-          for (let i = 0; i < 8; i++) {
+          const flashCount = hasCannonUpgrade ? 15 : 8;
+          const flashColor = hasCannonUpgrade ? '#ff4500' : '#fbbf24';
+          for (let i = 0; i < flashCount; i++) {
             game.particles.push({
               x: bullet.x,
               y: bullet.y,
-              vx: direction * (Math.random() * 3 + 2),
-              vy: (Math.random() - 0.5) * 4,
-              life: 15,
-              color: '#fbbf24',
-              size: 3
+              vx: Math.cos(angle) * (Math.random() * 5 + 3),
+              vy: Math.sin(angle) * (Math.random() * 5 + 3) + (Math.random() - 0.5) * 4,
+              life: hasCannonUpgrade ? 20 : 15,
+              color: flashColor,
+              size: hasCannonUpgrade ? 5 : 3
             });
           }
         }
@@ -279,18 +293,26 @@ export default function GameCanvas({
           // 100 bullets in all directions
           for (let i = 0; i < 100; i++) {
             const angle = (Math.PI * 2 / 100) * i;
+            const bulletDamage = hasCannonUpgrade ? 30 * upgrades.damage : 15 * upgrades.damage;
+            const bulletSize = hasCannonUpgrade ? 14 : 10;
+
             game.bullets.push({
               x: game.player.x + game.player.width / 2,
               y: game.player.y + game.player.height / 2,
               vx: Math.cos(angle) * 12,
               vy: Math.sin(angle) * 12,
-              damage: 15 * upgrades.damage,
-              size: 10,
-              fromPlayer: true
+              damage: bulletDamage,
+              size: bulletSize,
+              fromPlayer: true,
+              isCannon: hasCannonUpgrade,
+              isHoming: false,
+              distanceTraveled: 0,
+              maxDistance: 800
             });
           }
 
           // Epic particles
+          const particleColor = hasCannonUpgrade ? '#ff4500' : '#fbbf24';
           for (let i = 0; i < 50; i++) {
             game.particles.push({
               x: game.player.x + game.player.width / 2,
@@ -298,7 +320,7 @@ export default function GameCanvas({
               vx: (Math.random() - 0.5) * 10,
               vy: (Math.random() - 0.5) * 10,
               life: 50,
-              color: '#fbbf24',
+              color: particleColor,
               size: 8
             });
           }
@@ -320,7 +342,7 @@ export default function GameCanvas({
                 size: 6
               });
             }
-            onEnemyKill();
+            onEnemyKill(enemy.name);
           });
           game.enemies = [];
 
@@ -532,35 +554,192 @@ export default function GameCanvas({
         }
 
         return enemy.health > 0 && enemy.x > -200;
-      });
+        });
 
-      // Update bullets
-      game.bullets = game.bullets.filter(bullet => {
+        // Update flame attacks (for boss)
+        if (currentBoss?.pattern === 'flame') {
+        game.flameAttacks = game.flameAttacks.filter(flame => {
+          flame.life--;
+          flame.radius += 2;
+
+          const screenX = flame.x - game.camera.x;
+          const screenY = flame.y - game.camera.y;
+
+          // Draw flame
+          ctx.save();
+          const alpha = flame.life / flame.maxLife;
+          ctx.globalAlpha = alpha * 0.6;
+
+          const gradient = ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, flame.radius);
+          gradient.addColorStop(0, '#ff4500');
+          gradient.addColorStop(0.5, '#ff6347');
+          gradient.addColorStop(1, '#ff8c00');
+          ctx.fillStyle = gradient;
+
+          ctx.beginPath();
+          ctx.arc(screenX, screenY, flame.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+
+          // Flame particles
+          if (flame.life % 3 === 0) {
+            for (let i = 0; i < 5; i++) {
+              game.particles.push({
+                x: flame.x + (Math.random() - 0.5) * flame.radius,
+                y: flame.y + (Math.random() - 0.5) * flame.radius,
+                vx: (Math.random() - 0.5) * 3,
+                vy: -Math.random() * 4,
+                life: 20,
+                color: Math.random() > 0.5 ? '#ff4500' : '#ffa500',
+                size: 4
+              });
+            }
+          }
+
+          // Damage player
+          if (!isFlying) {
+            const dx = game.player.x + game.player.width / 2 - flame.x;
+            const dy = game.player.y + game.player.height / 2 - flame.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < flame.radius && game.animationFrame % 15 === 0) {
+              onPlayerDamage(flame.damage / 3);
+            }
+          }
+
+          return flame.life > 0;
+        });
+
+        // Spawn flame attacks
+        if (game.animationFrame % 60 === 0 && Math.random() < 0.5) {
+          game.flameAttacks.push({
+            x: game.player.x + (Math.random() - 0.5) * 300,
+            y: game.player.y + (Math.random() - 0.5) * 300,
+            radius: 20,
+            damage: 60,
+            life: 80,
+            maxLife: 80
+          });
+        }
+        }
+
+        // Update explosions
+        game.explosions = game.explosions.filter(explosion => {
+        explosion.life--;
+        explosion.radius += 3;
+
+        const screenX = explosion.x - game.camera.x;
+        const screenY = explosion.y - game.camera.y;
+
+        // Draw explosion
+        ctx.save();
+        const alpha = explosion.life / 30;
+        ctx.globalAlpha = alpha;
+
+        const gradient = ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, explosion.radius);
+        gradient.addColorStop(0, '#ffa500');
+        gradient.addColorStop(0.5, '#ff6347');
+        gradient.addColorStop(1, '#ff4500');
+        ctx.fillStyle = gradient;
+
+        ctx.beginPath();
+        ctx.arc(screenX, screenY, explosion.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // Explosion damage enemies
+        if (explosion.life === 25) {
+          game.enemies.forEach(enemy => {
+            const dx = enemy.x + enemy.width / 2 - explosion.x;
+            const dy = enemy.y + enemy.height / 2 - explosion.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < explosion.radius) {
+              enemy.health -= explosion.damage;
+            }
+          });
+        }
+
+        return explosion.life > 0;
+        });
+
+        // Update bullets
+        game.bullets = game.bullets.filter(bullet => {
+        // Homing logic
+        if (bullet.isHoming && game.enemies.length > 0) {
+          let closestEnemy = null;
+          let closestDist = Infinity;
+
+          game.enemies.forEach(enemy => {
+            const dx = enemy.x + enemy.width / 2 - bullet.x;
+            const dy = enemy.y + enemy.height / 2 - bullet.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < closestDist && dist < 300) {
+              closestDist = dist;
+              closestEnemy = enemy;
+            }
+          });
+
+          if (closestEnemy) {
+            const dx = closestEnemy.x + closestEnemy.width / 2 - bullet.x;
+            const dy = closestEnemy.y + closestEnemy.height / 2 - bullet.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const turnSpeed = 0.15;
+
+            bullet.vx += (dx / dist) * turnSpeed;
+            bullet.vy += (dy / dist) * turnSpeed;
+
+            const speed = Math.sqrt(bullet.vx * bullet.vx + bullet.vy * bullet.vy);
+            bullet.vx = (bullet.vx / speed) * 10;
+            bullet.vy = (bullet.vy / speed) * 10;
+          }
+        }
+
         bullet.x += bullet.vx;
         bullet.y += bullet.vy;
+        bullet.distanceTraveled += Math.sqrt(bullet.vx * bullet.vx + bullet.vy * bullet.vy);
+
+        // Check max distance
+        if (bullet.distanceTraveled > bullet.maxDistance) {
+          return false;
+        }
 
         // Check enemy collision
         for (let enemy of game.enemies) {
           if (bullet.x > enemy.x && bullet.x < enemy.x + enemy.width &&
               bullet.y > enemy.y && bullet.y < enemy.y + enemy.height) {
             enemy.health -= bullet.damage;
-            
+
+            // Cannon explosion
+            if (bullet.isCannon) {
+              game.explosions.push({
+                x: bullet.x,
+                y: bullet.y,
+                radius: 10,
+                damage: bullet.damage * 0.5,
+                life: 30
+              });
+            }
+
             // Hit particles
-            for (let i = 0; i < 10; i++) {
+            const particleCount = bullet.isCannon ? 20 : 10;
+            const particleColor = bullet.isCannon ? '#ff4500' : '#fbbf24';
+            for (let i = 0; i < particleCount; i++) {
               game.particles.push({
                 x: bullet.x,
                 y: bullet.y,
-                vx: (Math.random() - 0.5) * 8,
-                vy: (Math.random() - 0.5) * 8,
-                life: 20,
-                color: '#fbbf24',
-                size: 3
+                vx: (Math.random() - 0.5) * (bullet.isCannon ? 12 : 8),
+                vy: (Math.random() - 0.5) * (bullet.isCannon ? 12 : 8),
+                life: bullet.isCannon ? 30 : 20,
+                color: particleColor,
+                size: bullet.isCannon ? 5 : 3
               });
             }
 
             if (enemy.health <= 0) {
-              onEnemyKill();
-              
+              onEnemyKill(enemy.name);
+
               // Death explosion
               for (let i = 0; i < 25; i++) {
                 game.particles.push({
@@ -591,11 +770,41 @@ export default function GameCanvas({
         // Draw bullet
         const screenX = bullet.x - game.camera.x;
         const screenY = bullet.y - game.camera.y;
-        
+
         ctx.save();
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = '#fbbf24';
-        ctx.fillStyle = '#fbbf24';
+
+        if (bullet.isCannon) {
+          ctx.shadowBlur = 15;
+          ctx.shadowColor = '#ff4500';
+
+          const gradient = ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, bullet.size);
+          gradient.addColorStop(0, '#ffa500');
+          gradient.addColorStop(0.5, '#ff6347');
+          gradient.addColorStop(1, '#ff4500');
+          ctx.fillStyle = gradient;
+        } else if (bullet.isHoming) {
+          ctx.shadowBlur = 12;
+          ctx.shadowColor = '#a855f7';
+
+          const gradient = ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, bullet.size);
+          gradient.addColorStop(0, '#e879f9');
+          gradient.addColorStop(0.5, '#c084fc');
+          gradient.addColorStop(1, '#a855f7');
+          ctx.fillStyle = gradient;
+
+          // Homing trail
+          ctx.strokeStyle = '#a855f7';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(screenX, screenY);
+          ctx.lineTo(screenX - bullet.vx * 2, screenY - bullet.vy * 2);
+          ctx.stroke();
+        } else {
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = '#fbbf24';
+          ctx.fillStyle = '#fbbf24';
+        }
+
         ctx.beginPath();
         ctx.arc(screenX, screenY, bullet.size, 0, Math.PI * 2);
         ctx.fill();
