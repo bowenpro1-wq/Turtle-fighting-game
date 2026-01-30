@@ -966,8 +966,12 @@ function drawPlayer(ctx, player, isFlying, camera, frame) {
   
   const bobOffset = Math.sin(frame * 0.15) * 1.5;
   
-  // Shell
-  ctx.fillStyle = '#2d5016';
+  // Shell - detailed with gradient
+  const shellGradient = ctx.createRadialGradient(0, bobOffset - 15, 0, 0, bobOffset - 15, 22);
+  shellGradient.addColorStop(0, '#4a7c2f');
+  shellGradient.addColorStop(0.5, '#2d5016');
+  shellGradient.addColorStop(1, '#1a3010');
+  ctx.fillStyle = shellGradient;
   ctx.strokeStyle = '#1a3010';
   ctx.lineWidth = 3;
   ctx.beginPath();
@@ -975,16 +979,25 @@ function drawPlayer(ctx, player, isFlying, camera, frame) {
   ctx.fill();
   ctx.stroke();
   
-  // Shell pattern
-  ctx.fillStyle = '#4a7c2f';
-  for (let i = 0; i < 5; i++) {
-    const angle = (Math.PI * 2 / 5) * i;
-    const px = Math.cos(angle) * 12;
-    const py = Math.sin(angle) * 10 + bobOffset - 15;
+  // Shell hexagon pattern
+  ctx.fillStyle = '#6b9b4c';
+  ctx.strokeStyle = '#4a7c2f';
+  ctx.lineWidth = 1.5;
+  for (let i = 0; i < 6; i++) {
+    const angle = (Math.PI * 2 / 6) * i;
+    const px = Math.cos(angle) * 10;
+    const py = Math.sin(angle) * 8 + bobOffset - 15;
     ctx.beginPath();
-    ctx.arc(px, py, 5, 0, Math.PI * 2);
+    ctx.arc(px, py, 4, 0, Math.PI * 2);
     ctx.fill();
+    ctx.stroke();
   }
+  
+  // Center shell ornament
+  ctx.fillStyle = '#fbbf24';
+  ctx.beginPath();
+  ctx.arc(0, bobOffset - 15, 3, 0, Math.PI * 2);
+  ctx.fill();
   
   // Head
   ctx.fillStyle = '#6b9b4c';
