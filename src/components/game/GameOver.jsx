@@ -1,9 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { RotateCcw, Trophy, Skull } from 'lucide-react';
+import { RotateCcw, Trophy, Skull, Coins } from 'lucide-react';
 
-export default function GameOver({ victory, score, defeatedBosses, onRestart }) {
+export default function GameOver({ victory, score, coins, defeatedBosses, onRestart }) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -107,6 +107,13 @@ export default function GameOver({ victory, score, defeatedBosses, onRestart }) 
               {score.toLocaleString()}
             </div>
             <div className="text-white/60">总分数</div>
+          </div>
+          <div className="text-center">
+            <div className="text-4xl font-bold text-yellow-400 mb-1 flex items-center gap-2 justify-center">
+              <Coins className="w-8 h-8" />
+              {coins}
+            </div>
+            <div className="text-white/60">金币</div>
           </div>
           <div className="text-center">
             <div className="text-4xl font-bold text-orange-400 mb-1">

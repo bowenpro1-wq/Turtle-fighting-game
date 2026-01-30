@@ -848,112 +848,186 @@ function drawEnemy(ctx, enemy, frame) {
     ctx.shadowBlur = 30;
     ctx.shadowColor = enemy.color;
 
-    // Boss body
     const pulse = 1 + Math.sin(frame * 0.1) * 0.1;
+    
+    // Boss body - mechanical/armored look
     ctx.fillStyle = enemy.color;
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.arc(0, 0, enemy.size / 2 * pulse, 0, Math.PI * 2);
     ctx.fill();
+    ctx.stroke();
 
-    // Boss inner glow
-    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    // Armor plates
+    for (let i = 0; i < 8; i++) {
+      const angle = (Math.PI * 2 / 8) * i;
+      const x = Math.cos(angle) * enemy.size / 3;
+      const y = Math.sin(angle) * enemy.size / 3;
+      
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.beginPath();
+      ctx.arc(x, y, enemy.size / 10, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Core glow
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
     ctx.beginPath();
-    ctx.arc(0, 0, enemy.size / 3 * pulse, 0, Math.PI * 2);
+    ctx.arc(0, 0, enemy.size / 4 * pulse, 0, Math.PI * 2);
     ctx.fill();
 
-    // Boss eyes
-    ctx.fillStyle = '#fff';
+    // Boss eyes - glowing
+    ctx.fillStyle = '#ff0000';
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = '#ff0000';
     ctx.beginPath();
-    ctx.arc(-enemy.size / 6, -enemy.size / 8, enemy.size / 10, 0, Math.PI * 2);
-    ctx.arc(enemy.size / 6, -enemy.size / 8, enemy.size / 10, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#000';
-    ctx.beginPath();
-    ctx.arc(-enemy.size / 6, -enemy.size / 8, enemy.size / 20, 0, Math.PI * 2);
-    ctx.arc(enemy.size / 6, -enemy.size / 8, enemy.size / 20, 0, Math.PI * 2);
+    ctx.arc(-enemy.size / 6, -enemy.size / 8, enemy.size / 12, 0, Math.PI * 2);
+    ctx.arc(enemy.size / 6, -enemy.size / 8, enemy.size / 12, 0, Math.PI * 2);
     ctx.fill();
 
     // Health bar
+    ctx.shadowBlur = 0;
     const barWidth = enemy.size;
-    const barHeight = 6;
-    ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    ctx.fillRect(-barWidth / 2, enemy.size / 2 + 10, barWidth, barHeight);
-    ctx.fillStyle = enemy.health > enemy.maxHealth * 0.3 ? '#22c55e' : '#ef4444';
-    ctx.fillRect(-barWidth / 2, enemy.size / 2 + 10, barWidth * (enemy.health / enemy.maxHealth), barHeight);
-  } else {
-    // Regular enemy
-    const wobble = Math.sin(frame * 0.1 + enemy.x) * 5;
+    const barHeight = 8;
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(-barWidth / 2, enemy.size / 2 + 12, barWidth, barHeight);
     
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = '#ef4444';
+    const healthPercent = enemy.health / enemy.maxHealth;
+    ctx.fillStyle = healthPercent > 0.5 ? '#22c55e' : healthPercent > 0.25 ? '#f59e0b' : '#ef4444';
+    ctx.fillRect(-barWidth / 2, enemy.size / 2 + 12, barWidth * healthPercent, barHeight);
+  } else {
+    // Regular enemies - robots/drones
+    const wobble = Math.sin(frame * 0.1 + enemy.x) * 3;
+    
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = '#dc2626';
 
-    // Body based on type
     switch (enemy.type) {
       case 'jellyfish':
-        ctx.fillStyle = '#a855f7';
+        // Drone type 1
+        ctx.fillStyle = '#7c3aed';
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        
+        // Body
         ctx.beginPath();
-        ctx.arc(0, wobble, enemy.size / 2, Math.PI, 0);
+        ctx.arc(0, wobble, enemy.size / 2, 0, Math.PI * 2);
         ctx.fill();
-        // Tentacles
-        for (let i = 0; i < 5; i++) {
-          const tx = (i - 2) * 8;
-          ctx.strokeStyle = '#c084fc';
-          ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Propellers
+        for (let i = 0; i < 3; i++) {
+          const angle = (Math.PI * 2 / 3) * i + frame * 0.1;
+          const x = Math.cos(angle) * enemy.size / 2.5;
+          const y = Math.sin(angle) * enemy.size / 2.5 + wobble;
+          
+          ctx.strokeStyle = '#a78bfa';
+          ctx.lineWidth = 3;
           ctx.beginPath();
-          ctx.moveTo(tx, wobble);
-          ctx.bezierCurveTo(tx + wobble / 2, wobble + 15, tx - wobble / 2, wobble + 25, tx + wobble / 3, wobble + 35);
+          ctx.moveTo(x - 8, y);
+          ctx.lineTo(x + 8, y);
           ctx.stroke();
         }
-        break;
-      case 'crab':
+        
+        // Eye/sensor
         ctx.fillStyle = '#ef4444';
         ctx.beginPath();
-        ctx.ellipse(0, wobble, enemy.size / 2, enemy.size / 3, 0, 0, Math.PI * 2);
-        ctx.fill();
-        // Claws
-        ctx.beginPath();
-        ctx.arc(-enemy.size / 2 - 10, wobble, 10, 0, Math.PI * 2);
-        ctx.arc(enemy.size / 2 + 10, wobble, 10, 0, Math.PI * 2);
+        ctx.arc(0, wobble - 5, 6, 0, Math.PI * 2);
         ctx.fill();
         break;
+        
+      case 'crab':
+        // Tank type
+        ctx.fillStyle = '#991b1b';
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        
+        // Body
+        ctx.fillRect(-enemy.size / 2, wobble - enemy.size / 3, enemy.size, enemy.size / 1.5);
+        ctx.strokeRect(-enemy.size / 2, wobble - enemy.size / 3, enemy.size, enemy.size / 1.5);
+        
+        // Turret
+        ctx.beginPath();
+        ctx.arc(0, wobble, enemy.size / 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Cannon
+        ctx.fillRect(-4, wobble - enemy.size / 2, 8, enemy.size / 2);
+        
+        // Treads
+        ctx.fillStyle = '#000';
+        ctx.fillRect(-enemy.size / 2 - 5, wobble + enemy.size / 4, 10, 8);
+        ctx.fillRect(enemy.size / 2 - 5, wobble + enemy.size / 4, 10, 8);
+        break;
+        
       case 'fish':
-        ctx.fillStyle = '#f97316';
+        // Fighter type
+        ctx.fillStyle = '#dc2626';
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        
+        // Fuselage
         ctx.beginPath();
         ctx.ellipse(0, wobble, enemy.size / 2, enemy.size / 3, 0, 0, Math.PI * 2);
         ctx.fill();
-        // Tail
+        ctx.stroke();
+        
+        // Wings
         ctx.beginPath();
         ctx.moveTo(-enemy.size / 2, wobble);
-        ctx.lineTo(-enemy.size / 2 - 15, wobble - 10);
-        ctx.lineTo(-enemy.size / 2 - 15, wobble + 10);
-        ctx.closePath();
+        ctx.lineTo(-enemy.size, wobble - 10);
+        ctx.lineTo(-enemy.size / 2, wobble + 10);
+        ctx.fill();
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.moveTo(enemy.size / 2, wobble);
+        ctx.lineTo(enemy.size, wobble - 10);
+        ctx.lineTo(enemy.size / 2, wobble + 10);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Cockpit
+        ctx.fillStyle = '#60a5fa';
+        ctx.beginPath();
+        ctx.arc(0, wobble - 5, 8, 0, Math.PI * 2);
         ctx.fill();
         break;
-      default: // starfish
-        ctx.fillStyle = '#fbbf24';
-        for (let i = 0; i < 5; i++) {
-          const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
+        
+      default: // starfish - Mine type
+        ctx.fillStyle = '#ca8a04';
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        
+        // Core
+        ctx.beginPath();
+        ctx.arc(0, wobble, enemy.size / 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Spikes
+        for (let i = 0; i < 8; i++) {
+          const angle = (Math.PI * 2 / 8) * i;
+          const x1 = Math.cos(angle) * enemy.size / 3;
+          const y1 = Math.sin(angle) * enemy.size / 3 + wobble;
+          const x2 = Math.cos(angle) * enemy.size / 2;
+          const y2 = Math.sin(angle) * enemy.size / 2 + wobble;
+          
           ctx.beginPath();
-          ctx.moveTo(0, wobble);
-          ctx.lineTo(Math.cos(angle) * enemy.size / 2, Math.sin(angle) * enemy.size / 2 + wobble);
-          ctx.lineTo(Math.cos(angle + 0.3) * enemy.size / 4, Math.sin(angle + 0.3) * enemy.size / 4 + wobble);
-          ctx.closePath();
-          ctx.fill();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.lineWidth = 4;
+          ctx.stroke();
         }
+        
+        // Danger light
+        ctx.fillStyle = frame % 20 < 10 ? '#ef4444' : '#000';
+        ctx.beginPath();
+        ctx.arc(0, wobble, 5, 0, Math.PI * 2);
+        ctx.fill();
     }
-
-    // Eyes
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.arc(-5, wobble - 5, 4, 0, Math.PI * 2);
-    ctx.arc(5, wobble - 5, 4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#000';
-    ctx.beginPath();
-    ctx.arc(-5, wobble - 5, 2, 0, Math.PI * 2);
-    ctx.arc(5, wobble - 5, 2, 0, Math.PI * 2);
-    ctx.fill();
   }
 
   ctx.restore();
