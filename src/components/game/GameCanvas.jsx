@@ -528,9 +528,13 @@ export default function GameCanvas({
       // Remove destroyed buildings
       game.buildings = game.buildings.filter(b => b.health > 0);
 
-      // Spawn enemies
-      if (Date.now() - game.lastEnemySpawn > 3000) {
-        game.enemies.push(spawnEnemy());
+      // Spawn enemies every 5 seconds
+      if (Date.now() - game.lastEnemySpawn > 5000) {
+        // Spawn 2-3 enemies at once
+        const spawnCount = Math.floor(Math.random() * 2) + 2;
+        for (let i = 0; i < spawnCount; i++) {
+          game.enemies.push(spawnEnemy());
+        }
         game.lastEnemySpawn = Date.now();
       }
 

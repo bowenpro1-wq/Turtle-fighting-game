@@ -54,6 +54,26 @@ export default function Shop({ coins, upgrades, hasHomingBullets, onPurchase, on
       cost: upgrades.maxHealth * 100,
       color: 'from-green-500 to-emerald-500',
       stats: `${upgrades.maxHealth * 100} HP`
+    },
+    {
+      id: 'cooldownReduction',
+      name: '技能冷却',
+      icon: Shield,
+      description: '每级减少50%技能冷却',
+      level: upgrades.cooldownReduction,
+      cost: upgrades.cooldownReduction * 120,
+      color: 'from-purple-500 to-indigo-500',
+      stats: `-${Math.round((1 - 1/upgrades.cooldownReduction) * 100)}% 冷却`
+    },
+    {
+      id: 'abilityPower',
+      name: '技能强度',
+      icon: Sparkles,
+      description: '提升技能持续时间和效果',
+      level: upgrades.abilityPower,
+      cost: upgrades.abilityPower * 100,
+      color: 'from-pink-500 to-rose-500',
+      stats: `+${(upgrades.abilityPower - 1) * 50}% 效果`
     }
   ];
 

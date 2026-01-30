@@ -61,16 +61,18 @@ export default function Game() {
     damage: 1,
     fireRate: 1,
     speed: 1,
-    maxHealth: 1
+    maxHealth: 1,
+    cooldownReduction: 1,
+    abilityPower: 1
   });
 
   const SHOOT_CD = 300 / upgrades.fireRate;
-  const HEAL_CD = 5000;
-  const FLY_CD = 10000;
-  const FLY_DURATION = 3000;
-  const LARGE_ATTACK_CD = 15000;
-  const ALL_OUT_ATTACK_CD = 12000;
-  const ALL_OUT_DURATION = 800;
+  const HEAL_CD = 5000 / upgrades.cooldownReduction;
+  const FLY_CD = 10000 / upgrades.cooldownReduction;
+  const FLY_DURATION = 3000 + (upgrades.abilityPower - 1) * 500;
+  const LARGE_ATTACK_CD = 15000 / upgrades.cooldownReduction;
+  const ALL_OUT_ATTACK_CD = 12000 / upgrades.cooldownReduction;
+  const ALL_OUT_DURATION = 800 + (upgrades.abilityPower - 1) * 200;
   const MELEE_DURATION = 150;
 
   const startGame = () => {
@@ -171,11 +173,12 @@ export default function Game() {
   const heal = useCallback(() => {
     if (healCooldown <= 0 && playerHealth < maxHealth) {
       setHealCooldown(HEAL_CD);
-      setPlayerHealth(prev => Math.min(maxHealth, prev + 30));
+      const healAmount = 30 + (upgrades.abilityPower - 1) * 10;
+      setPlayerHealth(prev => Math.min(maxHealth, prev + healAmount));
       return true;
     }
     return false;
-  }, [healCooldown, playerHealth, maxHealth]);
+  }, [healCooldown, playerHealth, maxHealth, HEAL_CD, upgrades.abilityPower]);
 
   const fly = useCallback(() => {
     if (flyCooldown <= 0 && !isFlying) {
