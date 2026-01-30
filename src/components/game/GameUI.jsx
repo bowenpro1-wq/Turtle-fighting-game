@@ -19,7 +19,11 @@ export default function GameUI({
   bossName,
   defeatedBosses,
   hasCannonUpgrade,
-  hasHomingBullets
+  hasHomingBullets,
+  gameMode,
+  currentFloor,
+  checkpoint,
+  towerSpecialFloor
 }) {
   return (
     <div className="absolute inset-0 pointer-events-none">
@@ -52,9 +56,27 @@ export default function GameUI({
             <span className="text-yellow-400 text-xl font-bold">{coins}</span>
           </div>
 
-          <div className="text-orange-400 text-sm font-semibold">
-            BOSS: {defeatedBosses} / 20
-          </div>
+          {gameMode !== 'tower' && (
+            <div className="text-orange-400 text-sm font-semibold">
+              BOSS: {defeatedBosses} / 20
+            </div>
+          )}
+
+          {gameMode === 'tower' && (
+            <div className="space-y-2">
+              <div className="text-green-400 text-2xl font-bold">
+                第 {currentFloor} 层 / 100
+              </div>
+              <div className="text-emerald-300 text-sm">
+                存档点: 第 {checkpoint} 层
+              </div>
+              {towerSpecialFloor && (
+                <div className="text-yellow-300 text-sm font-bold bg-yellow-500/20 px-2 py-1 rounded">
+                  ⚠️ 特殊关卡: {towerSpecialFloor}
+                </div>
+              )}
+            </div>
+          )}
 
           {!hasCannonUpgrade && defeatedBosses < 5 && (
             <div className="text-cyan-400 text-sm font-semibold">

@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { RotateCcw, Trophy, Skull, Coins } from 'lucide-react';
 
-export default function GameOver({ victory, score, coins, defeatedBosses, onRestart }) {
+export default function GameOver({ victory, score, coins, defeatedBosses, onRestart, gameMode, currentFloor, checkpoint, hasTheHand }) {
   return (
     <motion.div
       initial={{ opacity: 0 }}

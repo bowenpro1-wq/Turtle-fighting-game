@@ -6,8 +6,24 @@ const CANVAS_HEIGHT = typeof window !== 'undefined' ? window.innerHeight : 800;
 const WORLD_WIDTH = 4000;
 const WORLD_HEIGHT = 3000;
 
+// Zhongdalin enemy for tower mode
+const ZHONGDALIN = {
+  name: 'zhongdalin',
+  width: 50,
+  height: 70,
+  speed: 1.8,
+  health: 60,
+  damage: 15,
+  shootInterval: 4000,
+  color: '#4ade80',
+  behaviorType: 'aggressive',
+  attacksBuildings: false,
+  ramAttack: true
+};
+
 // Enemy types with unique behaviors
 const ENEMY_TYPES = {
+  ZHONGDALIN: ZHONGDALIN,
   SOLDIER: {
     name: 'soldier',
     width: 40,
@@ -113,6 +129,7 @@ const ENEMY_TYPES = {
 
 export default function GameCanvas({
   gameState,
+  gameMode,
   onPlayerDamage,
   onEnemyKill,
   onBossDamage,
@@ -131,7 +148,17 @@ export default function GameCanvas({
   score,
   upgrades,
   hasCannonUpgrade,
-  hasHomingBullets
+  hasHomingBullets,
+  hasPiercingShots,
+  hasExplosiveShots,
+  weaponType,
+  playerColor,
+  bulletColor,
+  currentFloor,
+  towerSpecialFloor,
+  onTowerSpecialFloor,
+  gemDefeated,
+  onGemDefeated
 }) {
   const canvasRef = useRef(null);
   const gameRef = useRef({
@@ -213,10 +240,17 @@ export default function GameCanvas({
     gameRef.current.worldGenerated = true;
   }, []);
 
-  const spawnEnemy = useCallback((type = null) => {
-    if (!type) {
-      const types = Object.values(ENEMY_TYPES);
-      type = types[Math.floor(Math.random() * types.length)];
+  const spawnEnemy = useCallback((type = null, forcedType = null) => {
+    if (forcedType) {
+      type = forcedType;
+    } else if (!type) {
+      // In tower mode, only spawn Zhongdalin
+      if (gameMode === 'tower') {
+        type = ZHONGDALIN;
+      } else {
+        const types = Object.values(ENEMY_TYPES).filter(t => t.name !== 'zhongdalin');
+        type = types[Math.floor(Math.random() * types.length)];
+      }
     }
 
     const side = Math.floor(Math.random() * 4);
@@ -241,9 +275,10 @@ export default function GameCanvas({
       state: 'patrol',
       target: null,
       patrolAngle: Math.random() * Math.PI * 2,
-      stunned: false
+      stunned: false,
+      floorMultiplier: gameMode === 'tower' ? Math.floor(currentFloor / 10) + 1 : 1
     };
-  }, []);
+  }, [gameMode, currentFloor]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -556,6 +591,60 @@ export default function GameCanvas({
         }
       } else {
         game.lastBossEnemySpawn = 0;
+      }
+
+      // Tower mode spawning
+      if (gameMode === 'tower' && gameState === 'playing') {
+        // Check for special floors
+        if (currentFloor === 15 && !towerSpecialFloor) {
+          onTowerSpecialFloor('磐石迷宫');
+        } else if (currentFloor === 60 && !towerSpecialFloor) {
+          onTowerSpecialFloor('中大林狂欢节');
+        } else if (currentFloor === 99 && !towerSpecialFloor) {
+          onTowerSpecialFloor('石头体');
+        } else if (currentFloor % 10 !== 0 && towerSpecialFloor && ![15, 60, 99].includes(currentFloor)) {
+          onTowerSpecialFloor(null);
+        }
+
+        // Spawn Zhongdalin based on floor
+        if (Date.now() - game.lastEnemySpawn > 3000) {
+          const baseCount = Math.floor(currentFloor / 10) + 2;
+          let spawnCount = baseCount;
+
+          // Floor 60: Carnival - more enemies but weaker
+          if (currentFloor === 60) {
+            spawnCount = baseCount * 3;
+          }
+
+          for (let i = 0; i < spawnCount; i++) {
+            const zhongdalin = spawnEnemy(null, ZHONGDALIN);
+            // Scale stats with floor
+            zhongdalin.health = ZHONGDALIN.health * (1 + currentFloor * 0.1);
+            zhongdalin.damage = ZHONGDALIN.damage * (1 + currentFloor * 0.05);
+
+            // Floor 60: Weaken enemies
+            if (currentFloor === 60) {
+              zhongdalin.health *= 0.5;
+              zhongdalin.damage *= 0.5;
+            }
+
+            game.enemies.push(zhongdalin);
+          }
+          game.lastEnemySpawn = Date.now();
+        }
+
+        // Trigger boss every 10 floors
+        if (currentFloor % 10 === 0 && game.enemies.length === 0 && !currentBoss) {
+          const bossNumber = Math.floor(currentFloor / 10);
+          setTimeout(() => {
+            // Trigger appropriate boss for tower
+            if (currentFloor === 100) {
+              // Final boss - handled separately with gem mechanic
+            } else {
+              onTriggerBoss(bossNumber - 1);
+            }
+          }, 1000);
+        }
       }
 
       // Melee attack damage - 360 degrees

@@ -107,8 +107,18 @@ export default function StartScreen({ onStart, defeatedBosses = [] }) {
               BOSS连战
             </Button>
           )}
-        </div>
-      </motion.div>
+          </div>
+          <div className="mt-4">
+          <Button
+            onClick={() => onStart('tower')}
+            size="lg"
+            className="w-full px-12 py-8 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 rounded-2xl text-white text-3xl font-bold shadow-2xl border-4 border-green-400/50"
+          >
+            🗿 中大林之塔 🗿
+          </Button>
+          <p className="text-green-300 text-sm mt-2 text-center">挑战100层塔，击败中大林真身！</p>
+          </div>
+          </motion.div>
 
       <motion.div
         initial={{ opacity: 0 }}

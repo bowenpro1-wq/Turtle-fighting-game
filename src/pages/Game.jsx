@@ -46,6 +46,13 @@ export default function Game() {
   const [waveNumber, setWaveNumber] = useState(1);
   const [survivalTime, setSurvivalTime] = useState(0);
   
+  // Tower mode state
+  const [currentFloor, setCurrentFloor] = useState(1);
+  const [checkpoint, setCheckpoint] = useState(1);
+  const [hasTheHand, setHasTheHand] = useState(false);
+  const [towerSpecialFloor, setTowerSpecialFloor] = useState(null);
+  const [gemDefeated, setGemDefeated] = useState(false);
+  
   const [shootCooldown, setShootCooldown] = useState(0);
   const [healCooldown, setHealCooldown] = useState(0);
   const [flyCooldown, setFlyCooldown] = useState(0);
@@ -87,7 +94,7 @@ export default function Game() {
   const ALL_OUT_DURATION = 800 + (upgrades.abilityPower - 1) * 200;
   const MELEE_DURATION = 150;
 
-  const startGame = (mode = 'normal') => {
+  const startGame = (mode = 'normal', fromCheckpoint = false) => {
     setGameMode(mode);
     setGameState('playing');
     setPlayerHealth(100 * upgrades.maxHealth);
@@ -100,6 +107,17 @@ export default function Game() {
     setFlyCooldown(0);
     setWaveNumber(1);
     setSurvivalTime(0);
+    
+    if (mode === 'tower') {
+      if (fromCheckpoint) {
+        setCurrentFloor(checkpoint);
+      } else {
+        setCurrentFloor(1);
+        setCheckpoint(1);
+      }
+      setGemDefeated(false);
+      setTowerSpecialFloor(null);
+    }
   };
 
   const triggerBoss = useCallback((bossIndex) => {
@@ -125,18 +143,35 @@ export default function Game() {
       setCoins(prev => prev + 100);
       setPlayerHealth(prev => Math.min(maxHealth, prev + 50));
       setCurrentBoss(null);
-      setGameState('playing');
       
-      // Unlock cannon after 5 bosses
-      if (newDefeatedCount >= 5 && !hasCannonUpgrade) {
-        setHasCannonUpgrade(true);
-      }
-      
-      if (newDefeatedCount >= 20) {
-        setGameState('victory');
+      // Tower mode floor progression
+      if (gameMode === 'tower') {
+        const nextFloor = currentFloor + 1;
+        if (nextFloor > 100) {
+          setHasTheHand(true);
+          setGameState('victory');
+        } else {
+          setCurrentFloor(nextFloor);
+          // Save checkpoint every 10 floors
+          if (nextFloor % 10 === 1 && nextFloor > 1) {
+            setCheckpoint(nextFloor);
+          }
+          setGameState('playing');
+        }
+      } else {
+        setGameState('playing');
+        
+        // Unlock cannon after 5 bosses
+        if (newDefeatedCount >= 5 && !hasCannonUpgrade) {
+          setHasCannonUpgrade(true);
+        }
+        
+        if (newDefeatedCount >= 20) {
+          setGameState('victory');
+        }
       }
     }
-  }, [currentBoss, defeatedBosses.length, maxHealth, hasCannonUpgrade]);
+  }, [currentBoss, defeatedBosses.length, maxHealth, hasCannonUpgrade, gameMode, currentFloor]);
 
   const handlePlayerDamage = useCallback((damage) => {
     if (isFlying) return;
@@ -153,8 +188,8 @@ export default function Game() {
   const handleEnemyKill = useCallback((enemyType) => {
     setScore(prev => {
       const newScore = prev + 100;
-      // Trigger boss every 800 score
-      if (Math.floor(newScore / 800) > Math.floor(prev / 800)) {
+      // Trigger boss every 800 score (not in tower mode)
+      if (gameMode !== 'tower' && Math.floor(newScore / 800) > Math.floor(prev / 800)) {
         const bossIndex = defeatedBosses.length;
         if (bossIndex < BOSSES.length) {
           setTimeout(() => triggerBoss(bossIndex), 1000);
@@ -163,8 +198,15 @@ export default function Game() {
       return newScore;
     });
     setCoins(prev => prev + 10);
-    setPlayerHealth(prev => Math.min(maxHealth, prev + 10));
-  }, [maxHealth, defeatedBosses.length, triggerBoss]);
+    
+    // Life steal passive
+    if (upgrades.lifeSteal > 0) {
+      const lifeStealAmount = 10 * (upgrades.lifeSteal * 0.05);
+      setPlayerHealth(prev => Math.min(maxHealth, prev + lifeStealAmount));
+    } else {
+      setPlayerHealth(prev => Math.min(maxHealth, prev + 10));
+    }
+  }, [maxHealth, defeatedBosses.length, triggerBoss, gameMode, upgrades.lifeSteal]);
 
   const handleBossDamage = useCallback((damage) => {
     setBossHealth(prev => {
@@ -342,6 +384,11 @@ export default function Game() {
               weaponType={weaponType}
               playerColor={playerColor}
               bulletColor={bulletColor}
+              currentFloor={currentFloor}
+              towerSpecialFloor={towerSpecialFloor}
+              onTowerSpecialFloor={setTowerSpecialFloor}
+              gemDefeated={gemDefeated}
+              onGemDefeated={setGemDefeated}
             />
             
             <GameUI
@@ -362,6 +409,10 @@ export default function Game() {
               defeatedBosses={defeatedBosses.length}
               hasCannonUpgrade={hasCannonUpgrade}
               hasHomingBullets={hasHomingBullets}
+              gameMode={gameMode}
+              currentFloor={currentFloor}
+              checkpoint={checkpoint}
+              towerSpecialFloor={towerSpecialFloor}
             />
             
             <AnimatePresence>
@@ -396,6 +447,10 @@ export default function Game() {
             coins={coins}
             defeatedBosses={defeatedBosses.length}
             onRestart={startGame}
+            gameMode={gameMode}
+            currentFloor={currentFloor}
+            checkpoint={checkpoint}
+            hasTheHand={hasTheHand}
           />
         )}
       </AnimatePresence>
