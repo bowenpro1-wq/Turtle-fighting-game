@@ -161,17 +161,7 @@ export default function GameCanvas({
     lastHealCheck: 0,
     animationFrame: 0,
     worldGenerated: false,
-    sounds: {
-      shoot: new Audio(),
-      melee: new Audio(),
-      heal: new Audio(),
-      fly: new Audio(),
-      largeAttack: new Audio(),
-      allOut: new Audio(),
-      enemyHit: new Audio(),
-      enemyDie: new Audio(),
-      explosion: new Audio()
-    }
+    screenShake: 0
   });
 
   const generateWorld = useCallback(() => {
@@ -271,8 +261,6 @@ export default function GameCanvas({
       
       if (e.key.toLowerCase() === 'k') {
         if (shoot()) {
-          try { game.sounds.shoot.currentTime = 0; game.sounds.shoot.play().catch(() => {}); } catch(e) {}
-
           const angle = game.player.angle;
           const baseSpeed = hasHomingBullets ? 10 : 15;
           const bulletDamage = hasCannonUpgrade ? 25 * upgrades.damage : 10 * upgrades.damage;
@@ -293,8 +281,8 @@ export default function GameCanvas({
           };
           game.bullets.push(bullet);
 
-          // Muzzle flash
-          const flashCount = hasCannonUpgrade ? 15 : 8;
+          // Muzzle flash with trail
+          const flashCount = hasCannonUpgrade ? 20 : 10;
           const flashColor = hasCannonUpgrade ? '#ff4500' : '#fbbf24';
           for (let i = 0; i < flashCount; i++) {
             game.particles.push({
@@ -302,17 +290,21 @@ export default function GameCanvas({
               y: bullet.y,
               vx: Math.cos(angle) * (Math.random() * 5 + 3),
               vy: Math.sin(angle) * (Math.random() * 5 + 3) + (Math.random() - 0.5) * 4,
-              life: hasCannonUpgrade ? 20 : 15,
+              life: hasCannonUpgrade ? 25 : 18,
               color: flashColor,
-              size: hasCannonUpgrade ? 5 : 3
+              size: hasCannonUpgrade ? 6 : 4
             });
+          }
+
+          // Screen shake for cannon
+          if (hasCannonUpgrade) {
+            game.screenShake = 2;
           }
         }
       }
       
       if (e.key.toLowerCase() === 'h') {
         if (heal()) {
-          try { game.sounds.heal.currentTime = 0; game.sounds.heal.play().catch(() => {}); } catch(e) {}
           for (let i = 0; i < 20; i++) {
             game.particles.push({
               x: game.player.x + game.player.width / 2,
@@ -330,7 +322,6 @@ export default function GameCanvas({
       
       if (e.key.toLowerCase() === 'o') {
         if (fly()) {
-          try { game.sounds.fly.currentTime = 0; game.sounds.fly.play().catch(() => {}); } catch(e) {}
           for (let i = 0; i < 30; i++) {
             game.particles.push({
               x: game.player.x + game.player.width / 2,
@@ -347,8 +338,7 @@ export default function GameCanvas({
 
       if (e.key.toLowerCase() === 'l') {
         if (largeAttack()) {
-          try { game.sounds.largeAttack.currentTime = 0; game.sounds.largeAttack.play().catch(() => {}); } catch(e) {}
-
+          game.screenShake = 15;
           // 100 bullets in all directions
           for (let i = 0; i < 100; i++) {
             const angle = (Math.PI * 2 / 100) * i;
@@ -388,8 +378,6 @@ export default function GameCanvas({
 
       if (e.key.toLowerCase() === 'j') {
         if (meleeAttack()) {
-          try { game.sounds.melee.currentTime = 0; game.sounds.melee.play().catch(() => {}); } catch(e) {}
-
           // Melee particles - 360 degrees
           for (let i = 0; i < 40; i++) {
             const angle = (Math.PI * 2 / 40) * i;
@@ -408,8 +396,7 @@ export default function GameCanvas({
 
       if (e.key.toLowerCase() === 'p') {
         if (allOutAttack()) {
-          try { game.sounds.allOut.currentTime = 0; game.sounds.allOut.play().catch(() => {}); } catch(e) {}
-
+          game.screenShake = 25;
           // Kill all enemies instantly
           game.enemies.forEach(enemy => {
             for (let i = 0; i < 30; i++) {
@@ -458,6 +445,17 @@ export default function GameCanvas({
 
       ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
       game.animationFrame++;
+
+      // Screen shake effect
+      if (game.screenShake > 0) {
+        ctx.save();
+        ctx.translate(
+          (Math.random() - 0.5) * game.screenShake,
+          (Math.random() - 0.5) * game.screenShake
+        );
+        game.screenShake *= 0.9;
+        if (game.screenShake < 0.5) game.screenShake = 0;
+      }
 
       // All Out Attack red overlay
       if (isAllOutAttack) {
@@ -865,8 +863,9 @@ export default function GameCanvas({
               bullet.y > enemy.y && bullet.y < enemy.y + enemy.height) {
             enemy.health -= bullet.damage;
 
-            // Cannon explosion
+            // Cannon explosion with screen shake
             if (bullet.isCannon) {
+              game.screenShake = 4;
               game.explosions.push({
                 x: bullet.x,
                 y: bullet.y,
@@ -874,6 +873,19 @@ export default function GameCanvas({
                 damage: bullet.damage * 0.5,
                 life: 30
               });
+
+              // Extra explosion particles
+              for (let i = 0; i < 10; i++) {
+                game.particles.push({
+                  x: bullet.x,
+                  y: bullet.y,
+                  vx: (Math.random() - 0.5) * 8,
+                  vy: (Math.random() - 0.5) * 8,
+                  life: 25,
+                  color: '#ff6347',
+                  size: 4
+                });
+              }
             }
 
             // Hit particles
@@ -892,12 +904,12 @@ export default function GameCanvas({
             }
 
             if (enemy.health <= 0) {
-              try { game.sounds.enemyDie.currentTime = 0; game.sounds.enemyDie.play().catch(() => {}); } catch(e) {}
               onEnemyKill(enemy.name);
+              game.screenShake = 3;
 
               // Bomber explosion on death
               if (enemy.explodeOnDeath) {
-                try { game.sounds.explosion.currentTime = 0; game.sounds.explosion.play().catch(() => {}); } catch(e) {}
+                game.screenShake = 10;
                 game.explosions.push({
                   x: enemy.x + enemy.width / 2,
                   y: enemy.y + enemy.height / 2,
@@ -919,8 +931,6 @@ export default function GameCanvas({
                   size: 5
                 });
               }
-            } else {
-              try { game.sounds.enemyHit.currentTime = 0; game.sounds.enemyHit.play().catch(() => {}); } catch(e) {}
             }
 
             return false;
@@ -936,42 +946,59 @@ export default function GameCanvas({
           }
         }
 
-        // Draw bullet
+        // Draw bullet with trail effects
         const screenX = bullet.x - game.camera.x;
         const screenY = bullet.y - game.camera.y;
 
         ctx.save();
 
         if (bullet.isCannon) {
-          ctx.shadowBlur = 15;
+          ctx.shadowBlur = 20;
           ctx.shadowColor = '#ff4500';
 
           const gradient = ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, bullet.size);
-          gradient.addColorStop(0, '#ffa500');
-          gradient.addColorStop(0.5, '#ff6347');
+          gradient.addColorStop(0, '#fff');
+          gradient.addColorStop(0.3, '#ffa500');
+          gradient.addColorStop(0.7, '#ff6347');
           gradient.addColorStop(1, '#ff4500');
           ctx.fillStyle = gradient;
+
+          // Cannon bullet trail
+          for (let i = 1; i <= 3; i++) {
+            ctx.globalAlpha = 0.3 / i;
+            ctx.beginPath();
+            ctx.arc(screenX - bullet.vx * i * 0.5, screenY - bullet.vy * i * 0.5, bullet.size * 0.8, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
         } else if (bullet.isHoming) {
-          ctx.shadowBlur = 12;
+          ctx.shadowBlur = 15;
           ctx.shadowColor = '#a855f7';
 
           const gradient = ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, bullet.size);
-          gradient.addColorStop(0, '#e879f9');
-          gradient.addColorStop(0.5, '#c084fc');
+          gradient.addColorStop(0, '#fff');
+          gradient.addColorStop(0.4, '#e879f9');
+          gradient.addColorStop(0.8, '#c084fc');
           gradient.addColorStop(1, '#a855f7');
           ctx.fillStyle = gradient;
 
           // Homing trail
           ctx.strokeStyle = '#a855f7';
-          ctx.lineWidth = 2;
+          ctx.lineWidth = 3;
+          ctx.globalAlpha = 0.5;
           ctx.beginPath();
           ctx.moveTo(screenX, screenY);
-          ctx.lineTo(screenX - bullet.vx * 2, screenY - bullet.vy * 2);
+          ctx.lineTo(screenX - bullet.vx * 3, screenY - bullet.vy * 3);
           ctx.stroke();
+          ctx.globalAlpha = 1;
         } else {
-          ctx.shadowBlur = 10;
+          ctx.shadowBlur = 12;
           ctx.shadowColor = '#fbbf24';
-          ctx.fillStyle = '#fbbf24';
+          const gradient = ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, bullet.size);
+          gradient.addColorStop(0, '#fff');
+          gradient.addColorStop(0.5, '#fbbf24');
+          gradient.addColorStop(1, '#f59e0b');
+          ctx.fillStyle = gradient;
         }
 
         ctx.beginPath();
@@ -1149,6 +1176,11 @@ export default function GameCanvas({
         ctx.beginPath();
         ctx.arc(screenX, screenY, 75, 0, Math.PI * 2);
         ctx.stroke();
+        ctx.restore();
+      }
+
+      // Restore from screen shake
+      if (game.screenShake > 0) {
         ctx.restore();
       }
 
