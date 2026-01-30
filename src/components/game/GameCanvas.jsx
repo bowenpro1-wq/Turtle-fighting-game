@@ -1936,43 +1936,66 @@ function drawEnemy(ctx, enemy, camera, frame) {
       ctx.fill();
     }
   } else if (enemy.name === 'zhongdalin') {
-    // Zhongdalin - green tombstone-like stone
-    ctx.fillStyle = '#22c55e';
+    // Zhongdalin - stone with head on top
+    ctx.fillStyle = '#4ade80';
     ctx.strokeStyle = '#166534';
     ctx.lineWidth = 3;
 
-    // Tombstone body
-    ctx.beginPath();
-    ctx.moveTo(x + 15, y + enemy.height);
-    ctx.lineTo(x + 15, y + 15);
-    ctx.quadraticCurveTo(x + 15, y, x + enemy.width / 2, y);
-    ctx.quadraticCurveTo(x + enemy.width - 15, y, x + enemy.width - 15, y + 15);
-    ctx.lineTo(x + enemy.width - 15, y + enemy.height);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+    // Stone body (rectangular base)
+    const bodyHeight = enemy.height * 0.65;
+    const headHeight = enemy.height * 0.35;
+    
+    ctx.fillRect(x + 5, y + headHeight, enemy.width - 10, bodyHeight);
+    ctx.strokeRect(x + 5, y + headHeight, enemy.width - 10, bodyHeight);
 
-    // Stone texture
-    ctx.fillStyle = '#16a34a';
-    for (let i = 0; i < 5; i++) {
-      const sy = y + 20 + i * 10;
-      ctx.fillRect(x + 18, sy, enemy.width - 36, 6);
+    // Stone texture - horizontal lines
+    ctx.fillStyle = '#22c55e';
+    for (let i = 0; i < 4; i++) {
+      const sy = y + headHeight + 10 + i * 12;
+      ctx.fillRect(x + 8, sy, enemy.width - 16, 6);
     }
 
-    // Face - simple eyes and mouth
-    ctx.fillStyle = '#166534';
-    ctx.beginPath();
-    ctx.arc(x + 20, y + 25, 3, 0, Math.PI * 2);
-    ctx.arc(x + 30, y + 25, 3, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Angry mouth
+    // Cracks on stone
     ctx.strokeStyle = '#166534';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(x + 18, y + 40);
-    ctx.lineTo(x + 25, y + 35);
-    ctx.lineTo(x + 32, y + 40);
+    ctx.moveTo(x + 15, y + headHeight + 15);
+    ctx.lineTo(x + 20, y + headHeight + 25);
+    ctx.moveTo(x + 35, y + headHeight + 20);
+    ctx.lineTo(x + 32, y + headHeight + 35);
+    ctx.stroke();
+
+    // Head on top of stone
+    ctx.fillStyle = '#4ade80';
+    ctx.strokeStyle = '#166534';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(x + enemy.width / 2, y + headHeight * 0.6, headHeight * 0.7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Eyes
+    ctx.fillStyle = '#166534';
+    ctx.beginPath();
+    ctx.arc(x + enemy.width / 2 - 8, y + headHeight * 0.5, 3, 0, Math.PI * 2);
+    ctx.arc(x + enemy.width / 2 + 8, y + headHeight * 0.5, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Angry eyebrows
+    ctx.strokeStyle = '#166534';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x + enemy.width / 2 - 12, y + headHeight * 0.4);
+    ctx.lineTo(x + enemy.width / 2 - 5, y + headHeight * 0.45);
+    ctx.moveTo(x + enemy.width / 2 + 12, y + headHeight * 0.4);
+    ctx.lineTo(x + enemy.width / 2 + 5, y + headHeight * 0.45);
+    ctx.stroke();
+
+    // Angry mouth
+    ctx.beginPath();
+    ctx.moveTo(x + enemy.width / 2 - 6, y + headHeight * 0.75);
+    ctx.lineTo(x + enemy.width / 2, y + headHeight * 0.7);
+    ctx.lineTo(x + enemy.width / 2 + 6, y + headHeight * 0.75);
     ctx.stroke();
 
     // Green aura for aggression
