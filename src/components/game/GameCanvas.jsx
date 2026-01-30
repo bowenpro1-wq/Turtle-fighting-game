@@ -3,8 +3,6 @@ import { motion } from 'framer-motion';
 
 const CANVAS_WIDTH = typeof window !== 'undefined' ? window.innerWidth : 1200;
 const CANVAS_HEIGHT = typeof window !== 'undefined' ? window.innerHeight : 800;
-const WORLD_WIDTH = 1800;
-const WORLD_HEIGHT = 2000;
 
 // Zhongdalin enemy for tower mode
 const ZHONGDALIN = {
@@ -162,6 +160,9 @@ export default function GameCanvas({
   onGemDefeated
 }) {
   const canvasRef = useRef(null);
+  const WORLD_WIDTH = gameMode === 'tower' ? 1800 : 4000;
+  const WORLD_HEIGHT = gameMode === 'tower' ? 2000 : 3000;
+
   const gameRef = useRef({
     player: {
       x: 200,
@@ -194,6 +195,13 @@ export default function GameCanvas({
   });
 
   const generateWorld = useCallback(() => {
+    // Skip building generation in tower mode
+    if (gameMode === 'tower') {
+      gameRef.current.buildings = [];
+      gameRef.current.worldGenerated = true;
+      return;
+    }
+    
     const buildings = [];
     
     // Generate buildings across the world in a grid pattern
@@ -239,7 +247,7 @@ export default function GameCanvas({
     
     gameRef.current.buildings = buildings;
     gameRef.current.worldGenerated = true;
-  }, []);
+  }, [gameMode]);
 
   const spawnEnemy = useCallback((type = null, forcedType = null) => {
     if (forcedType) {
@@ -290,7 +298,7 @@ export default function GameCanvas({
       stunned: false,
       floorMultiplier: gameMode === 'tower' ? Math.floor(currentFloor / 10) + 1 : 1
     };
-  }, [gameMode, currentFloor]);
+  }, [gameMode, currentFloor, game]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -551,7 +559,7 @@ export default function GameCanvas({
       ));
 
       // Draw background
-      drawBackground(ctx, game.camera, game.animationFrame);
+      drawBackground(ctx, game.camera, game.animationFrame, gameMode);
 
       // Draw buildings
       game.buildings.forEach(building => {
@@ -1365,10 +1373,12 @@ export default function GameCanvas({
   );
 }
 
-function drawBackground(ctx, camera, frame) {
-  // Tower stone floor
-  ctx.fillStyle = '#4a5568';
-  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+function drawBackground(ctx, camera, frame, gameMode) {
+  // Check if tower mode
+  if (gameMode === 'tower') {
+    // Tower stone floor
+    ctx.fillStyle = '#4a5568';
+    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
   
   // Stone tiles
   ctx.save();
