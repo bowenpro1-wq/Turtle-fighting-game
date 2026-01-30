@@ -18,7 +18,6 @@ export default function GameUI({
   bossMaxHealth,
   bossName,
   defeatedBosses,
-  tankKills,
   hasCannonUpgrade,
   hasHomingBullets
 }) {
@@ -57,9 +56,9 @@ export default function GameUI({
             BOSS: {defeatedBosses} / 20
           </div>
 
-          {!hasCannonUpgrade && (
+          {!hasCannonUpgrade && defeatedBosses < 5 && (
             <div className="text-cyan-400 text-sm font-semibold">
-              坦克: {tankKills} / 5 🎯
+              大炮解锁: {defeatedBosses} / 5 BOSS 🎯
             </div>
           )}
 

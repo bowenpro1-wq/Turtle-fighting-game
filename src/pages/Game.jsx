@@ -52,8 +52,7 @@ export default function Game() {
   const [isAllOutAttack, setIsAllOutAttack] = useState(false);
   const [isMeleeAttacking, setIsMeleeAttacking] = useState(false);
 
-  // Tank kills and bullet upgrades
-  const [tankKills, setTankKills] = useState(0);
+  // Bullet upgrades
   const [hasCannonUpgrade, setHasCannonUpgrade] = useState(false);
   const [hasHomingBullets, setHasHomingBullets] = useState(false);
 
@@ -103,6 +102,7 @@ export default function Game() {
 
   const defeatBoss = useCallback(() => {
     if (currentBoss) {
+      const newDefeatedCount = defeatedBosses.length + 1;
       setDefeatedBosses(prev => [...prev, currentBoss.id]);
       setScore(prev => prev + currentBoss.health * 10);
       setCoins(prev => prev + 100);
@@ -110,11 +110,16 @@ export default function Game() {
       setCurrentBoss(null);
       setGameState('playing');
       
-      if (defeatedBosses.length + 1 >= 20) {
+      // Unlock cannon after 5 bosses
+      if (newDefeatedCount >= 5 && !hasCannonUpgrade) {
+        setHasCannonUpgrade(true);
+      }
+      
+      if (newDefeatedCount >= 20) {
         setGameState('victory');
       }
     }
-  }, [currentBoss, defeatedBosses.length, maxHealth]);
+  }, [currentBoss, defeatedBosses.length, maxHealth, hasCannonUpgrade]);
 
   const handlePlayerDamage = useCallback((damage) => {
     if (isFlying) return;
@@ -132,18 +137,7 @@ export default function Game() {
     setScore(prev => prev + 100);
     setCoins(prev => prev + 10);
     setPlayerHealth(prev => Math.min(maxHealth, prev + 10));
-    
-    // Track tank kills
-    if (enemyType === 'tank') {
-      setTankKills(prev => {
-        const newCount = prev + 1;
-        if (newCount >= 5 && !hasCannonUpgrade) {
-          setHasCannonUpgrade(true);
-        }
-        return newCount;
-      });
-    }
-  }, [maxHealth, hasCannonUpgrade]);
+  }, [maxHealth]);
 
   const handleBossDamage = useCallback((damage) => {
     setBossHealth(prev => {
@@ -302,7 +296,6 @@ export default function Game() {
               bossMaxHealth={bossMaxHealth}
               bossName={currentBoss?.name}
               defeatedBosses={defeatedBosses.length}
-              tankKills={tankKills}
               hasCannonUpgrade={hasCannonUpgrade}
               hasHomingBullets={hasHomingBullets}
             />
