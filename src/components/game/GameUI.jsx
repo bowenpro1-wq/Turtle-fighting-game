@@ -12,7 +12,6 @@ export default function GameUI({
   flyCooldown,
   largeAttackCooldown,
   allOutAttackCooldown,
-  meleeCooldown,
   isFlying,
   isAllOutAttack,
   bossHealth,
@@ -130,7 +129,7 @@ export default function GameUI({
         />
         <CooldownButton
           label="J - 近战"
-          cooldown={meleeCooldown}
+          cooldown={0}
           color="cyan"
         />
         <CooldownButton

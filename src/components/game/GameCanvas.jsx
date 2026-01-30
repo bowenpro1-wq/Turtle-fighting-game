@@ -331,17 +331,17 @@ export default function GameCanvas({
 
       if (e.key.toLowerCase() === 'j') {
         if (meleeAttack()) {
-          // Melee particles
-          for (let i = 0; i < 30; i++) {
-            const angle = game.player.angle + (Math.random() - 0.5) * Math.PI / 2;
+          // Melee particles - 360 degrees
+          for (let i = 0; i < 40; i++) {
+            const angle = (Math.PI * 2 / 40) * i;
             game.particles.push({
               x: game.player.x + game.player.width / 2,
               y: game.player.y + game.player.height / 2,
-              vx: Math.cos(angle) * (Math.random() * 8 + 5),
-              vy: Math.sin(angle) * (Math.random() * 8 + 5),
-              life: 25,
+              vx: Math.cos(angle) * (Math.random() * 6 + 6),
+              vy: Math.sin(angle) * (Math.random() * 6 + 6),
+              life: 20,
               color: '#60a5fa',
-              size: 6
+              size: 5
             });
           }
         }
@@ -475,21 +475,18 @@ export default function GameCanvas({
         game.lastEnemySpawn = Date.now();
       }
 
-      // Melee attack damage
+      // Melee attack damage - 360 degrees
       if (isMeleeAttacking) {
         const meleeRange = 80;
-        const meleeDamage = 50 * upgrades.damage;
+        const meleeDamage = 10 * upgrades.damage;
 
         game.enemies.forEach(enemy => {
           const dx = enemy.x + enemy.width / 2 - (game.player.x + game.player.width / 2);
           const dy = enemy.y + enemy.height / 2 - (game.player.y + game.player.height / 2);
           const dist = Math.sqrt(dx * dx + dy * dy);
-          const angleToEnemy = Math.atan2(dy, dx);
-          const angleDiff = Math.abs(angleToEnemy - game.player.angle);
 
-          if (dist < meleeRange && angleDiff < Math.PI / 3) {
+          if (dist < meleeRange) {
             enemy.health -= meleeDamage;
-            enemy.stunned = true;
 
             // Melee hit particles
             for (let i = 0; i < 15; i++) {
@@ -1018,24 +1015,19 @@ export default function GameCanvas({
       // Draw player
       drawPlayer(ctx, game.player, isFlying, game.camera, game.animationFrame);
 
-      // Draw melee attack arc
+      // Draw melee attack circle - 360 degrees
       if (isMeleeAttacking) {
         const screenX = game.player.x - game.camera.x + game.player.width / 2;
         const screenY = game.player.y - game.camera.y + game.player.height / 2;
 
         ctx.save();
         ctx.strokeStyle = '#60a5fa';
-        ctx.lineWidth = 6;
-        ctx.shadowBlur = 15;
+        ctx.lineWidth = 8;
+        ctx.shadowBlur = 20;
         ctx.shadowColor = '#60a5fa';
+        ctx.globalAlpha = 0.7;
         ctx.beginPath();
-        ctx.arc(
-          screenX,
-          screenY,
-          70,
-          game.player.angle - Math.PI / 6,
-          game.player.angle + Math.PI / 6
-        );
+        ctx.arc(screenX, screenY, 75, 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
       }

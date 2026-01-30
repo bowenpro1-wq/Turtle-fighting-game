@@ -48,7 +48,6 @@ export default function Game() {
   const [flyCooldown, setFlyCooldown] = useState(0);
   const [largeAttackCooldown, setLargeAttackCooldown] = useState(0);
   const [allOutAttackCooldown, setAllOutAttackCooldown] = useState(0);
-  const [meleeCooldown, setMeleeCooldown] = useState(0);
   const [isFlying, setIsFlying] = useState(false);
   const [isAllOutAttack, setIsAllOutAttack] = useState(false);
   const [isMeleeAttacking, setIsMeleeAttacking] = useState(false);
@@ -73,8 +72,7 @@ export default function Game() {
   const LARGE_ATTACK_CD = 15000;
   const ALL_OUT_ATTACK_CD = 30000;
   const ALL_OUT_DURATION = 3000;
-  const MELEE_CD = 800;
-  const MELEE_DURATION = 200;
+  const MELEE_DURATION = 150;
 
   const startGame = () => {
     setGameState('playing');
@@ -204,14 +202,10 @@ export default function Game() {
   }, [allOutAttackCooldown]);
 
   const meleeAttack = useCallback(() => {
-    if (meleeCooldown <= 0) {
-      setMeleeCooldown(MELEE_CD);
-      setIsMeleeAttacking(true);
-      setTimeout(() => setIsMeleeAttacking(false), MELEE_DURATION);
-      return true;
-    }
-    return false;
-  }, [meleeCooldown]);
+    setIsMeleeAttacking(true);
+    setTimeout(() => setIsMeleeAttacking(false), MELEE_DURATION);
+    return true;
+  }, []);
 
   const handlePurchase = (upgrade, cost) => {
     if (coins >= cost) {
@@ -244,7 +238,6 @@ export default function Game() {
       setFlyCooldown(prev => Math.max(0, prev - 50));
       setLargeAttackCooldown(prev => Math.max(0, prev - 50));
       setAllOutAttackCooldown(prev => Math.max(0, prev - 50));
-      setMeleeCooldown(prev => Math.max(0, prev - 50));
     }, 50);
 
     return () => clearInterval(interval);
@@ -303,7 +296,6 @@ export default function Game() {
               flyCooldown={flyCooldown / FLY_CD}
               largeAttackCooldown={largeAttackCooldown / LARGE_ATTACK_CD}
               allOutAttackCooldown={allOutAttackCooldown / ALL_OUT_ATTACK_CD}
-              meleeCooldown={meleeCooldown / MELEE_CD}
               isFlying={isFlying}
               isAllOutAttack={isAllOutAttack}
               bossHealth={currentBoss ? bossHealth : null}
