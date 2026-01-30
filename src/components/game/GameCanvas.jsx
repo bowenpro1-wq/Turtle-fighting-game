@@ -511,8 +511,8 @@ export default function GameCanvas({
         } else if (enemy.behaviorType === 'stationary') {
           enemy.vx = 0;
           enemy.vy = 0;
-          
-          if (enemy.createsHazards && Date.now() - enemy.lastShot > enemy.shootInterval - 500) {
+
+          if (enemy.createsHazards && Date.now() - enemy.lastShot > enemy.shootInterval + 2000) {
             game.hazardZones.push({
               x: game.player.x + (Math.random() - 0.5) * 200,
               y: game.player.y + (Math.random() - 0.5) * 200,
@@ -611,7 +611,7 @@ export default function GameCanvas({
         });
 
         // Spawn flame attacks
-        if (game.animationFrame % 60 === 0 && Math.random() < 0.5) {
+        if (game.animationFrame % 180 === 0 && Math.random() < 0.3) {
           game.flameAttacks.push({
             x: game.player.x + (Math.random() - 0.5) * 300,
             y: game.player.y + (Math.random() - 0.5) * 300,
