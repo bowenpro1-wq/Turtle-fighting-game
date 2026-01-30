@@ -628,8 +628,8 @@ export default function GameCanvas({
           onTowerSpecialFloor(null);
         }
 
-        // Spawn Zhongdalin based on floor
-        if (Date.now() - game.lastEnemySpawn > 3000) {
+        // Spawn enemies once per floor
+        if (game.lastEnemySpawn === 0) {
           const baseCount = Math.floor(currentFloor / 10) + 1;
           let spawnCount = baseCount;
 
@@ -652,20 +652,35 @@ export default function GameCanvas({
 
             game.enemies.push(zhongdalin);
           }
-          game.lastEnemySpawn = Date.now();
+          game.lastEnemySpawn = 1; // Mark as spawned
         }
 
-        // Trigger boss every 10 floors
-        if (currentFloor % 10 === 0 && game.enemies.length === 0 && !currentBoss) {
-          const bossNumber = Math.floor(currentFloor / 10);
-          setTimeout(() => {
-            // Trigger appropriate boss for tower
-            if (currentFloor === 100) {
-              // Final boss - handled separately with gem mechanic
-            } else {
-              onTriggerBoss(bossNumber - 1);
-            }
-          }, 1000);
+        // Advance to next floor when all enemies defeated
+        if (game.enemies.length === 0 && game.lastEnemySpawn === 1 && !currentBoss) {
+          game.lastEnemySpawn = 0; // Reset for next floor
+
+          // Trigger boss every 10 floors
+          if (currentFloor % 10 === 0) {
+            const bossNumber = Math.floor(currentFloor / 10);
+            setTimeout(() => {
+              // Trigger appropriate boss for tower
+              if (currentFloor === 100) {
+                // Final boss - handled separately with gem mechanic
+              } else {
+                onTriggerBoss(bossNumber - 1);
+              }
+            }, 1000);
+          } else {
+            // Go to next floor
+            setTimeout(() => {
+              const nextFloor = currentFloor + 1;
+              if (nextFloor > 100) {
+                setGameState('victory');
+              } else {
+                onEnemyKill('floor_complete'); // Use this to trigger floor change
+              }
+            }, 500);
+          }
         }
       }
 

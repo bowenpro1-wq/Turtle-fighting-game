@@ -186,6 +186,22 @@ export default function Game() {
   }, [isFlying]);
 
   const handleEnemyKill = useCallback((enemyType) => {
+    // Floor complete trigger for tower mode
+    if (enemyType === 'floor_complete' && gameMode === 'tower') {
+      const nextFloor = currentFloor + 1;
+      if (nextFloor > 100) {
+        setHasTheHand(true);
+        setGameState('victory');
+      } else {
+        setCurrentFloor(nextFloor);
+        // Save checkpoint every 10 floors
+        if (nextFloor % 10 === 1 && nextFloor > 1) {
+          setCheckpoint(nextFloor);
+        }
+      }
+      return;
+    }
+
     setScore(prev => {
       const newScore = prev + 100;
       // Trigger boss every 800 score (not in tower mode)
@@ -198,7 +214,7 @@ export default function Game() {
       return newScore;
     });
     setCoins(prev => prev + 10);
-    
+
     // Life steal passive
     if (upgrades.lifeSteal > 0) {
       const lifeStealAmount = 10 * (upgrades.lifeSteal * 0.05);
@@ -206,7 +222,7 @@ export default function Game() {
     } else {
       setPlayerHealth(prev => Math.min(maxHealth, prev + 10));
     }
-  }, [maxHealth, defeatedBosses.length, triggerBoss, gameMode, upgrades.lifeSteal]);
+  }, [maxHealth, defeatedBosses.length, triggerBoss, gameMode, upgrades.lifeSteal, currentFloor]);
 
   const handleBossDamage = useCallback((damage) => {
     setBossHealth(prev => {
