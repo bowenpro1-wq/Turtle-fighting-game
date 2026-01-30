@@ -3,7 +3,8 @@ import { motion } from 'framer-motion';
 import { Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export default function StartScreen({ onStart }) {
+export default function StartScreen({ onStart, defeatedBosses = [] }) {
+  const [selectedMode, setSelectedMode] = React.useState(null);
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -72,15 +73,41 @@ export default function StartScreen({ onStart }) {
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: "spring", delay: 0.7 }}
+        className="space-y-4"
       >
-        <Button
-          onClick={onStart}
-          size="lg"
-          className="px-16 py-8 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 rounded-full text-white text-3xl font-bold shadow-2xl shadow-emerald-500/50 hover:shadow-emerald-500/70 transition-all hover:scale-110"
-        >
-          <Play className="w-8 h-8 mr-3" fill="white" />
-          开始游戏
-        </Button>
+        <div className="grid grid-cols-2 gap-4">
+          <Button
+            onClick={() => onStart('normal')}
+            size="lg"
+            className="px-12 py-6 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 rounded-2xl text-white text-2xl font-bold shadow-2xl"
+          >
+            <Play className="w-6 h-6 mr-2" fill="white" />
+            正常模式
+          </Button>
+          <Button
+            onClick={() => onStart('endless')}
+            size="lg"
+            className="px-12 py-6 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-2xl text-white text-2xl font-bold shadow-2xl"
+          >
+            无尽模式
+          </Button>
+          <Button
+            onClick={() => onStart('survival')}
+            size="lg"
+            className="px-12 py-6 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 rounded-2xl text-white text-2xl font-bold shadow-2xl"
+          >
+            生存模式
+          </Button>
+          {defeatedBosses.length > 0 && (
+            <Button
+              onClick={() => onStart('bossrush')}
+              size="lg"
+              className="px-12 py-6 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 rounded-2xl text-white text-2xl font-bold shadow-2xl"
+            >
+              BOSS连战
+            </Button>
+          )}
+        </div>
       </motion.div>
 
       <motion.div

@@ -159,6 +159,7 @@ export default function GameCanvas({
     lastEnemySpawn: 0,
     lastObstacleCheck: 0,
     lastHealCheck: 0,
+    lastBossEnemySpawn: 0,
     animationFrame: 0,
     worldGenerated: false,
     screenShake: 0
@@ -528,14 +529,33 @@ export default function GameCanvas({
       // Remove destroyed buildings
       game.buildings = game.buildings.filter(b => b.health > 0);
 
-      // Spawn enemies every 5 seconds
-      if (Date.now() - game.lastEnemySpawn > 5000) {
-        // Spawn 2-3 enemies at once
+      // Spawn enemies every 5 seconds in normal mode
+      if (gameState === 'playing' && Date.now() - game.lastEnemySpawn > 5000) {
         const spawnCount = Math.floor(Math.random() * 2) + 2;
         for (let i = 0; i < spawnCount; i++) {
           game.enemies.push(spawnEnemy());
         }
         game.lastEnemySpawn = Date.now();
+      }
+
+      // Boss mode: spawn 3 enemies every 2 seconds
+      if (gameState === 'boss') {
+        // Initial spawn of 10-20 enemies when boss appears
+        if (game.lastBossEnemySpawn === 0) {
+          const initialCount = Math.floor(Math.random() * 11) + 10;
+          for (let i = 0; i < initialCount; i++) {
+            game.enemies.push(spawnEnemy());
+          }
+          game.lastBossEnemySpawn = Date.now();
+        } else if (Date.now() - game.lastBossEnemySpawn > 2000) {
+          // Spawn 3 enemies every 2 seconds
+          for (let i = 0; i < 3; i++) {
+            game.enemies.push(spawnEnemy());
+          }
+          game.lastBossEnemySpawn = Date.now();
+        }
+      } else {
+        game.lastBossEnemySpawn = 0;
       }
 
       // Melee attack damage - 360 degrees

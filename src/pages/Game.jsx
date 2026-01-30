@@ -32,16 +32,19 @@ const BOSSES = [
 
 export default function Game() {
   const [gameState, setGameState] = useState('start');
+  const [gameMode, setGameMode] = useState('normal');
   const [playerHealth, setPlayerHealth] = useState(100);
   const [maxHealth, setMaxHealth] = useState(100);
   const [score, setScore] = useState(0);
-  const [coins, setCoins] = useState(0);
+  const [coins, setCoins] = useState(1000);
   const [currentBoss, setCurrentBoss] = useState(null);
   const [bossHealth, setBossHealth] = useState(0);
   const [bossMaxHealth, setBossMaxHealth] = useState(0);
   const [defeatedBosses, setDefeatedBosses] = useState([]);
   const [showBossIntro, setShowBossIntro] = useState(false);
   const [showShop, setShowShop] = useState(false);
+  const [waveNumber, setWaveNumber] = useState(1);
+  const [survivalTime, setSurvivalTime] = useState(0);
   
   const [shootCooldown, setShootCooldown] = useState(0);
   const [healCooldown, setHealCooldown] = useState(0);
@@ -55,6 +58,11 @@ export default function Game() {
   // Bullet upgrades
   const [hasCannonUpgrade, setHasCannonUpgrade] = useState(false);
   const [hasHomingBullets, setHasHomingBullets] = useState(false);
+  const [hasPiercingShots, setHasPiercingShots] = useState(false);
+  const [hasExplosiveShots, setHasExplosiveShots] = useState(false);
+  const [weaponType, setWeaponType] = useState('normal');
+  const [playerColor, setPlayerColor] = useState('green');
+  const [bulletColor, setBulletColor] = useState('yellow');
 
   // Upgrades
   const [upgrades, setUpgrades] = useState({
@@ -63,7 +71,11 @@ export default function Game() {
     speed: 1,
     maxHealth: 1,
     cooldownReduction: 1,
-    abilityPower: 1
+    abilityPower: 1,
+    critChance: 0,
+    lifeSteal: 0,
+    armor: 0,
+    dodgeChance: 0
   });
 
   const SHOOT_CD = 300 / upgrades.fireRate;
@@ -75,7 +87,8 @@ export default function Game() {
   const ALL_OUT_DURATION = 800 + (upgrades.abilityPower - 1) * 200;
   const MELEE_DURATION = 150;
 
-  const startGame = () => {
+  const startGame = (mode = 'normal') => {
+    setGameMode(mode);
     setGameState('playing');
     setPlayerHealth(100 * upgrades.maxHealth);
     setMaxHealth(100 * upgrades.maxHealth);
@@ -85,6 +98,8 @@ export default function Game() {
     setShootCooldown(0);
     setHealCooldown(0);
     setFlyCooldown(0);
+    setWaveNumber(1);
+    setSurvivalTime(0);
   };
 
   const triggerBoss = useCallback((bossIndex) => {
@@ -220,6 +235,36 @@ export default function Game() {
       
       if (upgrade === 'homingBullets') {
         setHasHomingBullets(true);
+      } else if (upgrade === 'piercingShots') {
+        setHasPiercingShots(true);
+      } else if (upgrade === 'explosiveShots') {
+        setHasExplosiveShots(true);
+      } else if (upgrade === 'weaponSpread') {
+        setWeaponType('spread');
+      } else if (upgrade === 'weaponLaser') {
+        setWeaponType('laser');
+      } else if (upgrade.startsWith('color_')) {
+        const [, type, color] = upgrade.split('_');
+        if (type === 'player') setPlayerColor(color);
+        else if (type === 'bullet') setBulletColor(color);
+      } else if (upgrade === 'reset') {
+        setUpgrades({
+          damage: 1,
+          fireRate: 1,
+          speed: 1,
+          maxHealth: 1,
+          cooldownReduction: 1,
+          abilityPower: 1,
+          critChance: 0,
+          lifeSteal: 0,
+          armor: 0,
+          dodgeChance: 0
+        });
+        setHasHomingBullets(false);
+        setHasPiercingShots(false);
+        setHasExplosiveShots(false);
+        setWeaponType('normal');
+        setCoins(prev => prev + Math.floor(cost * 0.5));
       } else {
         setUpgrades(prev => ({
           ...prev,
@@ -265,13 +310,14 @@ export default function Game() {
     <div className="w-full h-screen bg-gradient-to-b from-[#87CEEB] via-[#5F9EA0] to-[#2F4F4F] overflow-hidden relative">
       <AnimatePresence mode="wait">
         {gameState === 'start' && (
-          <StartScreen onStart={startGame} />
+          <StartScreen onStart={startGame} defeatedBosses={defeatedBosses} />
         )}
         
         {(gameState === 'playing' || gameState === 'boss') && (
           <>
             <GameCanvas
               gameState={gameState}
+              gameMode={gameMode}
               onPlayerDamage={handlePlayerDamage}
               onEnemyKill={handleEnemyKill}
               onBossDamage={handleBossDamage}
@@ -291,6 +337,11 @@ export default function Game() {
               upgrades={upgrades}
               hasCannonUpgrade={hasCannonUpgrade}
               hasHomingBullets={hasHomingBullets}
+              hasPiercingShots={hasPiercingShots}
+              hasExplosiveShots={hasExplosiveShots}
+              weaponType={weaponType}
+              playerColor={playerColor}
+              bulletColor={bulletColor}
             />
             
             <GameUI
@@ -325,6 +376,11 @@ export default function Game() {
                   coins={coins}
                   upgrades={upgrades}
                   hasHomingBullets={hasHomingBullets}
+                  hasPiercingShots={hasPiercingShots}
+                  hasExplosiveShots={hasExplosiveShots}
+                  weaponType={weaponType}
+                  playerColor={playerColor}
+                  bulletColor={bulletColor}
                   onPurchase={handlePurchase}
                   onClose={() => setShowShop(false)}
                 />
