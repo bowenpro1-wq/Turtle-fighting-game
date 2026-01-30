@@ -3,10 +3,8 @@ import { motion } from 'framer-motion';
 
 const CANVAS_WIDTH = typeof window !== 'undefined' ? window.innerWidth : 1200;
 const CANVAS_HEIGHT = typeof window !== 'undefined' ? window.innerHeight : 800;
-const WORLD_WIDTH = 5000;
-const WORLD_HEIGHT = 1200;
-const GRAVITY = 0.6;
-const GROUND_LEVEL = WORLD_HEIGHT - 100;
+const WORLD_WIDTH = 4000;
+const WORLD_HEIGHT = 3000;
 
 // Enemy types with unique behaviors
 const ENEMY_TYPES = {
@@ -93,15 +91,12 @@ export default function GameCanvas({
   const gameRef = useRef({
     player: {
       x: 200,
-      y: GROUND_LEVEL - 60,
+      y: 200,
       vx: 0,
       vy: 0,
       width: 50,
-      height: 60,
+      height: 50,
       speed: 6,
-      jumpPower: 15,
-      onGround: false,
-      facingRight: true,
       angle: 0
     },
     camera: { x: 0, y: 0 },
@@ -122,47 +117,44 @@ export default function GameCanvas({
   const generateWorld = useCallback(() => {
     const buildings = [];
     
-    // Generate buildings across the world
-    for (let i = 0; i < 15; i++) {
-      const x = 300 + i * 300 + Math.random() * 100;
-      const buildingType = Math.random();
-      
-      if (buildingType < 0.4) {
-        // House
-        buildings.push({
-          x,
-          y: GROUND_LEVEL - 120,
-          width: 100,
-          height: 120,
-          type: 'house',
-          health: 100,
-          maxHealth: 100,
-          important: true
-        });
-      } else if (buildingType < 0.7) {
-        // Tower
-        buildings.push({
-          x,
-          y: GROUND_LEVEL - 180,
-          width: 80,
-          height: 180,
-          type: 'tower',
-          health: 150,
-          maxHealth: 150,
-          important: true
-        });
-      } else {
-        // Bunker
-        buildings.push({
-          x,
-          y: GROUND_LEVEL - 100,
-          width: 120,
-          height: 100,
-          type: 'bunker',
-          health: 200,
-          maxHealth: 200,
-          important: true
-        });
+    // Generate buildings across the world in a grid pattern
+    for (let row = 0; row < 4; row++) {
+      for (let col = 0; col < 5; col++) {
+        const x = 400 + col * 700 + Math.random() * 100;
+        const y = 400 + row * 600 + Math.random() * 100;
+        const buildingType = Math.random();
+        
+        if (buildingType < 0.4) {
+          buildings.push({
+            x, y,
+            width: 100,
+            height: 100,
+            type: 'house',
+            health: 100,
+            maxHealth: 100,
+            important: true
+          });
+        } else if (buildingType < 0.7) {
+          buildings.push({
+            x, y,
+            width: 90,
+            height: 90,
+            type: 'tower',
+            health: 150,
+            maxHealth: 150,
+            important: true
+          });
+        } else {
+          buildings.push({
+            x, y,
+            width: 120,
+            height: 100,
+            type: 'bunker',
+            health: 200,
+            maxHealth: 200,
+            important: true
+          });
+        }
       }
     }
     
@@ -176,13 +168,20 @@ export default function GameCanvas({
       type = types[Math.floor(Math.random() * types.length)];
     }
 
-    const spawnX = gameRef.current.camera.x + CANVAS_WIDTH + 100;
-    const isFlying = type.behaviorType === 'flying';
+    const side = Math.floor(Math.random() * 4);
+    let spawnX, spawnY;
+    
+    switch(side) {
+      case 0: spawnX = Math.random() * WORLD_WIDTH; spawnY = -50; break;
+      case 1: spawnX = WORLD_WIDTH + 50; spawnY = Math.random() * WORLD_HEIGHT; break;
+      case 2: spawnX = Math.random() * WORLD_WIDTH; spawnY = WORLD_HEIGHT + 50; break;
+      default: spawnX = -50; spawnY = Math.random() * WORLD_HEIGHT; break;
+    }
     
     return {
       ...type,
       x: spawnX,
-      y: isFlying ? GROUND_LEVEL - 200 - Math.random() * 100 : GROUND_LEVEL - type.height,
+      y: spawnY,
       vx: 0,
       vy: 0,
       health: type.health,
@@ -190,9 +189,8 @@ export default function GameCanvas({
       lastShot: Date.now(),
       state: 'patrol',
       target: null,
-      patrolDirection: -1,
-      stunned: false,
-      isFlying: isFlying
+      patrolAngle: Math.random() * Math.PI * 2,
+      stunned: false
     };
   }, []);
 
@@ -211,19 +209,14 @@ export default function GameCanvas({
     const handleKeyDown = (e) => {
       game.keys[e.key.toLowerCase()] = true;
       
-      if (e.key === ' ' && game.player.onGround) {
-        game.player.vy = -game.player.jumpPower;
-        game.player.onGround = false;
-      }
-      
       if (e.key.toLowerCase() === 'k') {
         if (shoot()) {
-          const direction = game.player.facingRight ? 1 : -1;
+          const angle = game.player.angle;
           const bullet = {
-            x: game.player.x + (game.player.facingRight ? game.player.width : 0),
+            x: game.player.x + game.player.width / 2,
             y: game.player.y + game.player.height / 2,
-            vx: direction * 15,
-            vy: 0,
+            vx: Math.cos(angle) * 15,
+            vy: Math.sin(angle) * 15,
             damage: 10 * upgrades.damage,
             size: 8,
             fromPlayer: true
@@ -295,46 +288,32 @@ export default function GameCanvas({
       ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
       game.animationFrame++;
 
-      // Player movement
+      // Player movement - all 4 directions
       const baseSpeed = 6 * upgrades.speed;
-      if (game.keys['a'] || game.keys['arrowleft']) {
-        game.player.vx = -baseSpeed;
-        game.player.facingRight = false;
-      } else if (game.keys['d'] || game.keys['arrowright']) {
-        game.player.vx = baseSpeed;
-        game.player.facingRight = true;
-      } else {
-        game.player.vx *= 0.8;
+      let moveX = 0, moveY = 0;
+      
+      if (game.keys['w'] || game.keys['arrowup']) moveY -= baseSpeed;
+      if (game.keys['s'] || game.keys['arrowdown']) moveY += baseSpeed;
+      if (game.keys['a'] || game.keys['arrowleft']) moveX -= baseSpeed;
+      if (game.keys['d'] || game.keys['arrowright']) moveX += baseSpeed;
+
+      // Normalize diagonal movement
+      if (moveX !== 0 && moveY !== 0) {
+        moveX *= 0.707;
+        moveY *= 0.707;
       }
 
-      // Gravity
-      if (!isFlying) {
-        game.player.vy += GRAVITY;
-      } else {
-        game.player.vy = 0;
-        if (game.keys['w'] || game.keys['arrowup']) {
-          game.player.y -= 5;
-        }
-        if (game.keys['s'] || game.keys['arrowdown']) {
-          game.player.y += 5;
-        }
-      }
+      game.player.x += moveX;
+      game.player.y += moveY;
 
-      game.player.x += game.player.vx;
-      game.player.y += game.player.vy;
-
-      // Ground collision
-      if (game.player.y >= GROUND_LEVEL - game.player.height) {
-        game.player.y = GROUND_LEVEL - game.player.height;
-        game.player.vy = 0;
-        game.player.onGround = true;
-      } else {
-        game.player.onGround = false;
+      // Update player angle based on movement
+      if (moveX !== 0 || moveY !== 0) {
+        game.player.angle = Math.atan2(moveY, moveX);
       }
 
       // Keep player in world bounds
       game.player.x = Math.max(0, Math.min(WORLD_WIDTH - game.player.width, game.player.x));
-      game.player.y = Math.max(0, game.player.y);
+      game.player.y = Math.max(0, Math.min(WORLD_HEIGHT - game.player.height, game.player.y));
 
       // Camera follows player
       game.camera.x = Math.max(0, Math.min(
@@ -380,47 +359,52 @@ export default function GameCanvas({
 
       // Update enemies
       game.enemies = game.enemies.filter(enemy => {
-        // AI behavior
+        // AI behavior - top-down movement
+        const dx = game.player.x - enemy.x;
+        const dy = game.player.y - enemy.y;
+        const distToPlayer = Math.sqrt(dx * dx + dy * dy);
+        
         if (enemy.behaviorType === 'patrol') {
-          enemy.vx = enemy.patrolDirection * enemy.speed;
-          
-          // Find nearest building or player
-          const targetBuilding = game.buildings
-            .filter(b => Math.abs(b.x - enemy.x) < 300)
-            .sort((a, b) => Math.abs(a.x - enemy.x) - Math.abs(b.x - enemy.x))[0];
-          
-          const distToPlayer = Math.abs(game.player.x - enemy.x);
-          
           if (distToPlayer < 400) {
             enemy.state = 'attack';
-            enemy.patrolDirection = game.player.x > enemy.x ? 1 : -1;
+            enemy.vx = (dx / distToPlayer) * enemy.speed;
+            enemy.vy = (dy / distToPlayer) * enemy.speed;
+          } else {
+            enemy.patrolAngle += 0.02;
+            enemy.vx = Math.cos(enemy.patrolAngle) * enemy.speed * 0.5;
+            enemy.vy = Math.sin(enemy.patrolAngle) * enemy.speed * 0.5;
           }
         } else if (enemy.behaviorType === 'assault') {
-          // Tanks target buildings first
           const nearestBuilding = game.buildings
             .filter(b => b.important)
-            .sort((a, b) => Math.abs(a.x - enemy.x) - Math.abs(b.x - enemy.x))[0];
+            .sort((a, b) => {
+              const distA = Math.sqrt((a.x - enemy.x)**2 + (a.y - enemy.y)**2);
+              const distB = Math.sqrt((b.x - enemy.x)**2 + (b.y - enemy.y)**2);
+              return distA - distB;
+            })[0];
           
-          if (nearestBuilding && Math.abs(nearestBuilding.x - enemy.x) < 500) {
+          if (nearestBuilding) {
+            const bdx = nearestBuilding.x - enemy.x;
+            const bdy = nearestBuilding.y - enemy.y;
+            const bdist = Math.sqrt(bdx * bdx + bdy * bdy);
             enemy.target = nearestBuilding;
-            enemy.vx = (nearestBuilding.x - enemy.x) > 0 ? enemy.speed : -enemy.speed;
-          } else {
-            enemy.vx = -enemy.speed;
+            enemy.vx = (bdx / bdist) * enemy.speed;
+            enemy.vy = (bdy / bdist) * enemy.speed;
           }
         } else if (enemy.behaviorType === 'flying') {
-          // Drones fly in waves
-          enemy.y += Math.sin(game.animationFrame * 0.05 + enemy.x) * 2;
-          enemy.vx = -enemy.speed;
+          const angle = Math.atan2(dy, dx);
+          enemy.vx = Math.cos(angle + Math.sin(game.animationFrame * 0.05) * 0.5) * enemy.speed;
+          enemy.vy = Math.sin(angle + Math.sin(game.animationFrame * 0.05) * 0.5) * enemy.speed;
         } else if (enemy.behaviorType === 'support') {
-          // Engineers deploy obstacles
-          enemy.vx = -enemy.speed * 0.5;
+          enemy.vx = (dx / distToPlayer) * enemy.speed * 0.3;
+          enemy.vy = (dy / distToPlayer) * enemy.speed * 0.3;
           
           if (Date.now() - game.lastObstacleCheck > 8000 && Math.random() < 0.3) {
             game.obstacles.push({
               x: enemy.x,
-              y: GROUND_LEVEL - 40,
+              y: enemy.y,
               width: 60,
-              height: 40,
+              height: 60,
               type: 'barrier',
               health: 50
             });
@@ -428,13 +412,12 @@ export default function GameCanvas({
           }
         } else if (enemy.behaviorType === 'stationary') {
           enemy.vx = 0;
+          enemy.vy = 0;
           
-          // Artillery creates hazard zones
           if (enemy.createsHazards && Date.now() - enemy.lastShot > enemy.shootInterval - 500) {
-            const targetX = game.player.x + (Math.random() - 0.5) * 200;
             game.hazardZones.push({
-              x: targetX,
-              y: GROUND_LEVEL - 100,
+              x: game.player.x + (Math.random() - 0.5) * 200,
+              y: game.player.y + (Math.random() - 0.5) * 200,
               radius: 80,
               damage: 20,
               life: 100,
@@ -444,16 +427,7 @@ export default function GameCanvas({
         }
 
         enemy.x += enemy.vx;
-        
-        if (!enemy.isFlying) {
-          enemy.vy += GRAVITY;
-          enemy.y += enemy.vy;
-          
-          if (enemy.y >= GROUND_LEVEL - enemy.height) {
-            enemy.y = GROUND_LEVEL - enemy.height;
-            enemy.vy = 0;
-          }
-        }
+        enemy.y += enemy.vy;
 
         // Enemy shooting
         if (Date.now() - enemy.lastShot > enemy.shootInterval) {
@@ -732,90 +706,76 @@ export default function GameCanvas({
 }
 
 function drawBackground(ctx, camera, frame) {
-  // Sky gradient
-  const skyGradient = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
-  skyGradient.addColorStop(0, '#87CEEB');
-  skyGradient.addColorStop(0.6, '#B0E0E6');
-  skyGradient.addColorStop(1, '#98D8C8');
-  ctx.fillStyle = skyGradient;
-  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-
-  // Clouds
-  ctx.save();
-  ctx.globalAlpha = 0.6;
-  for (let i = 0; i < 8; i++) {
-    const x = ((i * 400 - camera.x * 0.3 + frame * 0.2) % (CANVAS_WIDTH + 200)) - 100;
-    const y = 50 + i * 40;
-    
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.ellipse(x, y, 60, 25, 0, 0, Math.PI * 2);
-    ctx.ellipse(x + 30, y - 10, 50, 30, 0, 0, Math.PI * 2);
-    ctx.ellipse(x + 60, y, 55, 28, 0, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.restore();
-
-  // Ground - grass layer
-  const groundY = GROUND_LEVEL - camera.y;
-  const grassGradient = ctx.createLinearGradient(0, groundY, 0, CANVAS_HEIGHT);
+  // Grass base
+  const grassGradient = ctx.createRadialGradient(
+    CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 0,
+    CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, CANVAS_WIDTH
+  );
   grassGradient.addColorStop(0, '#7cb342');
-  grassGradient.addColorStop(0.3, '#689f38');
+  grassGradient.addColorStop(0.6, '#689f38');
   grassGradient.addColorStop(1, '#558b2f');
   ctx.fillStyle = grassGradient;
-  ctx.fillRect(0, groundY, CANVAS_WIDTH, CANVAS_HEIGHT - groundY);
+  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-  // Grass texture
-  ctx.save();
-  ctx.globalAlpha = 0.4;
-  for (let i = 0; i < 100; i++) {
-    const x = ((i * 47) % WORLD_WIDTH) - camera.x;
-    if (x < -20 || x > CANVAS_WIDTH + 20) continue;
-    
-    const grassY = groundY + (i % 3) * 3;
-    ctx.fillStyle = i % 2 === 0 ? '#558b2f' : '#689f38';
-    
-    // Grass blade
-    ctx.beginPath();
-    ctx.moveTo(x, grassY + 15);
-    ctx.quadraticCurveTo(x - 3, grassY + 7, x, grassY);
-    ctx.quadraticCurveTo(x + 3, grassY + 7, x, grassY + 15);
-    ctx.fill();
-  }
-  ctx.restore();
-
-  // Dirt/rocks on ground
+  // Grass texture - scattered across world
   ctx.save();
   ctx.globalAlpha = 0.3;
-  for (let i = 0; i < 50; i++) {
-    const x = ((i * 123 + 37) % WORLD_WIDTH) - camera.x;
-    if (x < -30 || x > CANVAS_WIDTH + 30) continue;
+  for (let i = 0; i < 200; i++) {
+    const worldX = (i * 67 + 23) % WORLD_WIDTH;
+    const worldY = (i * 91 + 41) % WORLD_HEIGHT;
+    const x = worldX - camera.x;
+    const y = worldY - camera.y;
     
-    const y = groundY + 20 + (i % 5) * 5;
-    ctx.fillStyle = '#6d4c41';
+    if (x < -30 || x > CANVAS_WIDTH + 30 || y < -30 || y > CANVAS_HEIGHT + 30) continue;
+    
+    ctx.fillStyle = i % 3 === 0 ? '#558b2f' : '#689f38';
     ctx.beginPath();
-    ctx.arc(x, y, 8 + (i % 3) * 2, 0, Math.PI * 2);
+    ctx.ellipse(x, y, 15 + (i % 8), 8 + (i % 5), i * 0.3, 0, Math.PI * 2);
     ctx.fill();
   }
   ctx.restore();
 
-  // Distant trees
+  // Dirt patches
   ctx.save();
-  ctx.globalAlpha = 0.4;
-  for (let i = 0; i < 20; i++) {
-    const x = ((i * 234) % WORLD_WIDTH) - camera.x * 0.7;
-    if (x < -50 || x > CANVAS_WIDTH + 50) continue;
+  ctx.globalAlpha = 0.2;
+  for (let i = 0; i < 80; i++) {
+    const worldX = (i * 127 + 53) % WORLD_WIDTH;
+    const worldY = (i * 143 + 71) % WORLD_HEIGHT;
+    const x = worldX - camera.x;
+    const y = worldY - camera.y;
     
-    const treeY = groundY - 80;
+    if (x < -50 || x > CANVAS_WIDTH + 50 || y < -50 || y > CANVAS_HEIGHT + 50) continue;
     
-    // Trunk
+    ctx.fillStyle = '#6d4c41';
+    ctx.beginPath();
+    ctx.arc(x, y, 12 + (i % 6), 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // Trees scattered in world
+  ctx.save();
+  for (let i = 0; i < 30; i++) {
+    const worldX = (i * 237 + 117) % WORLD_WIDTH;
+    const worldY = (i * 193 + 89) % WORLD_HEIGHT;
+    const x = worldX - camera.x;
+    const y = worldY - camera.y;
+    
+    if (x < -60 || x > CANVAS_WIDTH + 60 || y < -60 || y > CANVAS_HEIGHT + 60) continue;
+    
+    ctx.globalAlpha = 0.7;
     ctx.fillStyle = '#5d4037';
-    ctx.fillRect(x - 8, treeY, 16, 60);
+    ctx.fillRect(x - 8, y - 10, 16, 40);
     
-    // Foliage
     ctx.fillStyle = '#2e7d32';
     ctx.beginPath();
-    ctx.arc(x, treeY - 10, 30, 0, Math.PI * 2);
+    ctx.arc(x, y - 20, 25, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.fillStyle = '#388e3c';
+    ctx.beginPath();
+    ctx.arc(x - 10, y - 15, 18, 0, Math.PI * 2);
+    ctx.arc(x + 10, y - 15, 18, 0, Math.PI * 2);
     ctx.fill();
   }
   ctx.restore();
@@ -832,32 +792,26 @@ function drawBuilding(ctx, building, camera) {
     ctx.fillStyle = '#e7e5e4';
     ctx.strokeStyle = '#78716c';
     ctx.lineWidth = 3;
-    ctx.fillRect(x, y + 40, building.width, building.height - 40);
-    ctx.strokeRect(x, y + 40, building.width, building.height - 40);
-    
-    // Roof
-    ctx.fillStyle = '#b91c1c';
-    ctx.strokeStyle = '#7f1d1d';
-    ctx.beginPath();
-    ctx.moveTo(x - 10, y + 40);
-    ctx.lineTo(x + building.width / 2, y);
-    ctx.lineTo(x + building.width + 10, y + 40);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+    ctx.fillRect(x, y, building.width, building.height);
+    ctx.strokeRect(x, y, building.width, building.height);
     
     // Door
     ctx.fillStyle = '#78350f';
-    ctx.fillRect(x + building.width / 2 - 15, y + 75, 30, 45);
-    ctx.strokeRect(x + building.width / 2 - 15, y + 75, 30, 45);
+    ctx.fillRect(x + building.width / 2 - 12, y + building.height - 35, 24, 35);
+    ctx.strokeRect(x + building.width / 2 - 12, y + building.height - 35, 24, 35);
     
     // Windows
     ctx.fillStyle = '#93c5fd';
     ctx.strokeStyle = '#1e3a8a';
-    ctx.fillRect(x + 15, y + 60, 25, 25);
-    ctx.strokeRect(x + 15, y + 60, 25, 25);
-    ctx.fillRect(x + building.width - 40, y + 60, 25, 25);
-    ctx.strokeRect(x + building.width - 40, y + 60, 25, 25);
+    ctx.lineWidth = 2;
+    ctx.fillRect(x + 15, y + 20, 20, 20);
+    ctx.strokeRect(x + 15, y + 20, 20, 20);
+    ctx.fillRect(x + building.width - 35, y + 20, 20, 20);
+    ctx.strokeRect(x + building.width - 35, y + 20, 20, 20);
+    ctx.fillRect(x + 15, y + 55, 20, 20);
+    ctx.strokeRect(x + 15, y + 55, 20, 20);
+    ctx.fillRect(x + building.width - 35, y + 55, 20, 20);
+    ctx.strokeRect(x + building.width - 35, y + 55, 20, 20);
     
   } else if (building.type === 'tower') {
     // Main structure
@@ -926,9 +880,7 @@ function drawPlayer(ctx, player, isFlying, camera, frame) {
   
   ctx.save();
   ctx.translate(x + player.width / 2, y + player.height / 2);
-  if (!player.facingRight) {
-    ctx.scale(-1, 1);
-  }
+  ctx.rotate(player.angle + Math.PI / 2);
   
   // Flying glow
   if (isFlying) {
@@ -936,7 +888,7 @@ function drawPlayer(ctx, player, isFlying, camera, frame) {
     ctx.shadowColor = '#38bdf8';
   }
   
-  const bobOffset = player.onGround ? Math.sin(frame * 0.15) * 2 : 0;
+  const bobOffset = Math.sin(frame * 0.15) * 1.5;
   
   // Shell
   ctx.fillStyle = '#2d5016';
@@ -963,35 +915,45 @@ function drawPlayer(ctx, player, isFlying, camera, frame) {
   ctx.strokeStyle = '#4a7c2f';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.ellipse(15, bobOffset - 20, 8, 7, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, bobOffset - 22, 8, 7, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
   
   // Eyes
   ctx.fillStyle = '#fff';
   ctx.beginPath();
-  ctx.arc(17, bobOffset - 22, 3, 0, Math.PI * 2);
+  ctx.arc(-3, bobOffset - 24, 2.5, 0, Math.PI * 2);
+  ctx.arc(3, bobOffset - 24, 2.5, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = '#000';
   ctx.beginPath();
-  ctx.arc(18, bobOffset - 22, 1.5, 0, Math.PI * 2);
+  ctx.arc(-3, bobOffset - 24, 1.2, 0, Math.PI * 2);
+  ctx.arc(3, bobOffset - 24, 1.2, 0, Math.PI * 2);
   ctx.fill();
   
   // Legs
-  const legBob = Math.sin(frame * 0.2) * 3;
+  const legBob = Math.sin(frame * 0.2) * 2;
   ctx.fillStyle = '#6b9b4c';
   ctx.strokeStyle = '#4a7c2f';
   ctx.lineWidth = 2;
   
-  // Front legs
   ctx.beginPath();
-  ctx.ellipse(10, bobOffset + 5, 5, 10, legBob * 0.1, 0, Math.PI * 2);
+  ctx.ellipse(-12, bobOffset, 5, 9, legBob * 0.1, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
   
-  // Back legs
   ctx.beginPath();
-  ctx.ellipse(-8, bobOffset + 5, 5, 10, -legBob * 0.1, 0, Math.PI * 2);
+  ctx.ellipse(12, bobOffset, 5, 9, -legBob * 0.1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  
+  ctx.beginPath();
+  ctx.ellipse(-8, bobOffset + 12, 5, 8, legBob * 0.1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  
+  ctx.beginPath();
+  ctx.ellipse(8, bobOffset + 12, 5, 8, -legBob * 0.1, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
   

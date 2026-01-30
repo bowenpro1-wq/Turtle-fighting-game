@@ -110,7 +110,6 @@ export default function GameUI({
 
       <div className="absolute bottom-6 right-6 text-white/70 text-sm bg-black/40 px-4 py-2 rounded-lg backdrop-blur-sm">
         <div>按 B 打开商店</div>
-        <div>按 空格 跳跃</div>
       </div>
     </div>
   );

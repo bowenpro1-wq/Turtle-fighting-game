@@ -33,13 +33,9 @@ export default function StartScreen({ onStart }) {
       >
         <h3 className="text-cyan-300 text-2xl font-semibold mb-6 text-center">操作指南</h3>
         <div className="grid grid-cols-2 gap-6 text-white/90 text-lg">
-          <div className="flex items-center gap-3">
-            <kbd className="px-4 py-2 bg-white/20 rounded-lg font-mono font-bold">A / D</kbd>
-            <span>左右移动</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <kbd className="px-4 py-2 bg-white/20 rounded-lg font-mono font-bold">空格</kbd>
-            <span>跳跃</span>
+          <div className="flex items-center gap-3 col-span-2 justify-center">
+            <kbd className="px-4 py-2 bg-white/20 rounded-lg font-mono font-bold">W A S D</kbd>
+            <span>全方向移动</span>
           </div>
           <div className="flex items-center gap-3">
             <kbd className="px-4 py-2 bg-red-500/40 rounded-lg font-mono font-bold">K</kbd>
