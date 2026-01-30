@@ -130,24 +130,24 @@ export default function GameOver({ victory, score, coins, defeatedBosses, onRest
           transition={{ delay: 0.6 }}
           className="flex gap-4"
         >
+          {!victory && (
+            <Button
+              onClick={() => window.location.reload()}
+              size="lg"
+              className="px-10 py-6 text-xl font-bold rounded-full bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-400 hover:to-gray-500 shadow-lg shadow-gray-500/30"
+            >
+              返回首页
+            </Button>
+          )}
           {gameMode === 'tower' && !victory ? (
-            <>
-              <Button
-                onClick={() => window.location.reload()}
-                size="lg"
-                className="px-10 py-6 text-xl font-bold rounded-full bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-400 hover:to-gray-500 shadow-lg shadow-gray-500/30"
-              >
-                返回首页
-              </Button>
-              <Button
-                onClick={() => onRestart('tower', true)}
-                size="lg"
-                className="px-10 py-6 text-xl font-bold rounded-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 shadow-lg shadow-green-500/30"
-              >
-                <RotateCcw className="w-6 h-6 mr-2" />
-                从存档继续
-              </Button>
-            </>
+            <Button
+              onClick={() => onRestart('tower', true)}
+              size="lg"
+              className="px-10 py-6 text-xl font-bold rounded-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 shadow-lg shadow-green-500/30"
+            >
+              <RotateCcw className="w-6 h-6 mr-2" />
+              从存档继续
+            </Button>
           ) : (
             <Button
               onClick={onRestart}
