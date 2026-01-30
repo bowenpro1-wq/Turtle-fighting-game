@@ -5,13 +5,12 @@ import { Heart, Coins } from 'lucide-react';
 export default function GameUI({
   health,
   maxHealth,
-  structureHealth,
   score,
   coins,
   shootCooldown,
   healCooldown,
-  dashCooldown,
-  isDashing,
+  flyCooldown,
+  isFlying,
   bossHealth,
   bossMaxHealth,
   bossName,
@@ -48,31 +47,19 @@ export default function GameUI({
             <span className="text-yellow-400 text-xl font-bold">{coins}</span>
           </div>
 
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-blue-400 font-semibold">基地:</span>
-            <div className="relative w-32 h-4 bg-gray-800 rounded overflow-hidden border border-blue-900">
-              <motion.div
-                className="h-full bg-gradient-to-r from-blue-600 to-blue-400"
-                initial={false}
-                animate={{ width: `${structureHealth}%` }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              />
-            </div>
-          </div>
-
           <div className="text-orange-400 text-sm font-semibold">
             BOSS: {defeatedBosses} / 20
           </div>
         </div>
 
-        {isDashing && (
+        {isFlying && (
           <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             className="px-6 py-3 bg-gradient-to-r from-cyan-500/80 to-blue-500/80 rounded-full backdrop-blur-sm border-2 border-cyan-300/50"
           >
-            <span className="text-white font-bold text-lg">冲刺中!</span>
+            <span className="text-white font-bold text-lg">无敌飞行中!</span>
           </motion.div>
         )}
       </div>
@@ -104,7 +91,7 @@ export default function GameUI({
 
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-4">
         <CooldownButton
-          label="J - 射击"
+          label="K - 射击"
           cooldown={shootCooldown}
           color="red"
         />
@@ -114,16 +101,15 @@ export default function GameUI({
           color="green"
         />
         <CooldownButton
-          label="K - 冲刺"
-          cooldown={dashCooldown}
+          label="O - 飞行"
+          cooldown={flyCooldown}
           color="blue"
-          active={isDashing}
+          active={isFlying}
         />
       </div>
 
       <div className="absolute bottom-6 right-6 text-white/70 text-sm bg-black/40 px-4 py-2 rounded-lg backdrop-blur-sm">
-        <div>空格 - 跳跃 | B - 商店</div>
-        <div className="text-xs mt-1">A/D - 移动</div>
+        <div>按 B 打开商店</div>
       </div>
     </div>
   );

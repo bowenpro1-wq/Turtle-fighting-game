@@ -1,23 +1,37 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { motion } from 'framer-motion';
 
-const CANVAS_WIDTH = typeof window !== 'undefined' ? window.innerWidth : 1400;
+const CANVAS_WIDTH = typeof window !== 'undefined' ? window.innerWidth : 1200;
 const CANVAS_HEIGHT = typeof window !== 'undefined' ? window.innerHeight : 800;
-const GROUND_Y = CANVAS_HEIGHT - 150;
-const GRAVITY = 0.6;
-const JUMP_FORCE = -15;
+
+// Static buildings/structures
+const BUILDINGS = [
+  { x: 150, y: 200, width: 120, height: 150, type: 'tower' },
+  { x: CANVAS_WIDTH - 270, y: 200, width: 120, height: 150, type: 'tower' },
+  { x: 400, y: 450, width: 100, height: 80, type: 'house' },
+  { x: CANVAS_WIDTH - 500, y: 450, width: 100, height: 80, type: 'house' },
+  { x: CANVAS_WIDTH / 2 - 60, y: 150, width: 120, height: 100, type: 'castle' },
+  { x: 200, y: CANVAS_HEIGHT - 250, width: 90, height: 90, type: 'house' },
+  { x: CANVAS_WIDTH - 290, y: CANVAS_HEIGHT - 250, width: 90, height: 90, type: 'house' },
+];
+
+const FENCES = [
+  { x1: 100, y1: 100, x2: 300, y2: 100 },
+  { x1: CANVAS_WIDTH - 300, y1: 100, x2: CANVAS_WIDTH - 100, y2: 100 },
+  { x1: 100, y1: CANVAS_HEIGHT - 100, x2: 400, y2: CANVAS_HEIGHT - 100 },
+  { x1: CANVAS_WIDTH - 400, y1: CANVAS_HEIGHT - 100, x2: CANVAS_WIDTH - 100, y2: CANVAS_HEIGHT - 100 },
+];
 
 export default function GameCanvas({
   gameState,
   onPlayerDamage,
-  onStructureDamage,
   onEnemyKill,
   onBossDamage,
   onTriggerBoss,
   shoot,
   heal,
-  dash,
-  isDashing,
+  fly,
+  isFlying,
   currentBoss,
   defeatedBosses,
   score,
@@ -25,83 +39,51 @@ export default function GameCanvas({
 }) {
   const canvasRef = useRef(null);
   const gameRef = useRef({
-    player: { 
-      x: 200, 
-      y: GROUND_Y - 50, 
-      width: 50, 
-      height: 50, 
-      velocityY: 0,
-      velocityX: 0,
-      onGround: true,
-      facing: 1,
-      animFrame: 0
-    },
-    camera: { x: 0 },
+    player: { x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2, width: 50, height: 50, speed: 5, angle: 0 },
     bullets: [],
     enemyBullets: [],
     enemies: [],
     particles: [],
-    hazards: [],
     coins: [],
-    structures: [
-      { x: 600, y: GROUND_Y - 180, width: 100, height: 180, type: 'tower', health: 100, maxHealth: 100 },
-      { x: 1200, y: GROUND_Y - 120, width: 120, height: 120, type: 'bunker', health: 150, maxHealth: 150 },
-      { x: 1800, y: GROUND_Y - 150, width: 90, height: 150, type: 'generator', health: 80, maxHealth: 80 },
-    ],
-    platforms: [
-      { x: 400, y: GROUND_Y - 200, width: 150, height: 20 },
-      { x: 800, y: GROUND_Y - 250, width: 120, height: 20 },
-      { x: 1400, y: GROUND_Y - 220, width: 160, height: 20 },
-      { x: 2000, y: GROUND_Y - 280, width: 140, height: 20 },
-    ],
     keys: {},
     lastEnemySpawn: 0,
     lastCoinSpawn: 0,
-    animationFrame: 0,
-    worldWidth: 3000
+    bossSpawnScore: 500,
+    animationFrame: 0
   });
 
-  const spawnEnemy = useCallback((type = null) => {
-    const types = [
-      'grunt',      // Basic ground enemy
-      'flyer',      // Flying enemy
-      'destroyer',  // Targets structures
-      'miner',      // Deploys obstacles
-      'sniper',     // Long range
-      'bomber'      // Creates hazard zones
-    ];
+  const spawnEnemy = useCallback(() => {
+    const side = Math.floor(Math.random() * 4);
+    let x, y;
     
-    const enemyType = type || types[Math.floor(Math.random() * types.length)];
-    const spawnX = gameRef.current.camera.x + CANVAS_WIDTH + 100;
-    
-    const configs = {
-      grunt: { health: 40, speed: 2, damage: 10, size: 40, canJump: true, color: '#ef4444' },
-      flyer: { health: 30, speed: 3, damage: 8, size: 35, flying: true, color: '#8b5cf6', altitude: -150 },
-      destroyer: { health: 60, speed: 1.5, damage: 20, size: 50, targetsStructures: true, color: '#dc2626' },
-      miner: { health: 35, speed: 1.8, damage: 5, size: 38, deploysObstacles: true, color: '#f59e0b', lastDeploy: 0 },
-      sniper: { health: 25, speed: 1, damage: 25, size: 35, longRange: true, color: '#6366f1', shootDist: 600 },
-      bomber: { health: 45, speed: 2.2, damage: 15, size: 42, createsHazards: true, color: '#10b981', lastHazard: 0 }
-    };
-    
-    const config = configs[enemyType];
+    switch (side) {
+      case 0: x = Math.random() * CANVAS_WIDTH; y = -50; break;
+      case 1: x = CANVAS_WIDTH + 50; y = Math.random() * CANVAS_HEIGHT; break;
+      case 2: x = Math.random() * CANVAS_WIDTH; y = CANVAS_HEIGHT + 50; break;
+      default: x = -50; y = Math.random() * CANVAS_HEIGHT; break;
+    }
+
+    const types = ['jellyfish', 'crab', 'fish', 'starfish'];
+    const type = types[Math.floor(Math.random() * types.length)];
     
     return {
-      x: spawnX,
-      y: config.flying ? GROUND_Y + config.altitude : GROUND_Y - config.size,
-      velocityY: 0,
-      type: enemyType,
-      ...config,
+      x, y,
+      type,
+      health: 30,
+      speed: 1 + Math.random() * 1.5,
       lastShot: Date.now(),
-      shootInterval: 2000 + Math.random() * 1000,
-      animFrame: 0
+      shootInterval: 1500 + Math.random() * 1000,
+      angle: 0,
+      size: 35 + Math.random() * 15
     };
   }, []);
 
   const spawnBossEnemy = useCallback((boss) => {
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 300;
     return {
-      x: gameRef.current.camera.x + CANVAS_WIDTH - 200,
-      y: GROUND_Y - boss.size - 20,
-      velocityY: 0,
+      x: CANVAS_WIDTH / 2 + Math.cos(angle) * distance,
+      y: CANVAS_HEIGHT / 2 + Math.sin(angle) * distance,
       health: boss.health,
       maxHealth: boss.health,
       speed: boss.speed,
@@ -110,11 +92,11 @@ export default function GameCanvas({
       color: boss.color,
       pattern: boss.pattern,
       lastShot: Date.now(),
-      shootInterval: 1200,
+      shootInterval: 800,
+      angle: 0,
+      patternTimer: 0,
       isBoss: true,
-      name: boss.name,
-      animFrame: 0,
-      patternPhase: 0
+      name: boss.name
     };
   }, []);
 
@@ -127,35 +109,30 @@ export default function GameCanvas({
     let animationId;
 
     const handleKeyDown = (e) => {
-      game.keys[e.key.toLowerCase()] = true;
-      
-      if (e.key === ' ' && game.player.onGround) {
-        game.player.velocityY = JUMP_FORCE;
-        game.player.onGround = false;
-      }
-      
-      if (e.key.toLowerCase() === 'j') {
-        if (shoot()) {
-          const direction = game.player.facing;
-          const bullet = {
-            x: game.player.x + (direction > 0 ? 40 : -10),
-            y: game.player.y + 15,
-            velocityX: direction * 15,
-            velocityY: 0,
-            damage: 10 * upgrades.damage,
-            size: 6
-          };
-          game.bullets.push(bullet);
+    game.keys[e.key.toLowerCase()] = true;
+
+    if (e.key.toLowerCase() === 'k') {
+      if (shoot()) {
+        const bullet = {
+          x: game.player.x,
+          y: game.player.y - 20,
+          speed: 12,
+          damage: 10 * upgrades.damage,
+          size: 8,
+          angle: game.player.angle
+        };
+        game.bullets.push(bullet);
           
-          for (let i = 0; i < 8; i++) {
+          // Muzzle flash particles
+          for (let i = 0; i < 5; i++) {
             game.particles.push({
               x: bullet.x,
               y: bullet.y,
-              vx: -direction * Math.random() * 4,
-              vy: (Math.random() - 0.5) * 4,
+              vx: (Math.random() - 0.5) * 3,
+              vy: -Math.random() * 3,
               life: 20,
-              color: '#fbbf24',
-              size: 3
+              color: '#4ade80',
+              size: 4
             });
           }
         }
@@ -163,24 +140,37 @@ export default function GameCanvas({
       
       if (e.key.toLowerCase() === 'h') {
         if (heal()) {
-          for (let i = 0; i < 30; i++) {
+          // Heal particles
+          for (let i = 0; i < 20; i++) {
             game.particles.push({
               x: game.player.x + (Math.random() - 0.5) * 50,
               y: game.player.y + (Math.random() - 0.5) * 50,
-              vx: (Math.random() - 0.5) * 3,
-              vy: -Math.random() * 5,
-              life: 50,
+              vx: (Math.random() - 0.5) * 2,
+              vy: -Math.random() * 3,
+              life: 40,
               color: '#22c55e',
-              size: 5,
+              size: 6,
               type: 'heal'
             });
           }
         }
       }
       
-      if (e.key.toLowerCase() === 'k') {
-        if (dash()) {
-          game.player.velocityX = game.player.facing * 20;
+      if (e.key.toLowerCase() === 'o') {
+        if (fly()) {
+          // Fly activation particles
+          for (let i = 0; i < 30; i++) {
+            game.particles.push({
+              x: game.player.x + (Math.random() - 0.5) * 60,
+              y: game.player.y + (Math.random() - 0.5) * 60,
+              vx: (Math.random() - 0.5) * 4,
+              vy: (Math.random() - 0.5) * 4,
+              life: 50,
+              color: '#38bdf8',
+              size: 5,
+              type: 'fly'
+            });
+          }
         }
       }
     };
@@ -201,99 +191,93 @@ export default function GameCanvas({
       ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
       game.animationFrame++;
 
+      // Draw background (grass/terrain)
+      drawBackground(ctx, game.animationFrame);
+
+      // Draw buildings and fences
+      drawBuildings(ctx, BUILDINGS);
+      drawFences(ctx, FENCES);
+
       // Player movement
-      const baseSpeed = 6 * upgrades.speed;
-      if (!isDashing) {
-        if (game.keys['a'] || game.keys['arrowleft']) {
-          game.player.velocityX = -baseSpeed;
-          game.player.facing = -1;
-        } else if (game.keys['d'] || game.keys['arrowright']) {
-          game.player.velocityX = baseSpeed;
-          game.player.facing = 1;
-        } else {
-          game.player.velocityX *= 0.8;
-        }
+      const baseSpeed = 5 * upgrades.speed;
+      let moveX = 0, moveY = 0;
+      if (game.keys['w'] || game.keys['arrowup']) moveY -= baseSpeed;
+      if (game.keys['s'] || game.keys['arrowdown']) moveY += baseSpeed;
+      if (game.keys['a'] || game.keys['arrowleft']) moveX -= baseSpeed;
+      if (game.keys['d'] || game.keys['arrowright']) moveX += baseSpeed;
+
+      // Calculate player angle based on movement
+      if (moveX !== 0 || moveY !== 0) {
+        game.player.angle = Math.atan2(moveY, moveX);
       }
 
-      game.player.x += game.player.velocityX;
-      
-      // Apply gravity
-      if (!game.player.onGround) {
-        game.player.velocityY += GRAVITY;
-      }
-      game.player.y += game.player.velocityY;
-
-      // Ground collision
-      if (game.player.y >= GROUND_Y - game.player.height) {
-        game.player.y = GROUND_Y - game.player.height;
-        game.player.velocityY = 0;
-        game.player.onGround = true;
-      }
-
-      // Platform collision
-      game.player.onGround = game.player.y >= GROUND_Y - game.player.height;
-      for (let platform of game.platforms) {
-        if (game.player.velocityY >= 0 &&
-            game.player.x + 40 > platform.x &&
-            game.player.x < platform.x + platform.width &&
-            game.player.y + game.player.height <= platform.y + 10 &&
-            game.player.y + game.player.height + game.player.velocityY >= platform.y) {
-          game.player.y = platform.y - game.player.height;
-          game.player.velocityY = 0;
-          game.player.onGround = true;
-        }
-      }
+      game.player.x += moveX;
+      game.player.y += moveY;
 
       // Keep player in bounds
-      game.player.x = Math.max(game.camera.x + 50, Math.min(game.player.x, game.camera.x + CANVAS_WIDTH - 100));
+      game.player.x = Math.max(25, Math.min(CANVAS_WIDTH - 25, game.player.x));
+      game.player.y = Math.max(25, Math.min(CANVAS_HEIGHT - 25, game.player.y));
 
-      // Camera follow player
-      const targetCameraX = Math.max(0, Math.min(game.player.x - CANVAS_WIDTH / 3, game.worldWidth - CANVAS_WIDTH));
-      game.camera.x += (targetCameraX - game.camera.x) * 0.1;
-
-      // Draw background
-      drawBackground(ctx, game.camera.x, game.animationFrame);
-      drawGround(ctx, game.camera.x);
-
-      // Draw platforms
-      game.platforms.forEach(platform => {
-        const screenX = platform.x - game.camera.x;
-        ctx.fillStyle = '#4b5563';
-        ctx.strokeStyle = '#1f2937';
-        ctx.lineWidth = 3;
-        ctx.fillRect(screenX, platform.y, platform.width, platform.height);
-        ctx.strokeRect(screenX, platform.y, platform.width, platform.height);
-        
-        // Platform details
-        ctx.fillStyle = '#6b7280';
-        for (let i = 0; i < platform.width; i += 20) {
-          ctx.fillRect(screenX + i, platform.y, 18, 4);
-        }
-      });
-
-      // Spawn enemies
+      // Spawn enemies (not during boss fight)
       if (gameState === 'playing') {
-        if (Date.now() - game.lastEnemySpawn > 3000) {
+        if (Date.now() - game.lastEnemySpawn > 2000) {
           game.enemies.push(spawnEnemy());
           game.lastEnemySpawn = Date.now();
         }
 
-        if (Date.now() - game.lastCoinSpawn > 6000) {
+        // Spawn collectible coins
+        if (Date.now() - game.lastCoinSpawn > 5000) {
           game.coins.push({
-            x: game.camera.x + CANVAS_WIDTH + Math.random() * 200,
-            y: GROUND_Y - 80 - Math.random() * 150,
-            size: 12,
-            velocityY: 0,
-            bounce: 0
+            x: Math.random() * (CANVAS_WIDTH - 100) + 50,
+            y: Math.random() * (CANVAS_HEIGHT - 100) + 50,
+            size: 15,
+            collected: false
           });
           game.lastCoinSpawn = Date.now();
         }
 
-        const bossIndex = Math.floor(score / 800);
-        if (bossIndex < 20 && !defeatedBosses.includes(bossIndex + 1) && score >= (bossIndex + 1) * 800 - 150) {
+        // Check for boss spawn based on score
+        const bossIndex = Math.floor(score / 500);
+        if (bossIndex < 20 && !defeatedBosses.includes(bossIndex + 1) && score >= (bossIndex + 1) * 500 - 100) {
           onTriggerBoss(bossIndex);
         }
       }
+
+      // Update and draw coins
+      game.coins = game.coins.filter(coin => {
+        if (!coin.collected) {
+          const dx = game.player.x - coin.x;
+          const dy = game.player.y - coin.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 30) {
+            coin.collected = true;
+            return false;
+          }
+
+          // Draw coin
+          ctx.save();
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = '#fbbf24';
+          ctx.fillStyle = '#fbbf24';
+          ctx.strokeStyle = '#f59e0b';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(coin.x, coin.y, coin.size, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          
+          // Inner shine
+          ctx.fillStyle = '#fef3c7';
+          ctx.beginPath();
+          ctx.arc(coin.x - 3, coin.y - 3, coin.size / 3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+
+          return true;
+        }
+        return false;
+      });
 
       // Spawn boss
       if (gameState === 'boss' && currentBoss && !game.enemies.find(e => e.isBoss)) {
@@ -301,188 +285,101 @@ export default function GameCanvas({
         game.enemies.push(spawnBossEnemy(currentBoss));
       }
 
-      // Update structures
-      game.structures.forEach(structure => {
-        const screenX = structure.x - game.camera.x;
-        drawStructure(ctx, structure, screenX, game.animationFrame);
-      });
-
-      // Update enemies
+      // Update and draw enemies
       game.enemies = game.enemies.filter(enemy => {
-        if (enemy.flying) {
-          const targetY = GROUND_Y + enemy.altitude + Math.sin(game.animationFrame * 0.05 + enemy.x * 0.01) * 30;
-          enemy.y += (targetY - enemy.y) * 0.05;
+        // Move towards player
+        const dx = game.player.x - enemy.x;
+        const dy = game.player.y - enemy.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        
+        if (enemy.isBoss) {
+          // Boss movement patterns
+          enemy.patternTimer++;
+          const patternMove = getBossMovement(enemy, game.player, enemy.patternTimer);
+          enemy.x += patternMove.x;
+          enemy.y += patternMove.y;
         } else {
-          enemy.velocityY += GRAVITY;
-          enemy.y += enemy.velocityY;
-          
-          if (enemy.y >= GROUND_Y - enemy.size) {
-            enemy.y = GROUND_Y - enemy.size;
-            enemy.velocityY = 0;
-          }
+          enemy.x += (dx / dist) * enemy.speed;
+          enemy.y += (dy / dist) * enemy.speed;
         }
 
-        // Enemy AI
-        if (!enemy.isBoss) {
-          if (enemy.targetsStructures) {
-            const nearest = game.structures.reduce((closest, struct) => {
-              if (!struct.health || struct.health <= 0) return closest;
-              const dist = Math.abs(struct.x - enemy.x);
-              return !closest || dist < Math.abs(closest.x - enemy.x) ? struct : closest;
-            }, null);
-            
-            if (nearest) {
-              enemy.x += (nearest.x < enemy.x ? -enemy.speed : enemy.speed);
-            } else {
-              enemy.x -= enemy.speed;
-            }
-          } else {
-            const playerDist = Math.abs(game.player.x - enemy.x);
-            if (playerDist > 100) {
-              enemy.x += (game.player.x < enemy.x ? -enemy.speed : enemy.speed);
-            }
-          }
-
-          // Deploy obstacles
-          if (enemy.deploysObstacles && Date.now() - enemy.lastDeploy > 4000) {
-            game.hazards.push({
-              x: enemy.x,
-              y: GROUND_Y - 40,
-              width: 50,
-              height: 40,
-              type: 'spikes',
-              damage: 5,
-              life: 300
-            });
-            enemy.lastDeploy = Date.now();
-          }
-
-          // Create hazard zones
-          if (enemy.createsHazards && Date.now() - enemy.lastHazard > 5000) {
-            game.hazards.push({
-              x: enemy.x - 60,
-              y: GROUND_Y - 80,
-              width: 120,
-              height: 80,
-              type: 'toxic',
-              damage: 2,
-              life: 400,
-              alpha: 0.6
-            });
-            enemy.lastHazard = Date.now();
-          }
-        } else {
-          // Boss AI
-          enemy.patternPhase++;
-          const targetX = game.player.x + Math.cos(enemy.patternPhase * 0.02) * 300;
-          enemy.x += (targetX - enemy.x) * 0.01 * enemy.speed;
-        }
+        enemy.angle = Math.atan2(dy, dx);
 
         // Enemy shooting
         if (Date.now() - enemy.lastShot > enemy.shootInterval) {
-          const dx = game.player.x - enemy.x;
-          const dy = game.player.y - enemy.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
+          const bulletSpeed = enemy.isBoss ? 6 : 4;
+          const bulletDamage = enemy.isBoss ? enemy.damage : 10;
           
-          if (enemy.longRange && dist > 200 || dist < 500) {
+          if (enemy.isBoss && enemy.pattern === 'burst') {
+            // Burst pattern - multiple bullets
+            for (let i = 0; i < 8; i++) {
+              const angle = (Math.PI * 2 / 8) * i;
+              game.enemyBullets.push({
+                x: enemy.x,
+                y: enemy.y,
+                vx: Math.cos(angle) * bulletSpeed,
+                vy: Math.sin(angle) * bulletSpeed,
+                damage: bulletDamage,
+                size: 6,
+                color: enemy.color || '#ef4444'
+              });
+            }
+          } else {
             game.enemyBullets.push({
               x: enemy.x,
-              y: enemy.y + enemy.size / 2,
-              vx: (dx / dist) * 8,
-              vy: (dy / dist) * 8 + GRAVITY,
-              damage: enemy.damage,
-              size: enemy.isBoss ? 10 : 6,
+              y: enemy.y,
+              vx: (dx / dist) * bulletSpeed,
+              vy: (dy / dist) * bulletSpeed,
+              damage: bulletDamage,
+              size: enemy.isBoss ? 8 : 5,
               color: enemy.color || '#ef4444'
             });
           }
           enemy.lastShot = Date.now();
         }
 
-        const screenX = enemy.x - game.camera.x;
-        drawEnemy(ctx, enemy, screenX, game.animationFrame);
+        // Draw enemy
+        drawEnemy(ctx, enemy, game.animationFrame);
 
-        return enemy.health > 0 && enemy.x > game.camera.x - 200;
-      });
-
-      // Update hazards
-      game.hazards = game.hazards.filter(hazard => {
-        hazard.life--;
-        const screenX = hazard.x - game.camera.x;
-        
-        ctx.save();
-        ctx.globalAlpha = hazard.alpha || 0.8;
-        
-        if (hazard.type === 'spikes') {
-          ctx.fillStyle = '#78716c';
-          ctx.fillRect(screenX, hazard.y, hazard.width, hazard.height);
-          ctx.fillStyle = '#57534e';
-          for (let i = 0; i < hazard.width; i += 12) {
-            ctx.beginPath();
-            ctx.moveTo(screenX + i, hazard.y + hazard.height);
-            ctx.lineTo(screenX + i + 6, hazard.y);
-            ctx.lineTo(screenX + i + 12, hazard.y + hazard.height);
-            ctx.fill();
-          }
-        } else if (hazard.type === 'toxic') {
-          ctx.fillStyle = '#10b981';
-          ctx.fillRect(screenX, hazard.y, hazard.width, hazard.height);
-          ctx.fillStyle = '#059669';
-          for (let i = 0; i < 5; i++) {
-            const bx = screenX + Math.random() * hazard.width;
-            const by = hazard.y + Math.random() * hazard.height;
-            ctx.beginPath();
-            ctx.arc(bx, by, 8, 0, Math.PI * 2);
-            ctx.fill();
-          }
-        }
-        ctx.restore();
-
-        // Hazard collision with player
-        if (game.player.x + 40 > hazard.x &&
-            game.player.x < hazard.x + hazard.width &&
-            game.player.y + game.player.height > hazard.y &&
-            game.player.y < hazard.y + hazard.height &&
-            game.animationFrame % 30 === 0) {
-          onPlayerDamage(hazard.damage);
-        }
-
-        return hazard.life > 0;
+        // Keep enemy
+        return enemy.health > 0;
       });
 
       // Update bullets
       game.bullets = game.bullets.filter(bullet => {
-        bullet.x += bullet.velocityX;
-        bullet.velocityY += GRAVITY * 0.2;
-        bullet.y += bullet.velocityY;
+        bullet.y -= bullet.speed;
 
+        // Check collision with enemies
         for (let enemy of game.enemies) {
           const dx = bullet.x - enemy.x;
-          const dy = bullet.y - (enemy.y + enemy.size / 2);
+          const dy = bullet.y - enemy.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
 
           if (dist < enemy.size / 2 + bullet.size) {
             enemy.health -= bullet.damage;
             
-            for (let i = 0; i < 12; i++) {
+            // Hit particles
+            for (let i = 0; i < 8; i++) {
               game.particles.push({
                 x: bullet.x,
                 y: bullet.y,
-                vx: (Math.random() - 0.5) * 8,
-                vy: (Math.random() - 0.5) * 8,
-                life: 30,
-                color: enemy.color || '#fbbf24',
+                vx: (Math.random() - 0.5) * 6,
+                vy: (Math.random() - 0.5) * 6,
+                life: 25,
+                color: enemy.isBoss ? enemy.color : '#fbbf24',
                 size: 4
               });
             }
 
             if (enemy.health <= 0) {
-              for (let i = 0; i < 25; i++) {
+              // Death explosion
+              for (let i = 0; i < 20; i++) {
                 game.particles.push({
                   x: enemy.x,
-                  y: enemy.y + enemy.size / 2,
-                  vx: (Math.random() - 0.5) * 12,
-                  vy: (Math.random() - 0.5) * 12,
-                  life: 50,
+                  y: enemy.y,
+                  vx: (Math.random() - 0.5) * 10,
+                  vy: (Math.random() - 0.5) * 10,
+                  life: 40,
                   color: enemy.isBoss ? enemy.color : '#f97316',
                   size: 6
                 });
@@ -499,39 +396,40 @@ export default function GameCanvas({
           }
         }
 
-        const screenX = bullet.x - game.camera.x;
+        // Draw bullet
         ctx.save();
-        ctx.shadowBlur = 12;
-        ctx.shadowColor = '#fbbf24';
-        ctx.fillStyle = '#fbbf24';
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#4ade80';
+        ctx.fillStyle = '#4ade80';
         ctx.beginPath();
-        ctx.arc(screenX, bullet.y, bullet.size, 0, Math.PI * 2);
+        ctx.arc(bullet.x, bullet.y, bullet.size, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
 
-        return bullet.x > game.camera.x - 50 && bullet.x < game.camera.x + CANVAS_WIDTH + 50;
+        return bullet.y > -20;
       });
 
       // Update enemy bullets
       game.enemyBullets = game.enemyBullets.filter(bullet => {
         bullet.x += bullet.vx;
         bullet.y += bullet.vy;
-        bullet.vy += GRAVITY * 0.1;
 
-        const dx = bullet.x - game.player.x - 20;
-        const dy = bullet.y - game.player.y - 25;
+        // Check collision with player
+        const dx = bullet.x - game.player.x;
+        const dy = bullet.y - game.player.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
 
         if (dist < 25 + bullet.size) {
           onPlayerDamage(bullet.damage);
           
+          // Hit particles
           for (let i = 0; i < 10; i++) {
             game.particles.push({
               x: bullet.x,
               y: bullet.y,
-              vx: (Math.random() - 0.5) * 6,
-              vy: (Math.random() - 0.5) * 6,
-              life: 25,
+              vx: (Math.random() - 0.5) * 5,
+              vy: (Math.random() - 0.5) * 5,
+              life: 20,
               color: '#ef4444',
               size: 4
             });
@@ -539,97 +437,32 @@ export default function GameCanvas({
           return false;
         }
 
-        // Check structure collision
-        for (let structure of game.structures) {
-          if (structure.health > 0 &&
-              bullet.x > structure.x && bullet.x < structure.x + structure.width &&
-              bullet.y > structure.y && bullet.y < structure.y + structure.height) {
-            structure.health -= bullet.damage;
-            onStructureDamage(bullet.damage);
-            
-            for (let i = 0; i < 8; i++) {
-              game.particles.push({
-                x: bullet.x,
-                y: bullet.y,
-                vx: (Math.random() - 0.5) * 5,
-                vy: (Math.random() - 0.5) * 5,
-                life: 20,
-                color: '#9ca3af',
-                size: 3
-              });
-            }
-            return false;
-          }
-        }
-
-        const screenX = bullet.x - game.camera.x;
+        // Draw enemy bullet
         ctx.save();
         ctx.shadowBlur = 10;
         ctx.shadowColor = bullet.color;
         ctx.fillStyle = bullet.color;
         ctx.beginPath();
-        ctx.arc(screenX, bullet.y, bullet.size, 0, Math.PI * 2);
+        ctx.arc(bullet.x, bullet.y, bullet.size, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
 
-        return bullet.x > game.camera.x - 50 && bullet.x < game.camera.x + CANVAS_WIDTH + 50;
-      });
-
-      // Update coins
-      game.coins = game.coins.filter(coin => {
-        coin.velocityY += GRAVITY * 0.3;
-        coin.y += coin.velocityY;
-        
-        if (coin.y >= GROUND_Y - coin.size - 5) {
-          coin.y = GROUND_Y - coin.size - 5;
-          coin.velocityY = -coin.velocityY * 0.6;
-          coin.bounce++;
-          if (coin.bounce > 5) coin.velocityY = 0;
-        }
-
-        const dx = game.player.x + 20 - coin.x;
-        const dy = game.player.y + 25 - coin.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-
-        if (dist < 40) {
-          return false;
-        }
-
-        const screenX = coin.x - game.camera.x;
-        ctx.save();
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = '#fbbf24';
-        ctx.fillStyle = '#fbbf24';
-        ctx.strokeStyle = '#f59e0b';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(screenX, coin.y, coin.size, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        
-        ctx.fillStyle = '#fef3c7';
-        ctx.beginPath();
-        ctx.arc(screenX - 3, coin.y - 3, coin.size / 3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-
-        return coin.x > game.camera.x - 100 && coin.x < game.camera.x + CANVAS_WIDTH + 100;
+        return bullet.x > -20 && bullet.x < CANVAS_WIDTH + 20 && 
+               bullet.y > -20 && bullet.y < CANVAS_HEIGHT + 20;
       });
 
       // Update particles
       game.particles = game.particles.filter(particle => {
         particle.x += particle.vx;
         particle.y += particle.vy;
-        particle.vy += GRAVITY * 0.2;
         particle.life--;
 
-        const screenX = particle.x - game.camera.x;
         const alpha = particle.life / 50;
         ctx.save();
         ctx.globalAlpha = alpha;
         ctx.fillStyle = particle.color;
         ctx.beginPath();
-        ctx.arc(screenX, particle.y, particle.size * alpha, 0, Math.PI * 2);
+        ctx.arc(particle.x, particle.y, particle.size * alpha, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
 
@@ -637,8 +470,7 @@ export default function GameCanvas({
       });
 
       // Draw player
-      const playerScreenX = game.player.x - game.camera.x;
-      drawPlayer(ctx, game.player, playerScreenX, isDashing, game.animationFrame);
+      drawPlayer(ctx, game.player, isFlying, game.animationFrame);
 
       animationId = requestAnimationFrame(gameLoop);
     };
@@ -650,7 +482,7 @@ export default function GameCanvas({
       window.removeEventListener('keyup', handleKeyUp);
       cancelAnimationFrame(animationId);
     };
-  }, [gameState, isDashing, shoot, heal, dash, onPlayerDamage, onStructureDamage, onEnemyKill, onBossDamage, onTriggerBoss, spawnEnemy, spawnBossEnemy, currentBoss, defeatedBosses, score, upgrades]);
+  }, [gameState, isFlying, shoot, heal, fly, onPlayerDamage, onEnemyKill, onBossDamage, onTriggerBoss, spawnEnemy, spawnBossEnemy, currentBoss, defeatedBosses, score, upgrades]);
 
   return (
     <motion.canvas
@@ -664,449 +496,601 @@ export default function GameCanvas({
   );
 }
 
-function drawBackground(ctx, cameraX, frame) {
+function drawBackground(ctx, frame) {
+  // Grass/terrain base
   const gradient = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
-  gradient.addColorStop(0, '#1e293b');
-  gradient.addColorStop(0.6, '#334155');
-  gradient.addColorStop(1, '#475569');
+  gradient.addColorStop(0, '#7cb342');
+  gradient.addColorStop(0.5, '#8bc34a');
+  gradient.addColorStop(1, '#689f38');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-  // Distant buildings
+  // Grass patches
   ctx.save();
   ctx.globalAlpha = 0.3;
-  for (let i = 0; i < 10; i++) {
-    const x = (i * 250 - cameraX * 0.2) % (CANVAS_WIDTH + 500);
-    const height = 150 + (i % 3) * 80;
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(x, CANVAS_HEIGHT - 150 - height, 120, height);
+  for (let i = 0; i < 50; i++) {
+    const x = (i * 77 + Math.sin(i) * 50) % CANVAS_WIDTH;
+    const y = (i * 93 + Math.cos(i) * 30) % CANVAS_HEIGHT;
     
-    // Windows
-    ctx.fillStyle = '#fbbf24';
-    for (let j = 0; j < height / 30; j++) {
-      for (let k = 0; k < 3; k++) {
-        if (Math.random() > 0.3) {
-          ctx.fillRect(x + 15 + k * 35, CANVAS_HEIGHT - 150 - height + 15 + j * 30, 20, 15);
+    ctx.fillStyle = i % 3 === 0 ? '#558b2f' : '#7cb342';
+    ctx.beginPath();
+    ctx.ellipse(x, y, 20 + (i % 10), 10 + (i % 5), i * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // Dirt paths
+  ctx.save();
+  ctx.globalAlpha = 0.2;
+  ctx.fillStyle = '#8d6e63';
+  ctx.fillRect(CANVAS_WIDTH / 2 - 40, 0, 80, CANVAS_HEIGHT);
+  ctx.fillRect(0, CANVAS_HEIGHT / 2 - 40, CANVAS_WIDTH, 80);
+  ctx.restore();
+
+  // Trees (simple)
+  const trees = [
+    { x: 80, y: 80 },
+    { x: CANVAS_WIDTH - 80, y: 80 },
+    { x: 80, y: CANVAS_HEIGHT - 80 },
+    { x: CANVAS_WIDTH - 80, y: CANVAS_HEIGHT - 80 },
+    { x: 300, y: 300 },
+    { x: CANVAS_WIDTH - 300, y: 300 },
+  ];
+
+  trees.forEach(tree => {
+    // Trunk
+    ctx.fillStyle = '#6d4c41';
+    ctx.fillRect(tree.x - 8, tree.y, 16, 40);
+    
+    // Foliage
+    ctx.fillStyle = '#2e7d32';
+    ctx.beginPath();
+    ctx.arc(tree.x, tree.y - 10, 25, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.fillStyle = '#388e3c';
+    ctx.beginPath();
+    ctx.arc(tree.x - 10, tree.y - 5, 20, 0, Math.PI * 2);
+    ctx.arc(tree.x + 10, tree.y - 5, 20, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+function drawBuildings(ctx, buildings) {
+  buildings.forEach(building => {
+    ctx.save();
+    
+    if (building.type === 'tower') {
+      // Stone tower
+      ctx.fillStyle = '#757575';
+      ctx.fillRect(building.x, building.y, building.width, building.height);
+      
+      // Stones texture
+      ctx.strokeStyle = '#616161';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < building.height; i += 30) {
+        for (let j = 0; j < building.width; j += 40) {
+          ctx.strokeRect(building.x + j, building.y + i, 40, 30);
         }
       }
+      
+      // Top battlements
+      ctx.fillStyle = '#616161';
+      for (let i = 0; i < building.width; i += 30) {
+        ctx.fillRect(building.x + i, building.y - 20, 20, 20);
+      }
+      
+      // Windows
+      ctx.fillStyle = '#424242';
+      ctx.fillRect(building.x + building.width / 2 - 15, building.y + 40, 30, 40);
+      ctx.fillRect(building.x + building.width / 2 - 15, building.y + 100, 30, 40);
+      
+    } else if (building.type === 'house') {
+      // Walls
+      ctx.fillStyle = '#d7ccc8';
+      ctx.fillRect(building.x, building.y + 30, building.width, building.height - 30);
+      
+      // Roof
+      ctx.fillStyle = '#8d6e63';
+      ctx.beginPath();
+      ctx.moveTo(building.x - 10, building.y + 30);
+      ctx.lineTo(building.x + building.width / 2, building.y);
+      ctx.lineTo(building.x + building.width + 10, building.y + 30);
+      ctx.closePath();
+      ctx.fill();
+      
+      // Door
+      ctx.fillStyle = '#5d4037';
+      ctx.fillRect(building.x + building.width / 2 - 15, building.y + 60, 30, 50);
+      
+      // Windows
+      ctx.fillStyle = '#81d4fa';
+      ctx.fillRect(building.x + 15, building.y + 50, 25, 25);
+      ctx.fillRect(building.x + building.width - 40, building.y + 50, 25, 25);
+      
+      // Window frames
+      ctx.strokeStyle = '#5d4037';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(building.x + 15, building.y + 50, 25, 25);
+      ctx.strokeRect(building.x + building.width - 40, building.y + 50, 25, 25);
+      
+    } else if (building.type === 'castle') {
+      // Main structure
+      ctx.fillStyle = '#9e9e9e';
+      ctx.fillRect(building.x, building.y + 20, building.width, building.height - 20);
+      
+      // Towers on sides
+      ctx.fillStyle = '#757575';
+      ctx.fillRect(building.x - 20, building.y, 25, building.height + 20);
+      ctx.fillRect(building.x + building.width - 5, building.y, 25, building.height + 20);
+      
+      // Battlements
+      ctx.fillStyle = '#616161';
+      for (let i = 0; i < building.width; i += 25) {
+        ctx.fillRect(building.x + i, building.y - 10, 18, 15);
+      }
+      
+      // Gate
+      ctx.fillStyle = '#4e342e';
+      ctx.fillRect(building.x + building.width / 2 - 25, building.y + 50, 50, 70);
+      
+      // Gate arch
+      ctx.beginPath();
+      ctx.arc(building.x + building.width / 2, building.y + 50, 25, 0, Math.PI, true);
+      ctx.fill();
     }
-  }
-  ctx.restore();
-
-  // Stars/distant lights
-  ctx.fillStyle = '#fff';
-  for (let i = 0; i < 50; i++) {
-    const x = (i * 37 - cameraX * 0.05) % CANVAS_WIDTH;
-    const y = (i * 29) % (CANVAS_HEIGHT - 200);
-    ctx.globalAlpha = 0.3 + Math.sin(frame * 0.05 + i) * 0.2;
-    ctx.beginPath();
-    ctx.arc(x, y, 1 + (i % 2), 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.globalAlpha = 1;
-}
-
-function drawGround(ctx, cameraX) {
-  ctx.fillStyle = '#1f2937';
-  ctx.fillRect(0, GROUND_Y, CANVAS_WIDTH, CANVAS_HEIGHT - GROUND_Y);
-  
-  ctx.strokeStyle = '#374151';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(0, GROUND_Y);
-  ctx.lineTo(CANVAS_WIDTH, GROUND_Y);
-  ctx.stroke();
-  
-  // Ground details
-  ctx.fillStyle = '#374151';
-  for (let i = 0; i < CANVAS_WIDTH; i += 40) {
-    const x = i - (cameraX % 40);
-    ctx.fillRect(x, GROUND_Y + 10, 30, 4);
-    ctx.fillRect(x + 10, GROUND_Y + 25, 20, 4);
-  }
-}
-
-function drawStructure(ctx, structure, screenX, frame) {
-  if (structure.health <= 0) {
-    ctx.save();
-    ctx.globalAlpha = 0.3;
-    ctx.fillStyle = '#1f2937';
-    ctx.fillRect(screenX, structure.y, structure.width, structure.height);
+    
     ctx.restore();
-    return;
-  }
+  });
+}
 
-  ctx.save();
-  
-  if (structure.type === 'tower') {
-    // Main structure
-    ctx.fillStyle = '#475569';
-    ctx.fillRect(screenX, structure.y, structure.width, structure.height);
+function drawFences(ctx, fences) {
+  fences.forEach(fence => {
+    ctx.save();
+    ctx.strokeStyle = '#795548';
+    ctx.lineWidth = 6;
+    ctx.lineCap = 'round';
     
-    // Windows
-    ctx.fillStyle = '#0ea5e9';
-    for (let i = 0; i < 4; i++) {
-      ctx.fillRect(screenX + 20, structure.y + 20 + i * 40, 25, 25);
-      ctx.fillRect(screenX + 55, structure.y + 20 + i * 40, 25, 25);
-    }
-    
-    // Top antenna
-    ctx.strokeStyle = '#ef4444';
-    ctx.lineWidth = 4;
+    // Horizontal rails
     ctx.beginPath();
-    ctx.moveTo(screenX + structure.width / 2, structure.y);
-    ctx.lineTo(screenX + structure.width / 2, structure.y - 30);
+    ctx.moveTo(fence.x1, fence.y1);
+    ctx.lineTo(fence.x2, fence.y2);
     ctx.stroke();
     
-    ctx.fillStyle = frame % 40 < 20 ? '#ef4444' : '#dc2626';
     ctx.beginPath();
-    ctx.arc(screenX + structure.width / 2, structure.y - 35, 6, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.moveTo(fence.x1, fence.y1 + 20);
+    ctx.lineTo(fence.x2, fence.y2 + 20);
+    ctx.stroke();
     
-  } else if (structure.type === 'bunker') {
-    // Base
-    ctx.fillStyle = '#334155';
-    ctx.fillRect(screenX, structure.y, structure.width, structure.height);
-    
-    // Armored plating
-    ctx.strokeStyle = '#1e293b';
-    ctx.lineWidth = 3;
-    for (let i = 0; i < structure.width; i += 30) {
-      ctx.strokeRect(screenX + i, structure.y, 28, structure.height);
+    // Vertical posts
+    const numPosts = Math.floor(Math.abs(fence.x2 - fence.x1) / 40);
+    for (let i = 0; i <= numPosts; i++) {
+      const x = fence.x1 + (fence.x2 - fence.x1) * (i / numPosts);
+      ctx.fillStyle = '#6d4c41';
+      ctx.fillRect(x - 4, fence.y1 - 10, 8, 40);
     }
     
-    // Gun turret
-    ctx.fillStyle = '#64748b';
-    ctx.beginPath();
-    ctx.arc(screenX + structure.width / 2, structure.y + 30, 25, 0, Math.PI * 2);
-    ctx.fill();
-    
-    ctx.fillStyle = '#475569';
-    ctx.fillRect(screenX + structure.width / 2 - 30, structure.y + 25, 60, 10);
-    
-  } else if (structure.type === 'generator') {
-    // Base
-    ctx.fillStyle = '#1e293b';
-    ctx.fillRect(screenX, structure.y, structure.width, structure.height);
-    
-    // Core
-    const pulse = 1 + Math.sin(frame * 0.1) * 0.1;
-    ctx.save();
-    ctx.shadowBlur = 20;
-    ctx.shadowColor = '#3b82f6';
-    ctx.fillStyle = '#3b82f6';
-    ctx.beginPath();
-    ctx.arc(screenX + structure.width / 2, structure.y + structure.height / 2, 30 * pulse, 0, Math.PI * 2);
-    ctx.fill();
     ctx.restore();
-    
-    // Energy lines
-    ctx.strokeStyle = '#60a5fa';
-    ctx.lineWidth = 2;
-    for (let i = 0; i < 4; i++) {
-      const angle = (Math.PI * 2 / 4) * i + frame * 0.05;
-      const x1 = screenX + structure.width / 2 + Math.cos(angle) * 32;
-      const y1 = structure.y + structure.height / 2 + Math.sin(angle) * 32;
-      const x2 = screenX + structure.width / 2 + Math.cos(angle) * 45;
-      const y2 = structure.y + structure.height / 2 + Math.sin(angle) * 45;
-      ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
-      ctx.stroke();
-    }
-  }
-  
-  // Health bar
-  if (structure.health < structure.maxHealth) {
-    ctx.fillStyle = 'rgba(0,0,0,0.7)';
-    ctx.fillRect(screenX, structure.y - 15, structure.width, 8);
-    
-    const healthPercent = structure.health / structure.maxHealth;
-    ctx.fillStyle = healthPercent > 0.5 ? '#22c55e' : healthPercent > 0.25 ? '#f59e0b' : '#ef4444';
-    ctx.fillRect(screenX, structure.y - 15, structure.width * healthPercent, 8);
-  }
-  
-  ctx.restore();
+  });
 }
 
-function drawPlayer(ctx, player, screenX, isDashing, frame) {
+function drawPlayer(ctx, player, isFlying, frame) {
   ctx.save();
-  ctx.translate(screenX + 25, player.y + 25);
-  if (player.facing < 0) ctx.scale(-1, 1);
+  ctx.translate(player.x, player.y);
+  ctx.rotate(player.angle + Math.PI / 2);
 
-  if (isDashing) {
-    ctx.shadowBlur = 25;
+  const scale = 1;
+  
+  // Flying glow effect
+  if (isFlying) {
+    ctx.shadowBlur = 30;
     ctx.shadowColor = '#38bdf8';
     
+    ctx.globalAlpha = 0.5;
     for (let i = 0; i < 5; i++) {
-      ctx.globalAlpha = 0.3 - i * 0.05;
+      const angle = (frame * 0.1 + i * (Math.PI * 2 / 5));
+      const dist = 40 + Math.sin(frame * 0.2 + i) * 10;
       ctx.fillStyle = '#38bdf8';
       ctx.beginPath();
-      ctx.arc(-i * 8 * player.facing, 0, 20, 0, Math.PI * 2);
+      ctx.arc(Math.cos(angle) * dist, Math.sin(angle) * dist, 5, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.globalAlpha = 1;
   }
 
-  const walkCycle = Math.sin(frame * 0.2) * (player.velocityX !== 0 ? 5 : 0);
+  const bobOffset = Math.sin(frame * 0.1) * 2;
   
   // Shadow
-  ctx.globalAlpha = 0.3;
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.beginPath();
+  ctx.ellipse(2, 2 + bobOffset, 25 * scale, 20 * scale, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Shell base (darker green)
+  ctx.fillStyle = '#2d5016';
+  ctx.strokeStyle = '#1a3010';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.ellipse(0, bobOffset, 25 * scale, 20 * scale, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Shell pattern (hexagons)
+  ctx.fillStyle = '#4a7c2f';
+  const hexSize = 6 * scale;
+  for (let i = -1; i <= 1; i++) {
+    for (let j = -1; j <= 1; j++) {
+      const hx = i * hexSize * 1.5;
+      const hy = j * hexSize * 1.8 + bobOffset;
+      ctx.beginPath();
+      for (let k = 0; k < 6; k++) {
+        const angle = (Math.PI / 3) * k;
+        const px = hx + Math.cos(angle) * hexSize;
+        const py = hy + Math.sin(angle) * hexSize;
+        if (k === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#1a3010';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  }
+
+  // Shell highlight
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  ctx.beginPath();
+  ctx.ellipse(-8, -8 + bobOffset, 10 * scale, 8 * scale, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Head
+  ctx.fillStyle = '#6b9b4c';
+  ctx.strokeStyle = '#4a7c2f';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.ellipse(0, -28 + bobOffset, 10 * scale, 9 * scale, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Eyes
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(-4, -29 + bobOffset, 3.5, 0, Math.PI * 2);
+  ctx.arc(4, -29 + bobOffset, 3.5, 0, Math.PI * 2);
+  ctx.fill();
+
   ctx.fillStyle = '#000';
   ctx.beginPath();
-  ctx.ellipse(0, 35, 22, 8, 0, 0, Math.PI * 2);
+  ctx.arc(-4, -28 + bobOffset, 2, 0, Math.PI * 2);
+  ctx.arc(4, -28 + bobOffset, 2, 0, Math.PI * 2);
   ctx.fill();
-  ctx.globalAlpha = 1;
 
-  // Body (armored suit)
-  ctx.fillStyle = '#2563eb';
-  ctx.strokeStyle = '#1e40af';
+  // Eye shine
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(-3.5, -29 + bobOffset, 1, 0, Math.PI * 2);
+  ctx.arc(4.5, -29 + bobOffset, 1, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Mouth
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(0, -25 + bobOffset, 4, 0.2, Math.PI - 0.2);
+  ctx.stroke();
+
+  // Flippers (legs)
+  const flipperAngle = Math.sin(frame * 0.15) * 0.2;
+  ctx.fillStyle = '#6b9b4c';
+  ctx.strokeStyle = '#4a7c2f';
   ctx.lineWidth = 2;
   
-  // Torso
+  // Left front flipper
+  ctx.save();
+  ctx.translate(-20, -5 + bobOffset);
+  ctx.rotate(-0.3 + flipperAngle);
   ctx.beginPath();
-  ctx.roundRect(-15, -10, 30, 35, 5);
+  ctx.ellipse(0, 0, 12 * scale, 6 * scale, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
-  
-  // Armor plates
-  ctx.fillStyle = '#1d4ed8';
-  ctx.fillRect(-12, -8, 24, 8);
-  ctx.fillRect(-12, 5, 24, 8);
-  
-  // Head
-  ctx.fillStyle = '#1e40af';
-  ctx.strokeStyle = '#1e3a8a';
+  ctx.restore();
+
+  // Right front flipper
+  ctx.save();
+  ctx.translate(20, -5 + bobOffset);
+  ctx.rotate(0.3 - flipperAngle);
   ctx.beginPath();
-  ctx.roundRect(-12, -25, 24, 18, 3);
+  ctx.ellipse(0, 0, 12 * scale, 6 * scale, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
-  
-  // Visor
-  ctx.fillStyle = '#0ea5e9';
-  ctx.fillRect(-10, -22, 20, 10);
-  
-  ctx.fillStyle = '#06b6d4';
-  ctx.fillRect(-8, -21, 4, 8);
-  ctx.fillRect(4, -21, 4, 8);
-  
-  // Arms
-  ctx.fillStyle = '#2563eb';
-  ctx.strokeStyle = '#1e40af';
-  
-  // Left arm
-  ctx.save();
-  ctx.translate(-15, 0);
-  ctx.rotate(walkCycle * 0.03);
-  ctx.fillRect(-6, -5, 10, 20);
-  ctx.strokeRect(-6, -5, 10, 20);
-  
-  // Gun
-  ctx.fillStyle = '#374151';
-  ctx.fillRect(-8, 8, 14, 6);
-  ctx.fillStyle = '#6b7280';
-  ctx.fillRect(6, 9, 8, 4);
   ctx.restore();
-  
-  // Right arm
+
+  // Back flippers
   ctx.save();
-  ctx.translate(15, 0);
-  ctx.rotate(-walkCycle * 0.03);
-  ctx.fillRect(-4, -5, 10, 20);
-  ctx.strokeRect(-4, -5, 10, 20);
+  ctx.translate(-18, 15 + bobOffset);
+  ctx.rotate(-0.5 - flipperAngle);
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 10 * scale, 5 * scale, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
   ctx.restore();
-  
-  // Legs
-  const legOffset = player.onGround ? walkCycle : 0;
-  
-  // Left leg
+
   ctx.save();
-  ctx.translate(-8, 25);
-  ctx.rotate(legOffset * 0.02);
-  ctx.fillRect(-5, 0, 10, 18);
-  ctx.strokeRect(-5, 0, 10, 18);
+  ctx.translate(18, 15 + bobOffset);
+  ctx.rotate(0.5 + flipperAngle);
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 10 * scale, 5 * scale, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
   ctx.restore();
-  
-  // Right leg
-  ctx.save();
-  ctx.translate(8, 25);
-  ctx.rotate(-legOffset * 0.02);
-  ctx.fillRect(-5, 0, 10, 18);
-  ctx.strokeRect(-5, 0, 10, 18);
-  ctx.restore();
-  
-  // Boots
-  ctx.fillStyle = '#1f2937';
-  ctx.fillRect(-13, 40, 10, 6);
-  ctx.fillRect(3, 40, 10, 6);
+
+  // Tail
+  ctx.fillStyle = '#6b9b4c';
+  ctx.strokeStyle = '#4a7c2f';
+  ctx.beginPath();
+  ctx.moveTo(0, 20 + bobOffset);
+  ctx.lineTo(-5, 28 + bobOffset);
+  ctx.lineTo(5, 28 + bobOffset);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
 
   ctx.restore();
 }
 
-function drawEnemy(ctx, enemy, screenX, frame) {
+function drawEnemy(ctx, enemy, frame) {
   ctx.save();
-  ctx.translate(screenX, enemy.y + enemy.size / 2);
-
-  const wobble = Math.sin(frame * 0.1 + enemy.x * 0.01) * 2;
+  ctx.translate(enemy.x, enemy.y);
 
   if (enemy.isBoss) {
-    const pulse = 1 + Math.sin(frame * 0.08) * 0.08;
-    
-    ctx.save();
+    // Boss glow
     ctx.shadowBlur = 30;
     ctx.shadowColor = enemy.color;
+
+    const pulse = 1 + Math.sin(frame * 0.1) * 0.1;
     
-    // Boss body
+    // Boss body - mechanical/armored look
     ctx.fillStyle = enemy.color;
     ctx.strokeStyle = '#000';
-    ctx.lineWidth = 5;
+    ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.arc(0, 0, enemy.size / 2 * pulse, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
-    
-    // Armor segments
+
+    // Armor plates
     for (let i = 0; i < 8; i++) {
-      const angle = (Math.PI * 2 / 8) * i + frame * 0.02;
-      const dist = enemy.size / 2.5 * pulse;
-      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      const angle = (Math.PI * 2 / 8) * i;
+      const x = Math.cos(angle) * enemy.size / 3;
+      const y = Math.sin(angle) * enemy.size / 3;
+      
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
       ctx.beginPath();
-      ctx.arc(Math.cos(angle) * dist, Math.sin(angle) * dist, 12, 0, Math.PI * 2);
+      ctx.arc(x, y, enemy.size / 10, 0, Math.PI * 2);
       ctx.fill();
     }
-    
-    // Glowing core
-    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+
+    // Core glow
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
     ctx.beginPath();
     ctx.arc(0, 0, enemy.size / 4 * pulse, 0, Math.PI * 2);
     ctx.fill();
-    
-    // Menacing eyes
+
+    // Boss eyes - glowing
     ctx.fillStyle = '#ff0000';
     ctx.shadowBlur = 15;
     ctx.shadowColor = '#ff0000';
     ctx.beginPath();
-    ctx.arc(-enemy.size / 5, -enemy.size / 6, 10, 0, Math.PI * 2);
-    ctx.arc(enemy.size / 5, -enemy.size / 6, 10, 0, Math.PI * 2);
+    ctx.arc(-enemy.size / 6, -enemy.size / 8, enemy.size / 12, 0, Math.PI * 2);
+    ctx.arc(enemy.size / 6, -enemy.size / 8, enemy.size / 12, 0, Math.PI * 2);
     ctx.fill();
-    
-    ctx.restore();
-    
+
     // Health bar
     ctx.shadowBlur = 0;
     const barWidth = enemy.size;
     const barHeight = 8;
-    ctx.fillStyle = 'rgba(0,0,0,0.8)';
-    ctx.fillRect(-barWidth / 2, enemy.size / 2 + 15, barWidth, barHeight);
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(-barWidth / 2, enemy.size / 2 + 12, barWidth, barHeight);
     
     const healthPercent = enemy.health / enemy.maxHealth;
     ctx.fillStyle = healthPercent > 0.5 ? '#22c55e' : healthPercent > 0.25 ? '#f59e0b' : '#ef4444';
-    ctx.fillRect(-barWidth / 2, enemy.size / 2 + 15, barWidth * healthPercent, barHeight);
+    ctx.fillRect(-barWidth / 2, enemy.size / 2 + 12, barWidth * healthPercent, barHeight);
   } else {
-    // Regular enemies
-    ctx.shadowBlur = 8;
-    ctx.shadowColor = enemy.color;
+    // Regular enemies - robots/drones
+    const wobble = Math.sin(frame * 0.1 + enemy.x) * 3;
     
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = '#dc2626';
+
     switch (enemy.type) {
-      case 'grunt':
-        // Simple robot
-        ctx.fillStyle = enemy.color;
-        ctx.fillRect(-enemy.size / 2, -enemy.size / 2 + wobble, enemy.size, enemy.size);
+      case 'jellyfish':
+        // Drone type 1
+        ctx.fillStyle = '#7c3aed';
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 2;
-        ctx.strokeRect(-enemy.size / 2, -enemy.size / 2 + wobble, enemy.size, enemy.size);
         
-        ctx.fillStyle = '#fbbf24';
-        ctx.fillRect(-enemy.size / 4, -enemy.size / 3 + wobble, 6, 6);
-        ctx.fillRect(enemy.size / 6, -enemy.size / 3 + wobble, 6, 6);
-        break;
-        
-      case 'flyer':
-        // Drone
-        ctx.fillStyle = enemy.color;
+        // Body
         ctx.beginPath();
         ctx.arc(0, wobble, enemy.size / 2, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
         
         // Propellers
-        for (let i = 0; i < 4; i++) {
-          const angle = (Math.PI * 2 / 4) * i + frame * 0.2;
-          const px = Math.cos(angle) * enemy.size / 1.8;
-          const py = Math.sin(angle) * enemy.size / 1.8 + wobble;
+        for (let i = 0; i < 3; i++) {
+          const angle = (Math.PI * 2 / 3) * i + frame * 0.1;
+          const x = Math.cos(angle) * enemy.size / 2.5;
+          const y = Math.sin(angle) * enemy.size / 2.5 + wobble;
+          
           ctx.strokeStyle = '#a78bfa';
           ctx.lineWidth = 3;
           ctx.beginPath();
-          ctx.moveTo(px - 8, py);
-          ctx.lineTo(px + 8, py);
+          ctx.moveTo(x - 8, y);
+          ctx.lineTo(x + 8, y);
           ctx.stroke();
         }
+        
+        // Eye/sensor
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.arc(0, wobble - 5, 6, 0, Math.PI * 2);
+        ctx.fill();
         break;
         
-      case 'destroyer':
-        // Tank-like
-        ctx.fillStyle = enemy.color;
-        ctx.fillRect(-enemy.size / 2, -enemy.size / 3 + wobble, enemy.size, enemy.size * 0.7);
-        ctx.strokeRect(-enemy.size / 2, -enemy.size / 3 + wobble, enemy.size, enemy.size * 0.7);
+      case 'crab':
+        // Tank type
+        ctx.fillStyle = '#991b1b';
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
         
+        // Body
+        ctx.fillRect(-enemy.size / 2, wobble - enemy.size / 3, enemy.size, enemy.size / 1.5);
+        ctx.strokeRect(-enemy.size / 2, wobble - enemy.size / 3, enemy.size, enemy.size / 1.5);
+        
+        // Turret
         ctx.beginPath();
         ctx.arc(0, wobble, enemy.size / 3, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
         
+        // Cannon
         ctx.fillRect(-4, wobble - enemy.size / 2, 8, enemy.size / 2);
+        
+        // Treads
+        ctx.fillStyle = '#000';
+        ctx.fillRect(-enemy.size / 2 - 5, wobble + enemy.size / 4, 10, 8);
+        ctx.fillRect(enemy.size / 2 - 5, wobble + enemy.size / 4, 10, 8);
         break;
         
-      case 'miner':
-        // Builder bot
-        ctx.fillStyle = enemy.color;
-        ctx.fillRect(-enemy.size / 2.5, -enemy.size / 2 + wobble, enemy.size / 1.25, enemy.size);
-        ctx.strokeRect(-enemy.size / 2.5, -enemy.size / 2 + wobble, enemy.size / 1.25, enemy.size);
+      case 'fish':
+        // Fighter type
+        ctx.fillStyle = '#dc2626';
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
         
-        // Drill arm
-        ctx.save();
-        ctx.translate(-enemy.size / 2, wobble);
-        ctx.rotate(frame * 0.1);
-        ctx.fillStyle = '#78716c';
-        ctx.fillRect(-15, -3, 20, 6);
-        ctx.restore();
-        break;
-        
-      case 'sniper':
-        // Long range unit
-        ctx.fillStyle = enemy.color;
-        ctx.fillRect(-enemy.size / 3, -enemy.size / 2 + wobble, enemy.size * 0.65, enemy.size);
-        ctx.strokeRect(-enemy.size / 3, -enemy.size / 2 + wobble, enemy.size * 0.65, enemy.size);
-        
-        // Long barrel
-        ctx.fillStyle = '#1f2937';
-        ctx.fillRect(enemy.size / 3, wobble - 3, 25, 6);
-        
-        // Scope
-        ctx.fillStyle = '#3b82f6';
+        // Fuselage
         ctx.beginPath();
-        ctx.arc(enemy.size / 4, wobble - enemy.size / 4, 5, 0, Math.PI * 2);
-        ctx.fill();
-        break;
-        
-      case 'bomber':
-        // Heavy unit
-        ctx.fillStyle = enemy.color;
-        ctx.beginPath();
-        ctx.ellipse(0, wobble, enemy.size / 1.8, enemy.size / 2.2, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, wobble, enemy.size / 2, enemy.size / 3, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
         
-        // Bombs
-        for (let i = 0; i < 3; i++) {
-          ctx.fillStyle = '#1f2937';
-          ctx.beginPath();
-          ctx.arc(-enemy.size / 3 + i * enemy.size / 3, wobble + enemy.size / 3, 6, 0, Math.PI * 2);
-          ctx.fill();
-        }
+        // Wings
+        ctx.beginPath();
+        ctx.moveTo(-enemy.size / 2, wobble);
+        ctx.lineTo(-enemy.size, wobble - 10);
+        ctx.lineTo(-enemy.size / 2, wobble + 10);
+        ctx.fill();
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.moveTo(enemy.size / 2, wobble);
+        ctx.lineTo(enemy.size, wobble - 10);
+        ctx.lineTo(enemy.size / 2, wobble + 10);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Cockpit
+        ctx.fillStyle = '#60a5fa';
+        ctx.beginPath();
+        ctx.arc(0, wobble - 5, 8, 0, Math.PI * 2);
+        ctx.fill();
         break;
+        
+      default: // starfish - Mine type
+        ctx.fillStyle = '#ca8a04';
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        
+        // Core
+        ctx.beginPath();
+        ctx.arc(0, wobble, enemy.size / 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Spikes
+        for (let i = 0; i < 8; i++) {
+          const angle = (Math.PI * 2 / 8) * i;
+          const x1 = Math.cos(angle) * enemy.size / 3;
+          const y1 = Math.sin(angle) * enemy.size / 3 + wobble;
+          const x2 = Math.cos(angle) * enemy.size / 2;
+          const y2 = Math.sin(angle) * enemy.size / 2 + wobble;
+          
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.lineWidth = 4;
+          ctx.stroke();
+        }
+        
+        // Danger light
+        ctx.fillStyle = frame % 20 < 10 ? '#ef4444' : '#000';
+        ctx.beginPath();
+        ctx.arc(0, wobble, 5, 0, Math.PI * 2);
+        ctx.fill();
     }
   }
 
   ctx.restore();
+}
+
+function getBossMovement(boss, player, timer) {
+  const dx = player.x - boss.x;
+  const dy = player.y - boss.y;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  
+  switch (boss.pattern) {
+    case 'circle':
+      return {
+        x: Math.cos(timer * 0.02) * boss.speed * 2,
+        y: Math.sin(timer * 0.02) * boss.speed * 2
+      };
+    case 'zigzag':
+      return {
+        x: Math.sin(timer * 0.05) * boss.speed * 3,
+        y: (dy / dist) * boss.speed * 0.5
+      };
+    case 'chase':
+      return {
+        x: (dx / dist) * boss.speed,
+        y: (dy / dist) * boss.speed
+      };
+    case 'teleport':
+      if (timer % 120 === 0) {
+        return {
+          x: (Math.random() - 0.5) * 200,
+          y: (Math.random() - 0.5) * 200
+        };
+      }
+      return { x: 0, y: 0 };
+    case 'dash':
+      if (timer % 100 < 20) {
+        return {
+          x: (dx / dist) * boss.speed * 4,
+          y: (dy / dist) * boss.speed * 4
+        };
+      }
+      return { x: 0, y: 0 };
+    case 'spiral':
+      const spiralAngle = timer * 0.03;
+      const spiralDist = 100 + Math.sin(timer * 0.01) * 50;
+      return {
+        x: (player.x + Math.cos(spiralAngle) * spiralDist - boss.x) * 0.02,
+        y: (player.y + Math.sin(spiralAngle) * spiralDist - boss.y) * 0.02
+      };
+    case 'bounce':
+      return {
+        x: Math.sin(timer * 0.04) * boss.speed * 2,
+        y: Math.cos(timer * 0.03) * boss.speed * 2
+      };
+    case 'wave':
+      return {
+        x: (dx / dist) * boss.speed * 0.5,
+        y: Math.sin(timer * 0.05) * boss.speed * 3
+      };
+    default:
+      return {
+        x: (dx / dist) * boss.speed * 0.8,
+        y: (dy / dist) * boss.speed * 0.8
+      };
+  }
 }
