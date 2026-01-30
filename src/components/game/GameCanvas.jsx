@@ -561,7 +561,7 @@ export default function GameCanvas({
       ));
 
       // Draw background
-      drawBackground(ctx, game.camera, game.animationFrame, gameMode);
+      drawBackground(ctx, game.camera, game.animationFrame, gameMode, WORLD_WIDTH, WORLD_HEIGHT);
 
       // Draw buildings
       game.buildings.forEach(building => {
@@ -1375,7 +1375,7 @@ export default function GameCanvas({
   );
 }
 
-function drawBackground(ctx, camera, frame, gameMode) {
+function drawBackground(ctx, camera, frame, gameMode, WORLD_WIDTH, WORLD_HEIGHT) {
   // Check if tower mode
   if (gameMode === 'tower') {
     // Tower stone floor
