@@ -93,7 +93,10 @@ export default function StartScreen({ onStart }) {
           击败 20 个 BOSS 赢得胜利！
         </p>
         <p className="text-cyan-300/70 text-lg">
-          保护建筑物免受敌人攻击
+          每得 800 分挑战一个 BOSS
+        </p>
+        <p className="text-emerald-300/70 text-base">
+          新增敌人: 狙击手、医疗兵、爆破手
         </p>
       </motion.div>
     </motion.div>

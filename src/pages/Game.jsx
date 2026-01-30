@@ -134,10 +134,20 @@ export default function Game() {
   }, [isFlying]);
 
   const handleEnemyKill = useCallback((enemyType) => {
-    setScore(prev => prev + 100);
+    setScore(prev => {
+      const newScore = prev + 100;
+      // Trigger boss every 800 score
+      if (Math.floor(newScore / 800) > Math.floor(prev / 800)) {
+        const bossIndex = defeatedBosses.length;
+        if (bossIndex < BOSSES.length) {
+          setTimeout(() => triggerBoss(bossIndex), 1000);
+        }
+      }
+      return newScore;
+    });
     setCoins(prev => prev + 10);
     setPlayerHealth(prev => Math.min(maxHealth, prev + 10));
-  }, [maxHealth]);
+  }, [maxHealth, defeatedBosses.length, triggerBoss]);
 
   const handleBossDamage = useCallback((damage) => {
     setBossHealth(prev => {

@@ -15,7 +15,7 @@ const ENEMY_TYPES = {
     speed: 1.5,
     health: 40,
     damage: 10,
-    shootInterval: 4000,
+    shootInterval: 6000,
     color: '#7c3aed',
     behaviorType: 'patrol',
     attacksBuildings: false
@@ -27,7 +27,7 @@ const ENEMY_TYPES = {
     speed: 0.8,
     health: 100,
     damage: 25,
-    shootInterval: 5000,
+    shootInterval: 8000,
     color: '#dc2626',
     behaviorType: 'assault',
     attacksBuildings: true
@@ -39,7 +39,7 @@ const ENEMY_TYPES = {
     speed: 2.5,
     health: 25,
     damage: 8,
-    shootInterval: 3000,
+    shootInterval: 5000,
     color: '#0891b2',
     behaviorType: 'flying',
     attacksBuildings: false
@@ -51,7 +51,7 @@ const ENEMY_TYPES = {
     speed: 1.2,
     health: 30,
     damage: 5,
-    shootInterval: 7000,
+    shootInterval: 10000,
     color: '#ea580c',
     behaviorType: 'support',
     attacksBuildings: false,
@@ -64,11 +64,50 @@ const ENEMY_TYPES = {
     speed: 0.3,
     health: 80,
     damage: 40,
-    shootInterval: 6000,
+    shootInterval: 9000,
     color: '#65a30d',
     behaviorType: 'stationary',
     attacksBuildings: true,
     createsHazards: true
+  },
+  SNIPER: {
+    name: 'sniper',
+    width: 45,
+    height: 55,
+    speed: 0.5,
+    health: 50,
+    damage: 35,
+    shootInterval: 12000,
+    color: '#f59e0b',
+    behaviorType: 'stationary',
+    attacksBuildings: false,
+    longRange: true
+  },
+  HEALER: {
+    name: 'healer',
+    width: 38,
+    height: 48,
+    speed: 1.0,
+    health: 35,
+    damage: 3,
+    shootInterval: 15000,
+    color: '#10b981',
+    behaviorType: 'support',
+    attacksBuildings: false,
+    healsAllies: true
+  },
+  BOMBER: {
+    name: 'bomber',
+    width: 50,
+    height: 50,
+    speed: 2.0,
+    health: 60,
+    damage: 15,
+    shootInterval: 7000,
+    color: '#f43f5e',
+    behaviorType: 'kamikaze',
+    attacksBuildings: false,
+    explodeOnDeath: true
   }
 };
 
@@ -119,8 +158,20 @@ export default function GameCanvas({
     keys: {},
     lastEnemySpawn: 0,
     lastObstacleCheck: 0,
+    lastHealCheck: 0,
     animationFrame: 0,
-    worldGenerated: false
+    worldGenerated: false,
+    sounds: {
+      shoot: new Audio(),
+      melee: new Audio(),
+      heal: new Audio(),
+      fly: new Audio(),
+      largeAttack: new Audio(),
+      allOut: new Audio(),
+      enemyHit: new Audio(),
+      enemyDie: new Audio(),
+      explosion: new Audio()
+    }
   });
 
   const generateWorld = useCallback(() => {
@@ -220,6 +271,8 @@ export default function GameCanvas({
       
       if (e.key.toLowerCase() === 'k') {
         if (shoot()) {
+          try { game.sounds.shoot.currentTime = 0; game.sounds.shoot.play().catch(() => {}); } catch(e) {}
+
           const angle = game.player.angle;
           const baseSpeed = hasHomingBullets ? 10 : 15;
           const bulletDamage = hasCannonUpgrade ? 25 * upgrades.damage : 10 * upgrades.damage;
@@ -259,6 +312,7 @@ export default function GameCanvas({
       
       if (e.key.toLowerCase() === 'h') {
         if (heal()) {
+          try { game.sounds.heal.currentTime = 0; game.sounds.heal.play().catch(() => {}); } catch(e) {}
           for (let i = 0; i < 20; i++) {
             game.particles.push({
               x: game.player.x + game.player.width / 2,
@@ -276,6 +330,7 @@ export default function GameCanvas({
       
       if (e.key.toLowerCase() === 'o') {
         if (fly()) {
+          try { game.sounds.fly.currentTime = 0; game.sounds.fly.play().catch(() => {}); } catch(e) {}
           for (let i = 0; i < 30; i++) {
             game.particles.push({
               x: game.player.x + game.player.width / 2,
@@ -292,6 +347,8 @@ export default function GameCanvas({
 
       if (e.key.toLowerCase() === 'l') {
         if (largeAttack()) {
+          try { game.sounds.largeAttack.currentTime = 0; game.sounds.largeAttack.play().catch(() => {}); } catch(e) {}
+
           // 100 bullets in all directions
           for (let i = 0; i < 100; i++) {
             const angle = (Math.PI * 2 / 100) * i;
@@ -331,6 +388,8 @@ export default function GameCanvas({
 
       if (e.key.toLowerCase() === 'j') {
         if (meleeAttack()) {
+          try { game.sounds.melee.currentTime = 0; game.sounds.melee.play().catch(() => {}); } catch(e) {}
+
           // Melee particles - 360 degrees
           for (let i = 0; i < 40; i++) {
             const angle = (Math.PI * 2 / 40) * i;
@@ -349,6 +408,8 @@ export default function GameCanvas({
 
       if (e.key.toLowerCase() === 'p') {
         if (allOutAttack()) {
+          try { game.sounds.allOut.currentTime = 0; game.sounds.allOut.play().catch(() => {}); } catch(e) {}
+
           // Kill all enemies instantly
           game.enemies.forEach(enemy => {
             for (let i = 0; i < 30; i++) {
@@ -504,6 +565,39 @@ export default function GameCanvas({
         });
       }
 
+      // Healer behavior - heal nearby allies
+      if (Date.now() - game.lastHealCheck > 2000) {
+        game.enemies.forEach(healer => {
+          if (healer.healsAllies) {
+            game.enemies.forEach(ally => {
+              if (ally !== healer && ally.health < ally.maxHealth) {
+                const dx = ally.x - healer.x;
+                const dy = ally.y - healer.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 200) {
+                  ally.health = Math.min(ally.maxHealth, ally.health + 10);
+
+                  // Heal particles
+                  for (let i = 0; i < 5; i++) {
+                    game.particles.push({
+                      x: ally.x + ally.width / 2,
+                      y: ally.y + ally.height / 2,
+                      vx: (Math.random() - 0.5) * 2,
+                      vy: -Math.random() * 3,
+                      life: 20,
+                      color: '#10b981',
+                      size: 3
+                    });
+                  }
+                }
+              }
+            });
+          }
+        });
+        game.lastHealCheck = Date.now();
+      }
+
       // Update enemies
       game.enemies = game.enemies.filter(enemy => {
         // AI behavior - top-down movement
@@ -571,13 +665,24 @@ export default function GameCanvas({
               warning: 50
             });
           }
+        } else if (enemy.behaviorType === 'kamikaze') {
+          // Rush towards player
+          const angle = Math.atan2(dy, dx);
+          enemy.vx = Math.cos(angle) * enemy.speed;
+          enemy.vy = Math.sin(angle) * enemy.speed;
+
+          // Explode if close to player
+          if (distToPlayer < 60) {
+            enemy.health = 0;
+          }
         }
 
         enemy.x += enemy.vx;
         enemy.y += enemy.vy;
 
-        // Enemy shooting
-        if (Date.now() - enemy.lastShot > enemy.shootInterval) {
+        // Enemy shooting (snipers have longer range)
+        const shootRange = enemy.longRange ? 800 : 600;
+        if (Date.now() - enemy.lastShot > enemy.shootInterval && distToPlayer < shootRange) {
           const target = enemy.target || game.player;
           const dx = (target.x || target.x) - enemy.x;
           const dy = ((target.y || target.y) + (target.height || 0) / 2) - (enemy.y + enemy.height / 2);
@@ -787,7 +892,20 @@ export default function GameCanvas({
             }
 
             if (enemy.health <= 0) {
+              try { game.sounds.enemyDie.currentTime = 0; game.sounds.enemyDie.play().catch(() => {}); } catch(e) {}
               onEnemyKill(enemy.name);
+
+              // Bomber explosion on death
+              if (enemy.explodeOnDeath) {
+                try { game.sounds.explosion.currentTime = 0; game.sounds.explosion.play().catch(() => {}); } catch(e) {}
+                game.explosions.push({
+                  x: enemy.x + enemy.width / 2,
+                  y: enemy.y + enemy.height / 2,
+                  radius: 10,
+                  damage: 80,
+                  life: 30
+                });
+              }
 
               // Death explosion
               for (let i = 0; i < 25; i++) {
@@ -801,6 +919,8 @@ export default function GameCanvas({
                   size: 5
                 });
               }
+            } else {
+              try { game.sounds.enemyHit.currentTime = 0; game.sounds.enemyHit.play().catch(() => {}); } catch(e) {}
             }
 
             return false;
@@ -1455,15 +1575,15 @@ function drawEnemy(ctx, enemy, camera, frame) {
     ctx.fillStyle = enemy.color;
     ctx.strokeStyle = '#000';
     ctx.lineWidth = 3;
-    
+
     // Base
     ctx.fillRect(x + 5, y + 35, 60, 20);
     ctx.strokeRect(x + 5, y + 35, 60, 20);
-    
+
     // Platform
     ctx.fillRect(x + 15, y + 20, 40, 15);
     ctx.strokeRect(x + 15, y + 20, 40, 15);
-    
+
     // Barrel
     ctx.save();
     ctx.translate(x + 35, y + 27);
@@ -1471,6 +1591,98 @@ function drawEnemy(ctx, enemy, camera, frame) {
     ctx.fillRect(0, -4, 35, 8);
     ctx.strokeRect(0, -4, 35, 8);
     ctx.restore();
+
+  } else if (enemy.name === 'sniper') {
+    // Sniper unit
+    ctx.fillStyle = enemy.color;
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+
+    // Body
+    ctx.fillRect(x + 10, y + 20, 25, 30);
+    ctx.strokeRect(x + 10, y + 20, 25, 30);
+
+    // Head
+    ctx.fillRect(x + 12, y + 5, 21, 15);
+    ctx.strokeRect(x + 12, y + 5, 21, 15);
+
+    // Sniper scope
+    ctx.fillStyle = '#60a5fa';
+    ctx.fillRect(x + 18, y + 10, 9, 5);
+
+    // Long rifle
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(x + 35, y + 30);
+    ctx.lineTo(x + 55, y + 25);
+    ctx.stroke();
+
+  } else if (enemy.name === 'healer') {
+    // Healer unit
+    ctx.fillStyle = enemy.color;
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+
+    // Body
+    ctx.fillRect(x + 11, y + 18, 16, 25);
+    ctx.strokeRect(x + 11, y + 18, 16, 25);
+
+    // Head
+    ctx.fillRect(x + 13, y + 5, 12, 13);
+    ctx.strokeRect(x + 13, y + 5, 12, 13);
+
+    // Medical cross
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(x + 16, y + 8, 6, 2);
+    ctx.fillRect(x + 17, y + 7, 4, 4);
+
+    // Healing aura
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 0.4 + Math.sin(frame * 0.1) * 0.3;
+    ctx.beginPath();
+    ctx.arc(x + 19, y + 30, 25, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+  } else if (enemy.name === 'bomber') {
+    // Bomber unit
+    ctx.fillStyle = enemy.color;
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+
+    // Body with bombs
+    ctx.beginPath();
+    ctx.arc(x + 25, y + 25, 20, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Warning symbol
+    ctx.fillStyle = '#fbbf24';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x + 25, y + 15);
+    ctx.lineTo(x + 30, y + 25);
+    ctx.lineTo(x + 20, y + 25);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x + 24, y + 20, 2, 3);
+
+    // Bombs attached
+    ctx.fillStyle = '#1c1917';
+    for (let i = 0; i < 3; i++) {
+      const angle = (Math.PI * 2 / 3) * i + frame * 0.05;
+      const bx = x + 25 + Math.cos(angle) * 15;
+      const by = y + 25 + Math.sin(angle) * 15;
+      ctx.beginPath();
+      ctx.arc(bx, by, 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
   
   ctx.restore();
