@@ -10,7 +10,10 @@ export default function GameUI({
   shootCooldown,
   healCooldown,
   flyCooldown,
+  largeAttackCooldown,
+  allOutAttackCooldown,
   isFlying,
+  isAllOutAttack,
   bossHealth,
   bossMaxHealth,
   bossName,
@@ -89,7 +92,7 @@ export default function GameUI({
         </motion.div>
       )}
 
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-4">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3">
         <CooldownButton
           label="K - 射击"
           cooldown={shootCooldown}
@@ -106,6 +109,19 @@ export default function GameUI({
           color="blue"
           active={isFlying}
         />
+        <CooldownButton
+          label="L - 大招"
+          cooldown={largeAttackCooldown}
+          color="orange"
+          large
+        />
+        <CooldownButton
+          label="P - 终极"
+          cooldown={allOutAttackCooldown}
+          color="purple"
+          active={isAllOutAttack}
+          large
+        />
       </div>
 
       <div className="absolute bottom-6 right-6 text-white/70 text-sm bg-black/40 px-4 py-2 rounded-lg backdrop-blur-sm">
@@ -115,13 +131,15 @@ export default function GameUI({
   );
 }
 
-function CooldownButton({ label, cooldown, color, active }) {
+function CooldownButton({ label, cooldown, color, active, large }) {
   const isReady = cooldown <= 0;
   
   const colorClasses = {
     red: 'from-red-600 to-red-500 border-red-400',
     green: 'from-green-600 to-green-500 border-green-400',
-    blue: 'from-blue-600 to-blue-500 border-blue-400'
+    blue: 'from-blue-600 to-blue-500 border-blue-400',
+    orange: 'from-orange-600 to-orange-500 border-orange-400',
+    purple: 'from-purple-600 to-purple-500 border-purple-400'
   };
 
   return (

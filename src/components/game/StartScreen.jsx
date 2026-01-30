@@ -53,6 +53,14 @@ export default function StartScreen({ onStart }) {
             <kbd className="px-4 py-2 bg-yellow-500/40 rounded-lg font-mono font-bold">B</kbd>
             <span>打开商店</span>
           </div>
+          <div className="flex items-center gap-3">
+            <kbd className="px-4 py-2 bg-orange-500/40 rounded-lg font-mono font-bold">L</kbd>
+            <span>大招 (100发)</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <kbd className="px-4 py-2 bg-purple-500/40 rounded-lg font-mono font-bold">P</kbd>
+            <span>终极技 (全灭)</span>
+          </div>
         </div>
       </motion.div>
 

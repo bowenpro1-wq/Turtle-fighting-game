@@ -159,6 +159,24 @@ export default function Game() {
     return false;
   }, [flyCooldown, isFlying]);
 
+  const largeAttack = useCallback(() => {
+    if (largeAttackCooldown <= 0) {
+      setLargeAttackCooldown(LARGE_ATTACK_CD);
+      return true;
+    }
+    return false;
+  }, [largeAttackCooldown, LARGE_ATTACK_CD]);
+
+  const allOutAttack = useCallback(() => {
+    if (allOutAttackCooldown <= 0) {
+      setAllOutAttackCooldown(ALL_OUT_ATTACK_CD);
+      setIsAllOutAttack(true);
+      setTimeout(() => setIsAllOutAttack(false), ALL_OUT_DURATION);
+      return true;
+    }
+    return false;
+  }, [allOutAttackCooldown]);
+
   const handlePurchase = (upgrade, cost) => {
     if (coins >= cost) {
       setCoins(prev => prev - cost);
@@ -183,6 +201,8 @@ export default function Game() {
       setShootCooldown(prev => Math.max(0, prev - 50));
       setHealCooldown(prev => Math.max(0, prev - 50));
       setFlyCooldown(prev => Math.max(0, prev - 50));
+      setLargeAttackCooldown(prev => Math.max(0, prev - 50));
+      setAllOutAttackCooldown(prev => Math.max(0, prev - 50));
     }, 50);
 
     return () => clearInterval(interval);
@@ -217,7 +237,10 @@ export default function Game() {
               shoot={shoot}
               heal={heal}
               fly={fly}
+              largeAttack={largeAttack}
+              allOutAttack={allOutAttack}
               isFlying={isFlying}
+              isAllOutAttack={isAllOutAttack}
               currentBoss={currentBoss}
               defeatedBosses={defeatedBosses}
               score={score}
@@ -232,7 +255,10 @@ export default function Game() {
               shootCooldown={shootCooldown / SHOOT_CD}
               healCooldown={healCooldown / HEAL_CD}
               flyCooldown={flyCooldown / FLY_CD}
+              largeAttackCooldown={largeAttackCooldown / LARGE_ATTACK_CD}
+              allOutAttackCooldown={allOutAttackCooldown / ALL_OUT_ATTACK_CD}
               isFlying={isFlying}
+              isAllOutAttack={isAllOutAttack}
               bossHealth={currentBoss ? bossHealth : null}
               bossMaxHealth={bossMaxHealth}
               bossName={currentBoss?.name}

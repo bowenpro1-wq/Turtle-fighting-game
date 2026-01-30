@@ -12,10 +12,10 @@ const ENEMY_TYPES = {
     name: 'soldier',
     width: 40,
     height: 50,
-    speed: 2,
+    speed: 1.5,
     health: 40,
     damage: 10,
-    shootInterval: 2000,
+    shootInterval: 4000,
     color: '#7c3aed',
     behaviorType: 'patrol',
     attacksBuildings: false
@@ -24,10 +24,10 @@ const ENEMY_TYPES = {
     name: 'tank',
     width: 80,
     height: 60,
-    speed: 1,
+    speed: 0.8,
     health: 100,
     damage: 25,
-    shootInterval: 3000,
+    shootInterval: 5000,
     color: '#dc2626',
     behaviorType: 'assault',
     attacksBuildings: true
@@ -36,10 +36,10 @@ const ENEMY_TYPES = {
     name: 'drone',
     width: 35,
     height: 35,
-    speed: 3,
+    speed: 2.5,
     health: 25,
     damage: 8,
-    shootInterval: 1500,
+    shootInterval: 3000,
     color: '#0891b2',
     behaviorType: 'flying',
     attacksBuildings: false
@@ -48,10 +48,10 @@ const ENEMY_TYPES = {
     name: 'engineer',
     width: 40,
     height: 50,
-    speed: 1.5,
+    speed: 1.2,
     health: 30,
     damage: 5,
-    shootInterval: 5000,
+    shootInterval: 7000,
     color: '#ea580c',
     behaviorType: 'support',
     attacksBuildings: false,
@@ -61,10 +61,10 @@ const ENEMY_TYPES = {
     name: 'artillery',
     width: 70,
     height: 55,
-    speed: 0.5,
+    speed: 0.3,
     health: 80,
     damage: 40,
-    shootInterval: 4000,
+    shootInterval: 6000,
     color: '#65a30d',
     behaviorType: 'stationary',
     attacksBuildings: true,
@@ -81,7 +81,10 @@ export default function GameCanvas({
   shoot,
   heal,
   fly,
+  largeAttack,
+  allOutAttack,
   isFlying,
+  isAllOutAttack,
   currentBoss,
   defeatedBosses,
   score,
@@ -270,6 +273,71 @@ export default function GameCanvas({
           }
         }
       }
+
+      if (e.key.toLowerCase() === 'l') {
+        if (largeAttack()) {
+          // 100 bullets in all directions
+          for (let i = 0; i < 100; i++) {
+            const angle = (Math.PI * 2 / 100) * i;
+            game.bullets.push({
+              x: game.player.x + game.player.width / 2,
+              y: game.player.y + game.player.height / 2,
+              vx: Math.cos(angle) * 12,
+              vy: Math.sin(angle) * 12,
+              damage: 15 * upgrades.damage,
+              size: 10,
+              fromPlayer: true
+            });
+          }
+
+          // Epic particles
+          for (let i = 0; i < 50; i++) {
+            game.particles.push({
+              x: game.player.x + game.player.width / 2,
+              y: game.player.y + game.player.height / 2,
+              vx: (Math.random() - 0.5) * 10,
+              vy: (Math.random() - 0.5) * 10,
+              life: 50,
+              color: '#fbbf24',
+              size: 8
+            });
+          }
+        }
+      }
+
+      if (e.key.toLowerCase() === 'p') {
+        if (allOutAttack()) {
+          // Kill all enemies instantly
+          game.enemies.forEach(enemy => {
+            for (let i = 0; i < 30; i++) {
+              game.particles.push({
+                x: enemy.x + enemy.width / 2,
+                y: enemy.y + enemy.height / 2,
+                vx: (Math.random() - 0.5) * 15,
+                vy: (Math.random() - 0.5) * 15,
+                life: 60,
+                color: '#ef4444',
+                size: 6
+              });
+            }
+            onEnemyKill();
+          });
+          game.enemies = [];
+
+          // Epic explosion particles
+          for (let i = 0; i < 100; i++) {
+            game.particles.push({
+              x: game.player.x + game.player.width / 2,
+              y: game.player.y + game.player.height / 2,
+              vx: (Math.random() - 0.5) * 20,
+              vy: (Math.random() - 0.5) * 20,
+              life: 80,
+              color: '#ef4444',
+              size: 10
+            });
+          }
+        }
+      }
     };
 
     const handleKeyUp = (e) => {
@@ -287,6 +355,14 @@ export default function GameCanvas({
 
       ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
       game.animationFrame++;
+
+      // All Out Attack red overlay
+      if (isAllOutAttack) {
+        ctx.save();
+        ctx.fillStyle = `rgba(239, 68, 68, ${0.3 + Math.sin(game.animationFrame * 0.3) * 0.2})`;
+        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        ctx.restore();
+      }
 
       // Player movement - all 4 directions
       const baseSpeed = 6 * upgrades.speed;
