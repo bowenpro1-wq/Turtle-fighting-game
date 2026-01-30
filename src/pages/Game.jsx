@@ -46,7 +46,10 @@ export default function Game() {
   const [shootCooldown, setShootCooldown] = useState(0);
   const [healCooldown, setHealCooldown] = useState(0);
   const [flyCooldown, setFlyCooldown] = useState(0);
+  const [largeAttackCooldown, setLargeAttackCooldown] = useState(0);
+  const [allOutAttackCooldown, setAllOutAttackCooldown] = useState(0);
   const [isFlying, setIsFlying] = useState(false);
+  const [isAllOutAttack, setIsAllOutAttack] = useState(false);
 
   // Upgrades
   const [upgrades, setUpgrades] = useState({
@@ -56,10 +59,13 @@ export default function Game() {
     maxHealth: 1
   });
 
-  const SHOOT_CD = 500 / upgrades.fireRate;
+  const SHOOT_CD = 300 / upgrades.fireRate;
   const HEAL_CD = 5000;
   const FLY_CD = 10000;
   const FLY_DURATION = 3000;
+  const LARGE_ATTACK_CD = 15000;
+  const ALL_OUT_ATTACK_CD = 30000;
+  const ALL_OUT_DURATION = 3000;
 
   const startGame = () => {
     setGameState('playing');
@@ -165,7 +171,7 @@ export default function Game() {
       return true;
     }
     return false;
-  }, [largeAttackCooldown, LARGE_ATTACK_CD]);
+  }, [largeAttackCooldown]);
 
   const allOutAttack = useCallback(() => {
     if (allOutAttackCooldown <= 0) {
