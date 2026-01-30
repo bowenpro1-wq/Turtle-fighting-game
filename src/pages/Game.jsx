@@ -69,8 +69,8 @@ export default function Game() {
   const FLY_CD = 10000;
   const FLY_DURATION = 3000;
   const LARGE_ATTACK_CD = 15000;
-  const ALL_OUT_ATTACK_CD = 30000;
-  const ALL_OUT_DURATION = 3000;
+  const ALL_OUT_ATTACK_CD = 15000;
+  const ALL_OUT_DURATION = 1500;
   const MELEE_DURATION = 150;
 
   const startGame = () => {
