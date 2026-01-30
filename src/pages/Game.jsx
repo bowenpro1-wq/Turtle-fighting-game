@@ -5,6 +5,7 @@ import GameUI from '@/components/game/GameUI';
 import GameOver from '@/components/game/GameOver';
 import BossIntro from '@/components/game/BossIntro';
 import StartScreen from '@/components/game/StartScreen';
+import Shop from '@/components/game/Shop';
 
 const BOSSES = [
   { id: 1, name: "海星守卫", health: 100, damage: 15, speed: 1.5, size: 60, color: "#ff6b6b", pattern: "circle" },
@@ -30,31 +31,40 @@ const BOSSES = [
 ];
 
 export default function Game() {
-  const [gameState, setGameState] = useState('start'); // start, playing, paused, boss, gameover, victory
+  const [gameState, setGameState] = useState('start');
   const [playerHealth, setPlayerHealth] = useState(100);
   const [maxHealth, setMaxHealth] = useState(100);
   const [score, setScore] = useState(0);
+  const [coins, setCoins] = useState(0);
   const [currentBoss, setCurrentBoss] = useState(null);
   const [bossHealth, setBossHealth] = useState(0);
   const [bossMaxHealth, setBossMaxHealth] = useState(0);
   const [defeatedBosses, setDefeatedBosses] = useState([]);
   const [showBossIntro, setShowBossIntro] = useState(false);
+  const [showShop, setShowShop] = useState(false);
   
-  // Cooldowns (in ms)
   const [shootCooldown, setShootCooldown] = useState(0);
   const [healCooldown, setHealCooldown] = useState(0);
   const [flyCooldown, setFlyCooldown] = useState(0);
   const [isFlying, setIsFlying] = useState(false);
 
-  const SHOOT_CD = 500;
+  // Upgrades
+  const [upgrades, setUpgrades] = useState({
+    damage: 1,
+    fireRate: 1,
+    speed: 1,
+    maxHealth: 1
+  });
+
+  const SHOOT_CD = 500 / upgrades.fireRate;
   const HEAL_CD = 5000;
   const FLY_CD = 10000;
   const FLY_DURATION = 3000;
 
   const startGame = () => {
     setGameState('playing');
-    setPlayerHealth(100);
-    setMaxHealth(100);
+    setPlayerHealth(100 * upgrades.maxHealth);
+    setMaxHealth(100 * upgrades.maxHealth);
     setScore(0);
     setDefeatedBosses([]);
     setCurrentBoss(null);
@@ -82,6 +92,7 @@ export default function Game() {
     if (currentBoss) {
       setDefeatedBosses(prev => [...prev, currentBoss.id]);
       setScore(prev => prev + currentBoss.health * 10);
+      setCoins(prev => prev + 100);
       setPlayerHealth(prev => Math.min(maxHealth, prev + 50));
       setCurrentBoss(null);
       setGameState('playing');
@@ -106,6 +117,7 @@ export default function Game() {
 
   const handleEnemyKill = useCallback(() => {
     setScore(prev => prev + 100);
+    setCoins(prev => prev + 10);
     setPlayerHealth(prev => Math.min(maxHealth, prev + 10));
   }, [maxHealth]);
 
@@ -126,7 +138,7 @@ export default function Game() {
       return true;
     }
     return false;
-  }, [shootCooldown]);
+  }, [shootCooldown, SHOOT_CD]);
 
   const heal = useCallback(() => {
     if (healCooldown <= 0 && playerHealth < maxHealth) {
@@ -147,7 +159,23 @@ export default function Game() {
     return false;
   }, [flyCooldown, isFlying]);
 
-  // Cooldown timer
+  const handlePurchase = (upgrade, cost) => {
+    if (coins >= cost) {
+      setCoins(prev => prev - cost);
+      setUpgrades(prev => ({
+        ...prev,
+        [upgrade]: prev[upgrade] + 1
+      }));
+      if (upgrade === 'maxHealth') {
+        const newMax = 100 * (upgrades.maxHealth + 1);
+        setMaxHealth(newMax);
+        setPlayerHealth(prev => Math.min(newMax, prev + 50));
+      }
+      return true;
+    }
+    return false;
+  };
+
   useEffect(() => {
     if (gameState !== 'playing' && gameState !== 'boss') return;
     
@@ -160,8 +188,19 @@ export default function Game() {
     return () => clearInterval(interval);
   }, [gameState]);
 
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (e.key.toLowerCase() === 'b' && (gameState === 'playing' || gameState === 'boss')) {
+        setShowShop(prev => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [gameState]);
+
   return (
-    <div className="w-full h-screen bg-gradient-to-b from-[#0a1628] via-[#1a2f4a] to-[#0f172a] overflow-hidden relative">
+    <div className="w-full h-screen bg-gradient-to-b from-[#87CEEB] via-[#5F9EA0] to-[#2F4F4F] overflow-hidden relative">
       <AnimatePresence mode="wait">
         {gameState === 'start' && (
           <StartScreen onStart={startGame} />
@@ -182,12 +221,14 @@ export default function Game() {
               currentBoss={currentBoss}
               defeatedBosses={defeatedBosses}
               score={score}
+              upgrades={upgrades}
             />
             
             <GameUI
               health={playerHealth}
               maxHealth={maxHealth}
               score={score}
+              coins={coins}
               shootCooldown={shootCooldown / SHOOT_CD}
               healCooldown={healCooldown / HEAL_CD}
               flyCooldown={flyCooldown / FLY_CD}
@@ -203,6 +244,17 @@ export default function Game() {
                 <BossIntro boss={currentBoss} />
               )}
             </AnimatePresence>
+
+            <AnimatePresence>
+              {showShop && (
+                <Shop
+                  coins={coins}
+                  upgrades={upgrades}
+                  onPurchase={handlePurchase}
+                  onClose={() => setShowShop(false)}
+                />
+              )}
+            </AnimatePresence>
           </>
         )}
         
@@ -210,6 +262,7 @@ export default function Game() {
           <GameOver
             victory={gameState === 'victory'}
             score={score}
+            coins={coins}
             defeatedBosses={defeatedBosses.length}
             onRestart={startGame}
           />
