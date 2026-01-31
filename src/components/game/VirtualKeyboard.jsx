@@ -127,10 +127,11 @@ export default function VirtualKeyboard() {
         </div>
       </div>
 
-      {/* Shop Button - Top Right */}
+      {/* Shop & Forge Buttons - Top Right */}
       <div className="absolute right-4 top-24 pointer-events-auto">
-        <div className="bg-black/40 backdrop-blur-sm rounded-2xl p-2 border-2 border-white/10 pointer-events-auto">
+        <div className="bg-black/40 backdrop-blur-sm rounded-2xl p-2 border-2 border-white/10 pointer-events-auto space-y-2">
           <KeyButton keyLabel="b" displayLabel="商店" color="yellow" size="small" />
+          <KeyButton keyLabel="f" displayLabel="锻造" color="orange" size="small" />
         </div>
       </div>
     </div>

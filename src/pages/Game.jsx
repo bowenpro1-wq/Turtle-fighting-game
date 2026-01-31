@@ -7,6 +7,8 @@ import BossIntro from '@/components/game/BossIntro';
 import StartScreen from '@/components/game/StartScreen';
 import Shop from '@/components/game/Shop';
 import VirtualKeyboard from '@/components/game/VirtualKeyboard';
+import WeaponSelect from '@/components/game/WeaponSelect';
+import Forge from '@/components/game/Forge';
 
 const BOSSES = [
   { id: 1, name: "海星守卫", health: 100, damage: 15, speed: 1.5, size: 60, color: "#ff6b6b", pattern: "circle" },
@@ -44,8 +46,27 @@ export default function Game() {
   const [defeatedBosses, setDefeatedBosses] = useState([]);
   const [showBossIntro, setShowBossIntro] = useState(false);
   const [showShop, setShowShop] = useState(false);
+  const [showWeaponSelect, setShowWeaponSelect] = useState(false);
+  const [showForge, setShowForge] = useState(false);
   const [waveNumber, setWaveNumber] = useState(1);
   const [survivalTime, setSurvivalTime] = useState(0);
+  
+  // Weapon system
+  const [selectedWeapon, setSelectedWeapon] = useState('none');
+  const [upgradeTemplates, setUpgradeTemplates] = useState(0);
+  const [weapons, setWeapons] = useState({
+    chichao: { level: 0, unlocked: false },
+    guigui: { level: 0, unlocked: false },
+    dianchao: { level: 0, unlocked: false },
+    totem: { level: 0, unlocked: false }
+  });
+  const [dailyBossesDefeated, setDailyBossesDefeated] = useState({
+    zhongdalin: false,
+    guangzhi: false,
+    xiaowang: false,
+    longhaixing: false,
+    qigong: false
+  });
   
   // Tower mode state
   const [currentFloor, setCurrentFloor] = useState(1);
@@ -96,6 +117,17 @@ export default function Game() {
   const MELEE_DURATION = 150;
 
   const startGame = (mode = 'normal', fromCheckpoint = false) => {
+    if (mode !== 'busbreak') {
+      // Show weapon select for all modes except busbreak initially
+      setGameMode(mode);
+      setShowWeaponSelect(true);
+      return;
+    }
+    
+    continueGameAfterWeaponSelect(mode, fromCheckpoint);
+  };
+
+  const continueGameAfterWeaponSelect = (mode, fromCheckpoint = false) => {
     setGameMode(mode);
     setPlayerHealth(100 * upgrades.maxHealth);
     setMaxHealth(100 * upgrades.maxHealth);
@@ -122,12 +154,57 @@ export default function Game() {
       }
       setGemDefeated(false);
       setTowerSpecialFloor(null);
+    } else if (mode === 'busbreak') {
+      // Bus失恋模式直接开始
     }
     
-    // Use setTimeout to ensure state is fully reset before starting
     setTimeout(() => {
       setGameState('playing');
     }, 0);
+  };
+
+  const handleWeaponSelect = (weaponId) => {
+    setSelectedWeapon(weaponId);
+    setShowWeaponSelect(false);
+    continueGameAfterWeaponSelect(gameMode);
+  };
+
+  const handleWeaponUpgrade = (weaponId) => {
+    if (upgradeTemplates > 0) {
+      setUpgradeTemplates(prev => prev - 1);
+      setWeapons(prev => ({
+        ...prev,
+        [weaponId]: {
+          ...prev[weaponId],
+          level: prev[weaponId].level + 1,
+          unlocked: weaponId === 'guigui' ? prev[weaponId].level + 1 >= 8 : true
+        }
+      }));
+    }
+  };
+
+  const handleBusBreakBossDefeat = (bossName) => {
+    // Award template
+    setUpgradeTemplates(prev => prev + 1);
+    
+    // Mark daily boss as defeated
+    setDailyBossesDefeated(prev => ({
+      ...prev,
+      [bossName]: true
+    }));
+
+    // Random weapon drop
+    const availableWeapons = ['chichao', 'guigui', 'dianchao', 'totem'];
+    const randomWeapon = availableWeapons[Math.floor(Math.random() * availableWeapons.length)];
+    
+    setWeapons(prev => ({
+      ...prev,
+      [randomWeapon]: {
+        ...prev[randomWeapon],
+        unlocked: true,
+        level: Math.max(prev[randomWeapon].level, 1)
+      }
+    }));
   };
 
   const triggerBoss = useCallback((bossIndex) => {
@@ -368,6 +445,9 @@ export default function Game() {
       if (e.key.toLowerCase() === 'b' && (gameState === 'playing' || gameState === 'boss')) {
         setShowShop(prev => !prev);
       }
+      if (e.key.toLowerCase() === 'f' && (gameState === 'playing' || gameState === 'boss')) {
+        setShowForge(prev => !prev);
+      }
     };
 
     window.addEventListener('keydown', handleKeyPress);
@@ -462,6 +542,26 @@ export default function Game() {
                   bulletColor={bulletColor}
                   onPurchase={handlePurchase}
                   onClose={() => setShowShop(false)}
+                />
+              )}
+
+              {showWeaponSelect && (
+                <WeaponSelect
+                  availableWeapons={weapons}
+                  onSelect={handleWeaponSelect}
+                  onClose={() => {
+                    setShowWeaponSelect(false);
+                    setGameState('start');
+                  }}
+                />
+              )}
+
+              {showForge && (
+                <Forge
+                  weapons={weapons}
+                  templates={upgradeTemplates}
+                  onUpgrade={handleWeaponUpgrade}
+                  onClose={() => setShowForge(false)}
                 />
               )}
             </AnimatePresence>
