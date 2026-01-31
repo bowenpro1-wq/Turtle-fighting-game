@@ -108,7 +108,7 @@ export default function StartScreen({ onStart, defeatedBosses = [] }) {
             </Button>
           )}
           </div>
-          <div className="mt-4">
+          <div className="mt-4 space-y-3">
           <Button
             onClick={() => onStart('tower')}
             size="lg"
@@ -116,7 +116,16 @@ export default function StartScreen({ onStart, defeatedBosses = [] }) {
           >
             🗿 中大林之塔 🗿
           </Button>
-          <p className="text-green-300 text-sm mt-2 text-center">挑战100层塔，击败中大林真身！</p>
+          <p className="text-green-300 text-sm text-center">挑战100层塔，击败中大林真身！</p>
+          
+          <Button
+            onClick={() => onStart('busbreak')}
+            size="lg"
+            className="w-full px-12 py-8 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-700 hover:via-pink-700 hover:to-rose-700 rounded-2xl text-white text-3xl font-bold shadow-2xl border-4 border-purple-400/50"
+          >
+            💔 Bus失恋模式 💔
+          </Button>
+          <p className="text-purple-300 text-sm text-center">击败特殊BOSS获得武器和升级模板！</p>
           </div>
           </motion.div>
 
