@@ -1,6 +1,7 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Heart, Coins } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Heart, Coins, Zap } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function GameUI({
   health,
@@ -24,8 +25,27 @@ export default function GameUI({
   currentFloor,
   checkpoint,
   towerSpecialFloor,
-  selectedWeapon
+  selectedWeapon,
+  onBoostBoss
 }) {
+  const [prevBossHealth, setPrevBossHealth] = useState(bossHealth);
+  const [healthShake, setHealthShake] = useState(false);
+  const [showDamage, setShowDamage] = useState(false);
+  const [damageAmount, setDamageAmount] = useState(0);
+
+  // Boss血量变化动画
+  useEffect(() => {
+    if (bossHealth !== null && prevBossHealth !== null && bossHealth < prevBossHealth) {
+      const damage = prevBossHealth - bossHealth;
+      setDamageAmount(Math.round(damage));
+      setHealthShake(true);
+      setShowDamage(true);
+      
+      setTimeout(() => setHealthShake(false), 300);
+      setTimeout(() => setShowDamage(false), 800);
+    }
+    setPrevBossHealth(bossHealth);
+  }, [bossHealth, prevBossHealth]);
   // 根据武器自定义技能名称
   const getSkillNames = () => {
     if (selectedWeapon === 'chichao') {
@@ -169,22 +189,76 @@ export default function GameUI({
           animate={{ y: 0, opacity: 1 }}
           className="absolute top-4 left-1/2 -translate-x-1/2"
         >
-          <div className="text-center mb-2">
+          <div className="text-center mb-2 flex items-center justify-center gap-4">
             <span className="text-orange-400 text-2xl font-bold drop-shadow-lg bg-black/40 px-4 py-2 rounded-lg">
               BOSS: {bossName}
             </span>
+
+            {/* Boss强化按钮 */}
+            <Button
+              onClick={() => onBoostBoss && onBoostBoss()}
+              disabled={coins < 500}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 text-white font-bold rounded-lg shadow-lg flex items-center gap-2"
+            >
+              <Zap className="w-4 h-4" />
+              强化Boss (500💰)
+            </Button>
           </div>
-          <div className="relative w-96 h-10 bg-black/60 rounded-lg overflow-hidden backdrop-blur-sm border-2 border-orange-500/50">
+
+          <motion.div 
+            className="relative w-96 h-10 bg-black/60 rounded-lg overflow-hidden backdrop-blur-sm border-2 border-orange-500/50"
+            animate={healthShake ? { 
+              x: [-5, 5, -5, 5, 0],
+              scale: [1, 1.02, 1, 1.02, 1]
+            } : {}}
+            transition={{ duration: 0.3 }}
+          >
+            {/* 血条背景闪光效果 */}
+            <AnimatePresence>
+              {healthShake && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: [0, 1, 0] }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="absolute inset-0 bg-white/30 pointer-events-none"
+                />
+              )}
+            </AnimatePresence>
+
+            {/* 血条 */}
             <motion.div
               className="h-full bg-gradient-to-r from-orange-600 via-red-500 to-orange-600"
               initial={false}
-              animate={{ width: `${(bossHealth / bossMaxHealth) * 100}%` }}
+              animate={{ 
+                width: `${(bossHealth / bossMaxHealth) * 100}%`,
+                boxShadow: healthShake ? '0 0 20px rgba(255, 0, 0, 0.8)' : 'none'
+              }}
               transition={{ type: "spring", stiffness: 200 }}
             />
+
+            {/* 血量文字 */}
             <span className="absolute inset-0 flex items-center justify-center text-white font-bold text-lg drop-shadow-lg">
               {Math.round(bossHealth)} / {bossMaxHealth}
             </span>
-          </div>
+
+            {/* 伤害数字 */}
+            <AnimatePresence>
+              {showDamage && (
+                <motion.div
+                  initial={{ y: 0, opacity: 1, scale: 1 }}
+                  animate={{ y: -50, opacity: 0, scale: 1.5 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.8 }}
+                  className="absolute left-1/2 top-1/2 -translate-x-1/2 pointer-events-none"
+                >
+                  <span className="text-red-400 font-bold text-3xl drop-shadow-[0_0_10px_rgba(239,68,68,1)]">
+                    -{damageAmount}
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
         </motion.div>
       )}
 

@@ -45,6 +45,7 @@ export default function Game() {
   const [bossHealth, setBossHealth] = useState(0);
   const [bossMaxHealth, setBossMaxHealth] = useState(0);
   const [defeatedBosses, setDefeatedBosses] = useState([]);
+  const [bossBoostLevel, setBossBoostLevel] = useState(0);
   const [showBossIntro, setShowBossIntro] = useState(false);
   const [showShop, setShowShop] = useState(false);
   const [showWeaponSelect, setShowWeaponSelect] = useState(false);
@@ -423,6 +424,21 @@ export default function Game() {
     });
   }, [defeatBoss]);
 
+  const handleBoostBoss = useCallback(() => {
+    if (coins >= 500 && currentBoss) {
+      setCoins(prev => prev - 500);
+      setBossBoostLevel(prev => prev + 1);
+
+      // 增加Boss血量和伤害
+      const healthBoost = bossMaxHealth * 0.3;
+      setBossHealth(prev => prev + healthBoost);
+      setBossMaxHealth(prev => prev + healthBoost);
+
+      // 视觉反馈
+      setScore(prev => prev + 500);
+    }
+  }, [coins, currentBoss, bossMaxHealth]);
+
   const shoot = useCallback(() => {
     if (shootCooldown <= 0) {
       setShootCooldown(SHOOT_CD);
@@ -633,6 +649,7 @@ export default function Game() {
               checkpoint={checkpoint}
               towerSpecialFloor={towerSpecialFloor}
               selectedWeapon={selectedWeapon}
+              onBoostBoss={handleBoostBoss}
             />
             
             <AnimatePresence>
