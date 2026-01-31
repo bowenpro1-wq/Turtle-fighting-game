@@ -844,6 +844,22 @@ export default function GameCanvas({
           const py = game.player.y + game.player.height / 2;
           game.screenShake = 25;
 
+          // 秒杀Boss
+          if (currentBoss && gameState === 'boss') {
+            onBossDamage(999999);
+            for (let i = 0; i < 150; i++) {
+              game.particles.push({
+                x: px,
+                y: py,
+                vx: (Math.random() - 0.5) * 30,
+                vy: (Math.random() - 0.5) * 30,
+                life: 100,
+                color: '#ff0000',
+                size: 15
+              });
+            }
+          }
+
           if (selectedWeapon === 'chichao') {
             // 赤潮 - 广志真身
             game.guangzhiSpirit = {
