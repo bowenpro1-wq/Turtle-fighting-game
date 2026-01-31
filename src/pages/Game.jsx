@@ -68,6 +68,7 @@ export default function Game() {
     longhaixing: false,
     qigong: false
   });
+  const [selectedBusBreakBoss, setSelectedBusBreakBoss] = useState(null);
   
   // Tower mode state
   const [currentFloor, setCurrentFloor] = useState(1);
@@ -157,14 +158,80 @@ export default function Game() {
       }
       setGemDefeated(false);
       setTowerSpecialFloor(null);
-    } else if (mode === 'busbreak') {
-      // Bus失恋模式直接开始
+    } else if (mode === 'busbreak' && selectedBusBreakBoss) {
+      // Trigger selected boss after 2 seconds
+      setTimeout(() => {
+        triggerBusBreakBoss(selectedBusBreakBoss);
+      }, 2000);
     }
     
     setTimeout(() => {
       setGameState('playing');
     }, 0);
   };
+
+  const triggerBusBreakBoss = useCallback((bossId) => {
+    const BUSBREAK_BOSSES = {
+      zhongdalin: {
+        name: '中大林广志',
+        health: 3000,
+        damage: 40,
+        speed: 2.0,
+        size: 120,
+        color: '#4ade80',
+        pattern: 'chase'
+      },
+      xiaowang: {
+        name: '小王',
+        health: 2500,
+        damage: 35,
+        speed: 3.0,
+        size: 100,
+        color: '#f59e0b',
+        pattern: 'dash'
+      },
+      longhaixing: {
+        name: '龙海星',
+        health: 2800,
+        damage: 38,
+        speed: 2.5,
+        size: 110,
+        color: '#06b6d4',
+        pattern: 'teleport'
+      },
+      qigong: {
+        name: '启功大师',
+        health: 3500,
+        damage: 45,
+        speed: 1.5,
+        size: 130,
+        color: '#8b5cf6',
+        pattern: 'spiral'
+      },
+      guangzhi: {
+        name: '广智',
+        health: 5000,
+        damage: 60,
+        speed: 2.2,
+        size: 150,
+        color: '#ff4500',
+        pattern: 'flame'
+      }
+    };
+
+    const boss = BUSBREAK_BOSSES[bossId];
+    if (boss) {
+      setCurrentBoss({ ...boss, id: bossId });
+      setBossHealth(boss.health);
+      setBossMaxHealth(boss.health);
+      setShowBossIntro(true);
+      setGameState('boss');
+      
+      setTimeout(() => {
+        setShowBossIntro(false);
+      }, 2000);
+    }
+  }, []);
 
   const handleWeaponSelect = (weaponId) => {
     setSelectedWeapon(weaponId);
@@ -173,8 +240,9 @@ export default function Game() {
   };
 
   const handleBossSelect = (bossId) => {
-    // TODO: Start busbreak mode with selected boss
-    setGameState('playing');
+    setSelectedBusBreakBoss(bossId);
+    setGameState('start');
+    setShowWeaponSelect(true);
   };
 
   const handleWeaponUpgrade = (weaponId) => {
@@ -248,6 +316,16 @@ export default function Game() {
       setScore(prev => prev + currentBoss.health * 10);
       setCoins(prev => prev + 100);
       setPlayerHealth(prev => Math.min(maxHealth, prev + 50));
+      
+      // Bus break mode - mark boss as defeated and give rewards
+      if (gameMode === 'busbreak') {
+        handleBusBreakBossDefeat(currentBoss.id);
+        setCurrentBoss(null);
+        setSelectedBusBreakBoss(null);
+        setGameState('victory');
+        return;
+      }
+      
       setCurrentBoss(null);
       
       // Tower mode floor progression
@@ -277,7 +355,7 @@ export default function Game() {
         }
       }
     }
-  }, [currentBoss, defeatedBosses.length, maxHealth, hasCannonUpgrade, gameMode, currentFloor]);
+  }, [currentBoss, defeatedBosses.length, maxHealth, hasCannonUpgrade, gameMode, currentFloor, handleBusBreakBossDefeat]);
 
   const handlePlayerDamage = useCallback((damage) => {
     if (isFlying) return;
