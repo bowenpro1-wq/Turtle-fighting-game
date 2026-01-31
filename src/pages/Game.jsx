@@ -482,6 +482,17 @@ export default function Game() {
         {(gameState === 'playing' || gameState === 'boss') && (
           <>
             <VirtualKeyboard />
+            
+            {/* Forge Button */}
+            <motion.button
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              onClick={() => setShowForge(true)}
+              className="fixed top-6 right-6 z-40 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold rounded-xl shadow-lg border-2 border-orange-300/50 flex items-center gap-2 transition-all hover:scale-105"
+            >
+              <span className="text-2xl">🔨</span>
+              <span>锻造处</span>
+            </motion.button>
 
             <GameCanvas
               gameState={gameState}
