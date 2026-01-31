@@ -1265,7 +1265,7 @@ export default function GameCanvas({
 
         // Boss collision damage
         if (distToPlayer < currentBoss.size + 25 && !isFlying) {
-          if (frame % 30 === 0) {
+          if (game.animationFrame % 30 === 0) {
             onPlayerDamage(currentBoss.damage * 0.5);
           }
         }
@@ -1282,7 +1282,7 @@ export default function GameCanvas({
         ctx.shadowColor = currentBoss.color;
 
         // Boss body with pulsing effect
-        const pulseSize = currentBoss.size / 2 + Math.sin(frame * 0.1) * 5;
+        const pulseSize = currentBoss.size / 2 + Math.sin(game.animationFrame * 0.1) * 5;
         ctx.beginPath();
         ctx.arc(bossScreenX, bossScreenY, pulseSize, 0, Math.PI * 2);
         ctx.fill();
