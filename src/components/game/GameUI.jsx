@@ -190,7 +190,7 @@ export default function GameUI({
 
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3">
         <CooldownButton
-          label="K - 射击"
+          label={skillNames.shoot}
           cooldown={shootCooldown}
           color="red"
         />
@@ -200,24 +200,24 @@ export default function GameUI({
           color="cyan"
         />
         <CooldownButton
-          label="H - 恢复"
+          label={skillNames.heal}
           cooldown={healCooldown}
           color="green"
         />
         <CooldownButton
-          label="O - 飞行"
+          label={skillNames.fly}
           cooldown={flyCooldown}
           color="blue"
           active={isFlying}
         />
         <CooldownButton
-          label="L - 大招"
+          label={skillNames.large}
           cooldown={largeAttackCooldown}
           color="orange"
           large
         />
         <CooldownButton
-          label="P - 终极"
+          label={skillNames.allOut}
           cooldown={allOutAttackCooldown}
           color="purple"
           active={isAllOutAttack}
