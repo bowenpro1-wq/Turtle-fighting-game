@@ -267,26 +267,30 @@ export default function Game() {
         [bossName]: true
       };
       
-      // Count total defeated bosses
-      const defeatedCount = Object.values(newDefeated).filter(Boolean).length;
+      // Unlock specific weapon for each boss
+      const bossWeaponMap = {
+        zhongdalin: 'totem',
+        xiaowang: 'chichao',
+        longhaixing: 'dianchao',
+        qigong: null, // No weapon unlock
+        guangzhi: null // No weapon unlock
+      };
       
-      // Every 4 bosses defeated, give a random weapon
-      if (defeatedCount % 4 === 0) {
-        const availableWeapons = ['chichao', 'guigui', 'dianchao', 'totem'];
-        const randomWeapon = availableWeapons[Math.floor(Math.random() * availableWeapons.length)];
-        
+      const weaponToUnlock = bossWeaponMap[bossName];
+      if (weaponToUnlock) {
         setWeapons(prev => ({
           ...prev,
-          [randomWeapon]: {
-            ...prev[randomWeapon],
+          [weaponToUnlock]: {
+            ...prev[weaponToUnlock],
             unlocked: true,
-            level: Math.max(prev[randomWeapon].level, 1)
+            level: Math.max(prev[weaponToUnlock].level, 1)
           }
         }));
       }
       
-      // All 5 bosses defeated, give 1 template
-      if (defeatedCount === 5) {
+      // Every 4 bosses defeated, give 1 upgrade template
+      const defeatedCount = Object.values(newDefeated).filter(Boolean).length;
+      if (defeatedCount % 4 === 0) {
         setUpgradeTemplates(prev => prev + 1);
       }
       
