@@ -128,6 +128,17 @@ export default function StartScreen({ onStart, defeatedBosses = [] }) {
             ⚔️ Boss试炼模式 ⚔️
           </Button>
           <p className="text-purple-300 text-sm text-center">击败特殊BOSS获得武器和升级模板！</p>
+          
+          <Link to={createPageUrl('Forge')}>
+            <Button
+              size="lg"
+              className="w-full px-12 py-8 bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 hover:from-amber-700 hover:via-orange-700 hover:to-red-700 rounded-2xl text-white text-3xl font-bold shadow-2xl border-4 border-amber-400/50"
+            >
+              <Hammer className="w-8 h-8 mr-3" />
+              🔨 锻造处 🔨
+            </Button>
+          </Link>
+          <p className="text-amber-300 text-sm text-center">使用模板升级你的武器！</p>
           </div>
           </motion.div>
 
@@ -146,17 +157,6 @@ export default function StartScreen({ onStart, defeatedBosses = [] }) {
         <p className="text-emerald-300/70 text-base">
           新增敌人: 狙击手、医疗兵、爆破手
         </p>
-        
-        <Link to={createPageUrl('Forge')}>
-          <Button
-            variant="outline"
-            size="lg"
-            className="mt-4 px-8 py-6 text-lg font-bold border-2 border-orange-500/50 hover:bg-orange-500/20"
-          >
-            <Hammer className="w-5 h-5 mr-2" />
-            前往锻造处
-          </Button>
-        </Link>
       </motion.div>
     </motion.div>
   );
