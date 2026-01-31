@@ -572,17 +572,6 @@ export default function Game() {
                 />
               )}
 
-              {showWeaponSelect && (
-                <WeaponSelect
-                  availableWeapons={weapons}
-                  onSelect={handleWeaponSelect}
-                  onClose={() => {
-                    setShowWeaponSelect(false);
-                    setGameState('start');
-                  }}
-                />
-              )}
-
               {showForge && (
                 <Forge
                   weapons={weapons}
@@ -593,6 +582,17 @@ export default function Game() {
               )}
             </AnimatePresence>
           </>
+        )}
+
+        {showWeaponSelect && (
+          <WeaponSelect
+            availableWeapons={weapons}
+            onSelect={handleWeaponSelect}
+            onClose={() => {
+              setShowWeaponSelect(false);
+              setGameState('start');
+            }}
+          />
         )}
         
         {(gameState === 'gameover' || gameState === 'victory') && (
