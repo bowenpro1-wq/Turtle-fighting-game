@@ -97,7 +97,6 @@ export default function Game() {
 
   const startGame = (mode = 'normal', fromCheckpoint = false) => {
     setGameMode(mode);
-    setGameState('playing');
     setPlayerHealth(100 * upgrades.maxHealth);
     setMaxHealth(100 * upgrades.maxHealth);
     setScore(0);
@@ -106,8 +105,13 @@ export default function Game() {
     setShootCooldown(0);
     setHealCooldown(0);
     setFlyCooldown(0);
+    setLargeAttackCooldown(0);
+    setAllOutAttackCooldown(0);
     setWaveNumber(1);
     setSurvivalTime(0);
+    setShowBossIntro(false);
+    setBossHealth(0);
+    setBossMaxHealth(0);
     
     if (mode === 'tower') {
       if (fromCheckpoint) {
@@ -119,6 +123,11 @@ export default function Game() {
       setGemDefeated(false);
       setTowerSpecialFloor(null);
     }
+    
+    // Use setTimeout to ensure state is fully reset before starting
+    setTimeout(() => {
+      setGameState('playing');
+    }, 0);
   };
 
   const triggerBoss = useCallback((bossIndex) => {
