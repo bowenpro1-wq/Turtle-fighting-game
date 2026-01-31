@@ -184,27 +184,38 @@ export default function Game() {
   };
 
   const handleBusBreakBossDefeat = (bossName) => {
-    // Award template
-    setUpgradeTemplates(prev => prev + 1);
-    
     // Mark daily boss as defeated
-    setDailyBossesDefeated(prev => ({
-      ...prev,
-      [bossName]: true
-    }));
-
-    // Random weapon drop
-    const availableWeapons = ['chichao', 'guigui', 'dianchao', 'totem'];
-    const randomWeapon = availableWeapons[Math.floor(Math.random() * availableWeapons.length)];
-    
-    setWeapons(prev => ({
-      ...prev,
-      [randomWeapon]: {
-        ...prev[randomWeapon],
-        unlocked: true,
-        level: Math.max(prev[randomWeapon].level, 1)
+    setDailyBossesDefeated(prev => {
+      const newDefeated = {
+        ...prev,
+        [bossName]: true
+      };
+      
+      // Count total defeated bosses
+      const defeatedCount = Object.values(newDefeated).filter(Boolean).length;
+      
+      // Every 4 bosses defeated, give a random weapon
+      if (defeatedCount % 4 === 0) {
+        const availableWeapons = ['chichao', 'guigui', 'dianchao', 'totem'];
+        const randomWeapon = availableWeapons[Math.floor(Math.random() * availableWeapons.length)];
+        
+        setWeapons(prev => ({
+          ...prev,
+          [randomWeapon]: {
+            ...prev[randomWeapon],
+            unlocked: true,
+            level: Math.max(prev[randomWeapon].level, 1)
+          }
+        }));
       }
-    }));
+      
+      // All 5 bosses defeated, give 1 template
+      if (defeatedCount === 5) {
+        setUpgradeTemplates(prev => prev + 1);
+      }
+      
+      return newDefeated;
+    });
   };
 
   const triggerBoss = useCallback((bossIndex) => {
