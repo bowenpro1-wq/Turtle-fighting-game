@@ -9,6 +9,7 @@ import Shop from '@/components/game/Shop';
 import VirtualKeyboard from '@/components/game/VirtualKeyboard';
 import WeaponSelect from '@/components/game/WeaponSelect';
 import Forge from '@/components/game/Forge';
+import BusBreakSelect from '@/components/game/BusBreakSelect';
 
 const BOSSES = [
   { id: 1, name: "海星守卫", health: 100, damage: 15, speed: 1.5, size: 60, color: "#ff6b6b", pattern: "circle" },
@@ -169,6 +170,11 @@ export default function Game() {
     setSelectedWeapon(weaponId);
     setShowWeaponSelect(false);
     continueGameAfterWeaponSelect(gameMode);
+  };
+
+  const handleBossSelect = (bossId) => {
+    // TODO: Start busbreak mode with selected boss
+    setGameState('playing');
   };
 
   const handleWeaponUpgrade = (weaponId) => {
@@ -472,6 +478,14 @@ export default function Game() {
       <AnimatePresence mode="wait">
         {gameState === 'start' && (
           <StartScreen onStart={startGame} defeatedBosses={defeatedBosses} />
+        )}
+
+        {gameState === 'busbreak_select' && (
+          <BusBreakSelect
+            onSelectBoss={handleBossSelect}
+            onCancel={() => setGameState('start')}
+            defeatedBosses={dailyBossesDefeated}
+          />
         )}
         
         {(gameState === 'playing' || gameState === 'boss') && (
