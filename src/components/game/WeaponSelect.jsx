@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Flame, Zap, Shield, Users, X } from 'lucide-react';
 
 export default function WeaponSelect({ availableWeapons, onSelect, onClose }) {
-  const [selectedWeapon, setSelectedWeapon] = useState(null);
+  const [selectedWeapon, setSelectedWeapon] = useState('none');
 
   const weapons = {
     none: {
