@@ -632,6 +632,7 @@ export default function Game() {
               currentFloor={currentFloor}
               checkpoint={checkpoint}
               towerSpecialFloor={towerSpecialFloor}
+              selectedWeapon={selectedWeapon}
             />
             
             <AnimatePresence>

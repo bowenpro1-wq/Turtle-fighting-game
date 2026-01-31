@@ -23,8 +23,54 @@ export default function GameUI({
   gameMode,
   currentFloor,
   checkpoint,
-  towerSpecialFloor
+  towerSpecialFloor,
+  selectedWeapon
 }) {
+  // 根据武器自定义技能名称
+  const getSkillNames = () => {
+    if (selectedWeapon === 'chichao') {
+      return {
+        shoot: 'K-火焰喷射',
+        heal: 'H-火焰斩',
+        fly: 'O-飞行',
+        large: 'L-炎爆',
+        allOut: 'P-广志真身'
+      };
+    } else if (selectedWeapon === 'dianchao') {
+      return {
+        shoot: 'K-电流四射',
+        heal: 'H-治疗',
+        fly: 'O-飞行',
+        large: 'L-雷暴',
+        allOut: 'P-终极清屏'
+      };
+    } else if (selectedWeapon === 'totem') {
+      return {
+        shoot: 'K-图腾射击',
+        heal: 'H-治疗',
+        fly: 'O-飞行',
+        large: 'L-召唤军团',
+        allOut: 'P-终极清屏'
+      };
+    } else if (selectedWeapon === 'guigui') {
+      return {
+        shoot: 'K-光束',
+        heal: 'H-治疗',
+        fly: 'O-飞行',
+        large: 'L-龟圈',
+        allOut: 'P-龟文诅咒'
+      };
+    }
+    return {
+      shoot: 'K-射击',
+      heal: 'H-治疗',
+      fly: 'O-飞行',
+      large: 'L-大招',
+      allOut: 'P-终极清屏'
+    };
+  };
+
+  const skillNames = getSkillNames();
   return (
     <div className="absolute inset-0 pointer-events-none">
       <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-start">
