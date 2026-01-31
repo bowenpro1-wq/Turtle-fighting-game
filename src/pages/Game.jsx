@@ -9,7 +9,6 @@ import Shop from '@/components/game/Shop';
 import VirtualKeyboard from '@/components/game/VirtualKeyboard';
 import WeaponSelect from '@/components/game/WeaponSelect';
 import Forge from '@/components/game/Forge';
-import BusBreakBossSelect from '@/components/game/BusBreakBossSelect';
 
 const BOSSES = [
   { id: 1, name: "海星守卫", health: 100, damage: 15, speed: 1.5, size: 60, color: "#ff6b6b", pattern: "circle" },
@@ -49,8 +48,6 @@ export default function Game() {
   const [showShop, setShowShop] = useState(false);
   const [showWeaponSelect, setShowWeaponSelect] = useState(false);
   const [showForge, setShowForge] = useState(false);
-  const [showBusBreakSelect, setShowBusBreakSelect] = useState(false);
-  const [currentBusBreakBoss, setCurrentBusBreakBoss] = useState(null);
   const [waveNumber, setWaveNumber] = useState(1);
   const [survivalTime, setSurvivalTime] = useState(0);
   
@@ -121,45 +118,20 @@ export default function Game() {
 
   const startGame = (mode = 'normal', fromCheckpoint = false) => {
     if (mode === 'busbreak') {
-      // Boss试炼模式显示boss选择
+      // Boss试炼模式直接开始,显示boss选择
       setGameMode(mode);
-      setShowBusBreakSelect(true);
+      setGameState('busbreak_select');
       return;
     }
     
-    // Show weapon select for all other modes
-    setGameMode(mode);
-    setShowWeaponSelect(true);
-  };
-
-  const handleBusBreakBossSelect = (bossId) => {
-    setCurrentBusBreakBoss(bossId);
-    setShowBusBreakSelect(false);
+    if (mode !== 'busbreak') {
+      // Show weapon select for all modes except busbreak
+      setGameMode(mode);
+      setShowWeaponSelect(true);
+      return;
+    }
     
-    // Start boss fight directly
-    const bossMap = {
-      zhongdalin: { id: 0, name: '中大林广志', health: 3000, damage: 40, speed: 2, size: 150, color: '#4ade80', pattern: 'chase' },
-      xiaowang: { id: 0, name: '小王', health: 2500, damage: 35, speed: 3, size: 120, color: '#f59e0b', pattern: 'dash' },
-      longhaixing: { id: 0, name: '龙海星', health: 2800, damage: 38, speed: 2.5, size: 130, color: '#06b6d4', pattern: 'teleport' },
-      qigong: { id: 0, name: '启功大师', health: 3500, damage: 45, speed: 1.5, size: 160, color: '#8b5cf6', pattern: 'spiral' },
-      guangzhi: { id: 0, name: '广智', health: 5000, damage: 60, speed: 2.2, size: 180, color: '#ff4500', pattern: 'flame' }
-    };
-
-    const selectedBoss = bossMap[bossId];
-    setCurrentBoss(selectedBoss);
-    setBossHealth(selectedBoss.health);
-    setBossMaxHealth(selectedBoss.health);
-    setShowBossIntro(true);
-    
-    // Reset game state
-    setPlayerHealth(100 * upgrades.maxHealth);
-    setMaxHealth(100 * upgrades.maxHealth);
-    setScore(0);
-    
-    setTimeout(() => {
-      setShowBossIntro(false);
-      setGameState('boss');
-    }, 3000);
+    continueGameAfterWeaponSelect(mode, fromCheckpoint);
   };
 
   const continueGameAfterWeaponSelect = (mode, fromCheckpoint = false) => {
@@ -275,16 +247,6 @@ export default function Game() {
       setScore(prev => prev + currentBoss.health * 10);
       setCoins(prev => prev + 100);
       setPlayerHealth(prev => Math.min(maxHealth, prev + 50));
-      
-      // Bus Break mode - handle boss defeat
-      if (gameMode === 'busbreak' && currentBusBreakBoss) {
-        handleBusBreakBossDefeat(currentBusBreakBoss);
-        setCurrentBoss(null);
-        setCurrentBusBreakBoss(null);
-        setGameState('victory');
-        return;
-      }
-      
       setCurrentBoss(null);
       
       // Tower mode floor progression
@@ -314,7 +276,7 @@ export default function Game() {
         }
       }
     }
-  }, [currentBoss, defeatedBosses.length, maxHealth, hasCannonUpgrade, gameMode, currentFloor, currentBusBreakBoss, handleBusBreakBossDefeat]);
+  }, [currentBoss, defeatedBosses.length, maxHealth, hasCannonUpgrade, gameMode, currentFloor]);
 
   const handlePlayerDamage = useCallback((damage) => {
     if (isFlying) return;
@@ -520,17 +482,6 @@ export default function Game() {
         {(gameState === 'playing' || gameState === 'boss') && (
           <>
             <VirtualKeyboard />
-            
-            {/* Forge Button */}
-            <motion.button
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              onClick={() => setShowForge(true)}
-              className="fixed top-6 right-6 z-40 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold rounded-xl shadow-lg border-2 border-orange-300/50 flex items-center gap-2 transition-all hover:scale-105"
-            >
-              <span className="text-2xl">🔨</span>
-              <span>锻造处</span>
-            </motion.button>
 
             <GameCanvas
               gameState={gameState}
@@ -629,17 +580,6 @@ export default function Game() {
                   templates={upgradeTemplates}
                   onUpgrade={handleWeaponUpgrade}
                   onClose={() => setShowForge(false)}
-                />
-              )}
-
-              {showBusBreakSelect && (
-                <BusBreakBossSelect
-                  onSelect={handleBusBreakBossSelect}
-                  onClose={() => {
-                    setShowBusBreakSelect(false);
-                    setGameState('start');
-                  }}
-                  defeatedBosses={dailyBossesDefeated}
                 />
               )}
             </AnimatePresence>

@@ -179,8 +179,9 @@ export default function GameUI({
         />
       </div>
 
-      <div className="absolute bottom-6 right-6 text-white/70 text-sm bg-black/40 px-4 py-2 rounded-lg backdrop-blur-sm">
+      <div className="absolute bottom-6 right-6 text-white/70 text-sm bg-black/40 px-4 py-2 rounded-lg backdrop-blur-sm space-y-1">
         <div>按 B 打开商店</div>
+        <div>按 F 打开锻造处</div>
       </div>
     </div>
   );
