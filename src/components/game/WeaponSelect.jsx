@@ -19,13 +19,14 @@ export default function WeaponSelect({ availableWeapons, onSelect, onClose }) {
       name: '赤潮',
       icon: Flame,
       color: 'from-red-500 to-orange-500',
-      description: '火焰攻击武器',
+      description: '击败小王解锁',
       skills: [
         '火焰喷射 - 发射火焰弹',
-        '火焰近战 - 近距离火焰攻击',
-        '超级火焰弹 - 喷发大量火焰',
+        '火焰斩 - 近距离火焰攻击',
+        '炎爆 - 喷发大量火焰',
         '广志真身 - 召唤广志攻击敌人'
-      ]
+      ],
+      locked: !availableWeapons?.chichao?.unlocked
     },
     guigui: {
       id: 'guigui',
@@ -34,9 +35,8 @@ export default function WeaponSelect({ availableWeapons, onSelect, onClose }) {
       color: 'from-green-500 to-emerald-500',
       description: '需要8个升级模板解锁',
       skills: [
-        '光喷射 - 向前喷射龟光',
-        '龟圈 - 散发致命光圈(10秒)',
-        '外龟法 - 召唤龟龟军团',
+        '光束 - 向前喷射龟光',
+        '龟圈 - 散发致命光圈',
         '龟文诅咒 - 散发诅咒文字'
       ],
       locked: !availableWeapons?.guigui?.unlocked
@@ -46,21 +46,24 @@ export default function WeaponSelect({ availableWeapons, onSelect, onClose }) {
       name: '电巢',
       icon: Zap,
       color: 'from-yellow-500 to-blue-500',
-      description: '向四周喷射电流',
+      description: '击败龙海星解锁',
       skills: [
-        '电流喷射 - 四周释放电流',
-        '电气攻击 - 大量电气伤害'
-      ]
+        '电流四射 - 四周释放电流',
+        '雷暴 - 大量电气伤害'
+      ],
+      locked: !availableWeapons?.dianchao?.unlocked
     },
     totem: {
       id: 'totem',
       name: '中大林图腾',
       icon: Users,
       color: 'from-green-400 to-green-600',
-      description: '召唤中大林协助战斗',
+      description: '击败中大林广志解锁',
       skills: [
-        '召唤中大林 - 帮助攻击敌人'
-      ]
+        '图腾射击 - 每5次召唤中大林',
+        '召唤军团 - 召唤强化中大林'
+      ],
+      locked: !availableWeapons?.totem?.unlocked
     }
   };
 
