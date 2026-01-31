@@ -1,7 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Play } from 'lucide-react';
+import { Play, Hammer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 
 export default function StartScreen({ onStart, defeatedBosses = [] }) {
   const [selectedMode, setSelectedMode] = React.useState(null);
@@ -133,7 +135,7 @@ export default function StartScreen({ onStart, defeatedBosses = [] }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}
-        className="mt-8 text-center space-y-2"
+        className="mt-8 text-center space-y-4"
       >
         <p className="text-orange-300/80 text-xl font-medium">
           击败 20 个 BOSS 赢得胜利！
@@ -144,6 +146,17 @@ export default function StartScreen({ onStart, defeatedBosses = [] }) {
         <p className="text-emerald-300/70 text-base">
           新增敌人: 狙击手、医疗兵、爆破手
         </p>
+        
+        <Link to={createPageUrl('Forge')}>
+          <Button
+            variant="outline"
+            size="lg"
+            className="mt-4 px-8 py-6 text-lg font-bold border-2 border-orange-500/50 hover:bg-orange-500/20"
+          >
+            <Hammer className="w-5 h-5 mr-2" />
+            前往锻造处
+          </Button>
+        </Link>
       </motion.div>
     </motion.div>
   );
