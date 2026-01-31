@@ -47,13 +47,13 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
-import Game from './pages/Game';
 import Forge from './pages/Forge';
+import Game from './pages/Game';
 
 
 export const PAGES = {
-    "Game": Game,
     "Forge": Forge,
+    "Game": Game,
 }
 
 export const pagesConfig = {

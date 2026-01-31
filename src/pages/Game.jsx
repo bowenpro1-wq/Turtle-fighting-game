@@ -124,14 +124,9 @@ export default function Game() {
       return;
     }
     
-    if (mode !== 'busbreak') {
-      // Show weapon select for all modes except busbreak
-      setGameMode(mode);
-      setShowWeaponSelect(true);
-      return;
-    }
-    
-    continueGameAfterWeaponSelect(mode, fromCheckpoint);
+    // Show weapon select for all other modes
+    setGameMode(mode);
+    setShowWeaponSelect(true);
   };
 
   const continueGameAfterWeaponSelect = (mode, fromCheckpoint = false) => {
