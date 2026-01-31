@@ -6,6 +6,7 @@ import GameOver from '@/components/game/GameOver';
 import BossIntro from '@/components/game/BossIntro';
 import StartScreen from '@/components/game/StartScreen';
 import Shop from '@/components/game/Shop';
+import VirtualKeyboard from '@/components/game/VirtualKeyboard';
 
 const BOSSES = [
   { id: 1, name: "海星守卫", health: 100, damage: 15, speed: 1.5, size: 60, color: "#ff6b6b", pattern: "circle" },
@@ -373,6 +374,8 @@ export default function Game() {
         
         {(gameState === 'playing' || gameState === 'boss') && (
           <>
+            <VirtualKeyboard />
+
             <GameCanvas
               gameState={gameState}
               gameMode={gameMode}
