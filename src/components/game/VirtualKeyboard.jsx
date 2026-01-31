@@ -51,16 +51,26 @@ export default function VirtualKeyboard() {
       <motion.button
         onTouchStart={(e) => {
           e.preventDefault();
+          e.stopPropagation();
           handleKeyDown(keyLabel);
         }}
         onTouchEnd={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          handleKeyUp(keyLabel);
+        }}
+        onMouseDown={(e) => {
+          e.preventDefault();
+          handleKeyDown(keyLabel);
+        }}
+        onMouseUp={(e) => {
           e.preventDefault();
           handleKeyUp(keyLabel);
         }}
         className={`${sizeClasses[size]} rounded-xl bg-gradient-to-b ${colorClasses[color]} 
           text-white font-bold shadow-lg border-2 border-white/20 
           ${isActive ? 'scale-95 brightness-75' : ''} 
-          transition-all select-none touch-none`}
+          transition-all select-none pointer-events-auto`}
         whileTap={{ scale: 0.9 }}
       >
         {displayLabel || keyLabel.toUpperCase()}
@@ -71,8 +81,8 @@ export default function VirtualKeyboard() {
   return (
     <div className="fixed inset-0 pointer-events-none z-50">
       {/* Movement Controls - Left */}
-      <div className="absolute left-4 bottom-4 pointer-events-auto">
-        <div className="bg-black/40 backdrop-blur-sm rounded-2xl p-3 border-2 border-white/10">
+      <div className="absolute left-4 bottom-32 pointer-events-auto">
+        <div className="bg-black/40 backdrop-blur-sm rounded-2xl p-3 border-2 border-white/10 pointer-events-auto">
           <div className="grid grid-cols-3 gap-2">
             <div />
             <KeyButton keyLabel="w" displayLabel="↑" color="gray" />
@@ -85,8 +95,8 @@ export default function VirtualKeyboard() {
       </div>
 
       {/* Action Controls - Right */}
-      <div className="absolute right-4 bottom-4 pointer-events-auto">
-        <div className="bg-black/40 backdrop-blur-sm rounded-2xl p-3 border-2 border-white/10">
+      <div className="absolute right-4 bottom-32 pointer-events-auto">
+        <div className="bg-black/40 backdrop-blur-sm rounded-2xl p-3 border-2 border-white/10 pointer-events-auto">
           <div className="grid grid-cols-2 gap-3">
             <KeyButton keyLabel="k" displayLabel="射击" color="red" size="large" />
             <KeyButton keyLabel="j" displayLabel="近战" color="cyan" size="large" />
@@ -100,7 +110,7 @@ export default function VirtualKeyboard() {
 
       {/* Shop Button - Top Right */}
       <div className="absolute right-4 top-24 pointer-events-auto">
-        <div className="bg-black/40 backdrop-blur-sm rounded-2xl p-2 border-2 border-white/10">
+        <div className="bg-black/40 backdrop-blur-sm rounded-2xl p-2 border-2 border-white/10 pointer-events-auto">
           <KeyButton keyLabel="b" displayLabel="商店" color="yellow" size="small" />
         </div>
       </div>
