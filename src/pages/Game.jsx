@@ -117,8 +117,15 @@ export default function Game() {
   const MELEE_DURATION = 150;
 
   const startGame = (mode = 'normal', fromCheckpoint = false) => {
+    if (mode === 'busbreak') {
+      // Boss试炼模式直接开始,显示boss选择
+      setGameMode(mode);
+      setGameState('busbreak_select');
+      return;
+    }
+    
     if (mode !== 'busbreak') {
-      // Show weapon select for all modes except busbreak initially
+      // Show weapon select for all modes except busbreak
       setGameMode(mode);
       setShowWeaponSelect(true);
       return;

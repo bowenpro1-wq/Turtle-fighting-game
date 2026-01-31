@@ -20,6 +20,70 @@ const ZHONGDALIN = {
   vineAttack: true
 };
 
+// Boss试炼 special bosses
+const BUSBREAK_BOSSES = {
+  zhongdalin: {
+    name: '中大林广志',
+    width: 120,
+    height: 150,
+    speed: 2.0,
+    health: 3000,
+    damage: 40,
+    color: '#4ade80',
+    pattern: 'chase',
+    shootInterval: 2000,
+    isSpecialBoss: true
+  },
+  xiaowang: {
+    name: '小王',
+    width: 100,
+    height: 120,
+    speed: 3.0,
+    health: 2500,
+    damage: 35,
+    color: '#f59e0b',
+    pattern: 'dash',
+    shootInterval: 1500,
+    isSpecialBoss: true
+  },
+  longhaixing: {
+    name: '龙海星',
+    width: 110,
+    height: 130,
+    speed: 2.5,
+    health: 2800,
+    damage: 38,
+    color: '#06b6d4',
+    pattern: 'teleport',
+    shootInterval: 1800,
+    isSpecialBoss: true
+  },
+  qigong: {
+    name: '启功大师',
+    width: 130,
+    height: 160,
+    speed: 1.5,
+    health: 3500,
+    damage: 45,
+    color: '#8b5cf6',
+    pattern: 'spiral',
+    shootInterval: 2500,
+    isSpecialBoss: true
+  },
+  guangzhi: {
+    name: '广智',
+    width: 150,
+    height: 180,
+    speed: 2.2,
+    health: 5000,
+    damage: 60,
+    color: '#ff4500',
+    pattern: 'flame',
+    shootInterval: 2000,
+    isSpecialBoss: true
+  }
+};
+
 // Enemy types with unique behaviors
 const ENEMY_TYPES = {
   ZHONGDALIN: ZHONGDALIN,
@@ -586,8 +650,8 @@ export default function GameCanvas({
       // Remove destroyed buildings
       game.buildings = game.buildings.filter(b => b.health > 0);
 
-      // Spawn enemies every 5 seconds in normal mode (not tower mode)
-      if (gameMode !== 'tower' && gameState === 'playing' && Date.now() - game.lastEnemySpawn > 5000) {
+      // Spawn enemies every 5 seconds in normal mode (not tower or busbreak mode)
+      if (gameMode !== 'tower' && gameMode !== 'busbreak' && gameState === 'playing' && Date.now() - game.lastEnemySpawn > 5000) {
         const spawnCount = Math.floor(Math.random() * 2) + 2;
         for (let i = 0; i < spawnCount; i++) {
           game.enemies.push(spawnEnemy());
@@ -595,8 +659,8 @@ export default function GameCanvas({
         game.lastEnemySpawn = Date.now();
       }
 
-      // Boss mode: spawn 3 enemies every 2 seconds (not in tower mode)
-      if (gameMode !== 'tower' && gameState === 'boss') {
+      // Boss mode: spawn 3 enemies every 2 seconds (not in tower or busbreak mode)
+      if (gameMode !== 'tower' && gameMode !== 'busbreak' && gameState === 'boss') {
         // Initial spawn of 10-20 enemies when boss appears
         if (game.lastBossEnemySpawn === 0) {
           const initialCount = Math.floor(Math.random() * 11) + 10;
@@ -611,7 +675,7 @@ export default function GameCanvas({
           }
           game.lastBossEnemySpawn = Date.now();
         }
-      } else if (gameMode !== 'tower') {
+      } else if (gameMode !== 'tower' && gameMode !== 'busbreak') {
         game.lastBossEnemySpawn = 0;
       }
 
