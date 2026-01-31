@@ -12,24 +12,14 @@ export default function VirtualKeyboard() {
     setIsTouchDevice(hasTouch);
   }, []);
 
-  // Global cleanup for stuck keys
+  // Cleanup on unmount
   useEffect(() => {
-    const handleGlobalTouchEnd = () => {
-      // Release all active keys
+    return () => {
+      // Release all active keys on unmount
       activeKeysRef.current.forEach(key => {
         window.dispatchEvent(new KeyboardEvent('keyup', { key }));
       });
       activeKeysRef.current.clear();
-      setActiveKeys(new Set());
-    };
-
-    window.addEventListener('touchend', handleGlobalTouchEnd);
-    window.addEventListener('touchcancel', handleGlobalTouchEnd);
-
-    return () => {
-      handleGlobalTouchEnd();
-      window.removeEventListener('touchend', handleGlobalTouchEnd);
-      window.removeEventListener('touchcancel', handleGlobalTouchEnd);
     };
   }, []);
 
