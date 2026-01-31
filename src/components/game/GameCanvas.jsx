@@ -451,33 +451,96 @@ export default function GameCanvas({
               });
             }
           } else if (selectedWeapon === 'totem') {
-            // 图腾 - 召唤中大林协助 (创建友军单位)
-            if (game.allies && game.allies.length < 3) {
-              const spawnAngle = Math.random() * Math.PI * 2;
-              const spawnDist = 100;
+            // 图腾 - 普通射击 + 召唤中大林
+            game.bullets.push({
+              x: px,
+              y: py,
+              vx: Math.cos(angle) * 12,
+              vy: Math.sin(angle) * 12,
+              damage: (10 + weaponLevel * 2) * upgrades.damage,
+              size: 9,
+              color: '#4ade80',
+              fromPlayer: true,
+              weaponType: 'totem',
+              distanceTraveled: 0,
+              maxDistance: 500
+            });
+
+            // 每5次射击召唤一个中大林
+            game.totemShotCount = (game.totemShotCount || 0) + 1;
+            if (game.totemShotCount >= 5) {
               game.allies = game.allies || [];
-              game.allies.push({
-                x: px + Math.cos(spawnAngle) * spawnDist,
-                y: py + Math.sin(spawnAngle) * spawnDist,
-                width: 40,
-                height: 50,
-                health: 50 + weaponLevel * 10,
-                maxHealth: 50 + weaponLevel * 10,
-                damage: 8 + weaponLevel,
-                lifetime: 300 + weaponLevel * 50,
-                lastShot: Date.now()
-              });
+              if (game.allies.length < 3) {
+                const spawnAngle = Math.random() * Math.PI * 2;
+                const spawnDist = 100;
+                game.allies.push({
+                  x: px + Math.cos(spawnAngle) * spawnDist,
+                  y: py + Math.sin(spawnAngle) * spawnDist,
+                  width: 40,
+                  height: 50,
+                  health: 50 + weaponLevel * 10,
+                  maxHealth: 50 + weaponLevel * 10,
+                  damage: 8 + weaponLevel,
+                  lifetime: 300 + weaponLevel * 50,
+                  lastShot: Date.now()
+                });
+
+                // 召唤特效
+                for (let i = 0; i < 20; i++) {
+                  game.particles.push({
+                    x: px,
+                    y: py,
+                    vx: (Math.random() - 0.5) * 8,
+                    vy: (Math.random() - 0.5) * 8,
+                    life: 25,
+                    color: '#4ade80',
+                    size: 6
+                  });
+                }
+              }
+              game.totemShotCount = 0;
             }
-            // 召唤特效
-            for (let i = 0; i < 25; i++) {
+
+            // 射击粒子
+            for (let i = 0; i < 8; i++) {
               game.particles.push({
                 x: px,
                 y: py,
-                vx: (Math.random() - 0.5) * 8,
-                vy: (Math.random() - 0.5) * 8,
-                life: 30,
+                vx: Math.cos(angle) * (Math.random() * 5 + 3),
+                vy: Math.sin(angle) * (Math.random() * 5 + 3),
+                life: 15,
                 color: '#4ade80',
-                size: 6
+                size: 4
+              });
+            }
+          } else if (selectedWeapon === 'guigui') {
+            // 龟龟之手 - 光喷射
+            for (let i = 0; i < 3; i++) {
+              const spreadAngle = angle + (i - 1) * 0.15;
+              game.bullets.push({
+                x: px,
+                y: py,
+                vx: Math.cos(spreadAngle) * 14,
+                vy: Math.sin(spreadAngle) * 14,
+                damage: (12 + weaponLevel * 2) * upgrades.damage,
+                size: 10,
+                color: '#22c55e',
+                fromPlayer: true,
+                weaponType: 'light',
+                distanceTraveled: 0,
+                maxDistance: 450
+              });
+            }
+            // 光粒子
+            for (let i = 0; i < 12; i++) {
+              game.particles.push({
+                x: px,
+                y: py,
+                vx: Math.cos(angle) * (Math.random() * 6 + 4),
+                vy: Math.sin(angle) * (Math.random() * 6 + 4),
+                life: 18,
+                color: '#22c55e',
+                size: 5
               });
             }
           } else {
