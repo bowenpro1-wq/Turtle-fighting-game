@@ -577,6 +577,8 @@ export default function Game() {
             <GameCanvas
               gameState={gameState}
               gameMode={gameMode}
+              selectedWeapon={selectedWeapon}
+              weaponLevel={weapons[selectedWeapon]?.level || 0}
               onPlayerDamage={handlePlayerDamage}
               onEnemyKill={handleEnemyKill}
               onBossDamage={handleBossDamage}

@@ -193,6 +193,8 @@ const ENEMY_TYPES = {
 export default function GameCanvas({
   gameState,
   gameMode,
+  selectedWeapon,
+  weaponLevel,
   onPlayerDamage,
   onEnemyKill,
   onBossDamage,
@@ -380,64 +382,205 @@ export default function GameCanvas({
 
     const handleKeyDown = (e) => {
       game.keys[e.key.toLowerCase()] = true;
-      
+
+      // K键 - 根据武器改变攻击方式
       if (e.key.toLowerCase() === 'k') {
         if (shoot()) {
           const angle = game.player.angle;
-          const baseSpeed = hasHomingBullets ? 10 : 15;
-          const bulletDamage = hasCannonUpgrade ? 25 * upgrades.damage : 10 * upgrades.damage;
-          const bulletSize = hasCannonUpgrade ? 12 : 8;
+          const px = game.player.x + game.player.width / 2;
+          const py = game.player.y + game.player.height / 2;
 
-          const bullet = {
-            x: game.player.x + game.player.width / 2,
-            y: game.player.y + game.player.height / 2,
-            vx: Math.cos(angle) * baseSpeed,
-            vy: Math.sin(angle) * baseSpeed,
-            damage: bulletDamage,
-            size: bulletSize,
-            fromPlayer: true,
-            isCannon: hasCannonUpgrade,
-            isHoming: hasHomingBullets,
-            distanceTraveled: 0,
-            maxDistance: hasHomingBullets ? 400 : 800
-          };
-          game.bullets.push(bullet);
+          if (selectedWeapon === 'chichao') {
+            // 赤潮 - 火焰喷射
+            for (let i = 0; i < 5; i++) {
+              const spreadAngle = angle + (Math.random() - 0.5) * 0.3;
+              game.bullets.push({
+                x: px,
+                y: py,
+                vx: Math.cos(spreadAngle) * (12 + Math.random() * 3),
+                vy: Math.sin(spreadAngle) * (12 + Math.random() * 3),
+                damage: (15 + weaponLevel * 2) * upgrades.damage,
+                size: 10,
+                color: '#ff4500',
+                fromPlayer: true,
+                weaponType: 'flame',
+                distanceTraveled: 0,
+                maxDistance: 400
+              });
+            }
+            // 火焰粒子效果
+            for (let i = 0; i < 15; i++) {
+              game.particles.push({
+                x: px,
+                y: py,
+                vx: Math.cos(angle) * (Math.random() * 8 + 5),
+                vy: Math.sin(angle) * (Math.random() * 8 + 5),
+                life: 20,
+                color: Math.random() > 0.5 ? '#ff4500' : '#ffa500',
+                size: 6
+              });
+            }
+          } else if (selectedWeapon === 'dianchao') {
+            // 电巢 - 四周喷射电流
+            for (let i = 0; i < 8; i++) {
+              const spreadAngle = (Math.PI * 2 / 8) * i;
+              game.bullets.push({
+                x: px,
+                y: py,
+                vx: Math.cos(spreadAngle) * 10,
+                vy: Math.sin(spreadAngle) * 10,
+                damage: (12 + weaponLevel * 2) * upgrades.damage,
+                size: 8,
+                color: '#fbbf24',
+                fromPlayer: true,
+                weaponType: 'electric',
+                distanceTraveled: 0,
+                maxDistance: 350
+              });
+            }
+            // 电流粒子
+            for (let i = 0; i < 20; i++) {
+              game.particles.push({
+                x: px,
+                y: py,
+                vx: (Math.random() - 0.5) * 12,
+                vy: (Math.random() - 0.5) * 12,
+                life: 15,
+                color: '#fbbf24',
+                size: 4
+              });
+            }
+          } else if (selectedWeapon === 'totem') {
+            // 图腾 - 召唤中大林协助 (创建友军单位)
+            if (game.allies && game.allies.length < 3) {
+              const spawnAngle = Math.random() * Math.PI * 2;
+              const spawnDist = 100;
+              game.allies = game.allies || [];
+              game.allies.push({
+                x: px + Math.cos(spawnAngle) * spawnDist,
+                y: py + Math.sin(spawnAngle) * spawnDist,
+                width: 40,
+                height: 50,
+                health: 50 + weaponLevel * 10,
+                maxHealth: 50 + weaponLevel * 10,
+                damage: 8 + weaponLevel,
+                lifetime: 300 + weaponLevel * 50,
+                lastShot: Date.now()
+              });
+            }
+            // 召唤特效
+            for (let i = 0; i < 25; i++) {
+              game.particles.push({
+                x: px,
+                y: py,
+                vx: (Math.random() - 0.5) * 8,
+                vy: (Math.random() - 0.5) * 8,
+                life: 30,
+                color: '#4ade80',
+                size: 6
+              });
+            }
+          } else {
+            // 默认射击
+            const baseSpeed = hasHomingBullets ? 10 : 15;
+            const bulletDamage = hasCannonUpgrade ? 25 * upgrades.damage : 10 * upgrades.damage;
+            const bulletSize = hasCannonUpgrade ? 12 : 8;
 
-          // Muzzle flash with trail
-          const flashCount = hasCannonUpgrade ? 20 : 10;
-          const flashColor = hasCannonUpgrade ? '#ff4500' : '#fbbf24';
-          for (let i = 0; i < flashCount; i++) {
-            game.particles.push({
-              x: bullet.x,
-              y: bullet.y,
-              vx: Math.cos(angle) * (Math.random() * 5 + 3),
-              vy: Math.sin(angle) * (Math.random() * 5 + 3) + (Math.random() - 0.5) * 4,
-              life: hasCannonUpgrade ? 25 : 18,
-              color: flashColor,
-              size: hasCannonUpgrade ? 6 : 4
+            game.bullets.push({
+              x: px,
+              y: py,
+              vx: Math.cos(angle) * baseSpeed,
+              vy: Math.sin(angle) * baseSpeed,
+              damage: bulletDamage,
+              size: bulletSize,
+              fromPlayer: true,
+              isCannon: hasCannonUpgrade,
+              isHoming: hasHomingBullets,
+              distanceTraveled: 0,
+              maxDistance: hasHomingBullets ? 400 : 800
             });
-          }
 
-          // Screen shake for cannon
-          if (hasCannonUpgrade) {
-            game.screenShake = 2;
+            const flashCount = hasCannonUpgrade ? 20 : 10;
+            const flashColor = hasCannonUpgrade ? '#ff4500' : '#fbbf24';
+            for (let i = 0; i < flashCount; i++) {
+              game.particles.push({
+                x: px,
+                y: py,
+                vx: Math.cos(angle) * (Math.random() * 5 + 3),
+                vy: Math.sin(angle) * (Math.random() * 5 + 3) + (Math.random() - 0.5) * 4,
+                life: hasCannonUpgrade ? 25 : 18,
+                color: flashColor,
+                size: hasCannonUpgrade ? 6 : 4
+              });
+            }
+
+            if (hasCannonUpgrade) {
+              game.screenShake = 2;
+            }
           }
         }
       }
       
+      // H键 - 根据武器改变技能
       if (e.key.toLowerCase() === 'h') {
         if (heal()) {
-          for (let i = 0; i < 20; i++) {
-            game.particles.push({
-              x: game.player.x + game.player.width / 2,
-              y: game.player.y + game.player.height / 2,
-              vx: (Math.random() - 0.5) * 4,
-              vy: -Math.random() * 5,
-              life: 30,
-              color: '#22c55e',
-              size: 4,
-              type: 'heal'
+          const px = game.player.x + game.player.width / 2;
+          const py = game.player.y + game.player.height / 2;
+
+          if (selectedWeapon === 'chichao') {
+            // 赤潮 - 火焰近战攻击
+            const meleeRange = 120;
+            const meleeDamage = (25 + weaponLevel * 3) * upgrades.damage;
+
+            game.enemies.forEach(enemy => {
+              const dx = enemy.x + enemy.width / 2 - px;
+              const dy = enemy.y + enemy.height / 2 - py;
+              const dist = Math.sqrt(dx * dx + dy * dy);
+
+              if (dist < meleeRange) {
+                enemy.health -= meleeDamage;
+                // 火焰爆炸
+                for (let i = 0; i < 15; i++) {
+                  game.particles.push({
+                    x: enemy.x + enemy.width / 2,
+                    y: enemy.y + enemy.height / 2,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10,
+                    life: 25,
+                    color: '#ff4500',
+                    size: 6
+                  });
+                }
+              }
             });
+
+            // 火焰环绕特效
+            for (let i = 0; i < 40; i++) {
+              const angle = (Math.PI * 2 / 40) * i;
+              game.particles.push({
+                x: px,
+                y: py,
+                vx: Math.cos(angle) * 8,
+                vy: Math.sin(angle) * 8,
+                life: 25,
+                color: '#ffa500',
+                size: 5
+              });
+            }
+          } else {
+            // 默认治疗
+            for (let i = 0; i < 20; i++) {
+              game.particles.push({
+                x: px,
+                y: py,
+                vx: (Math.random() - 0.5) * 4,
+                vy: -Math.random() * 5,
+                life: 30,
+                color: '#22c55e',
+                size: 4,
+                type: 'heal'
+              });
+            }
           }
         }
       }
@@ -458,42 +601,157 @@ export default function GameCanvas({
         }
       }
 
+      // L键 - 武器强力技能
       if (e.key.toLowerCase() === 'l') {
         if (largeAttack()) {
+          const px = game.player.x + game.player.width / 2;
+          const py = game.player.y + game.player.height / 2;
           game.screenShake = 15;
-          // 100 bullets in all directions
-          for (let i = 0; i < 100; i++) {
-            const angle = (Math.PI * 2 / 100) * i;
-            const bulletDamage = hasCannonUpgrade ? 30 * upgrades.damage : 15 * upgrades.damage;
-            const bulletSize = hasCannonUpgrade ? 14 : 10;
 
-            game.bullets.push({
-              x: game.player.x + game.player.width / 2,
-              y: game.player.y + game.player.height / 2,
-              vx: Math.cos(angle) * 12,
-              vy: Math.sin(angle) * 12,
-              damage: bulletDamage,
-              size: bulletSize,
-              fromPlayer: true,
-              isCannon: hasCannonUpgrade,
-              isHoming: false,
-              distanceTraveled: 0,
-              maxDistance: 800
-            });
-          }
+          if (selectedWeapon === 'chichao') {
+            // 赤潮 - 超级火焰弹
+            for (let i = 0; i < 50; i++) {
+              const angle = (Math.PI * 2 / 50) * i;
+              game.bullets.push({
+                x: px,
+                y: py,
+                vx: Math.cos(angle) * 10,
+                vy: Math.sin(angle) * 10,
+                damage: (40 + weaponLevel * 5) * upgrades.damage,
+                size: 15,
+                color: '#ff4500',
+                fromPlayer: true,
+                weaponType: 'superflame',
+                distanceTraveled: 0,
+                maxDistance: 600
+              });
+            }
+            for (let i = 0; i < 60; i++) {
+              game.particles.push({
+                x: px,
+                y: py,
+                vx: (Math.random() - 0.5) * 15,
+                vy: (Math.random() - 0.5) * 15,
+                life: 60,
+                color: '#ff4500',
+                size: 10
+              });
+            }
+          } else if (selectedWeapon === 'dianchao') {
+            // 电巢 - 电气攻击
+            for (let i = 0; i < 80; i++) {
+              const angle = Math.random() * Math.PI * 2;
+              game.bullets.push({
+                x: px,
+                y: py,
+                vx: Math.cos(angle) * (8 + Math.random() * 6),
+                vy: Math.sin(angle) * (8 + Math.random() * 6),
+                damage: (35 + weaponLevel * 4) * upgrades.damage,
+                size: 12,
+                color: '#fbbf24',
+                fromPlayer: true,
+                weaponType: 'thunder',
+                distanceTraveled: 0,
+                maxDistance: 500
+              });
+            }
+            for (let i = 0; i < 70; i++) {
+              game.particles.push({
+                x: px,
+                y: py,
+                vx: (Math.random() - 0.5) * 20,
+                vy: (Math.random() - 0.5) * 20,
+                life: 50,
+                color: '#fbbf24',
+                size: 8
+              });
+            }
+          } else if (selectedWeapon === 'guigui') {
+            // 龟龟之手 - 龟圈 (持续伤害区域)
+            game.turtleRing = {
+              x: px,
+              y: py,
+              radius: 200,
+              damage: (5 + weaponLevel) * upgrades.damage,
+              life: 200,
+              maxLife: 200
+            };
+            for (let i = 0; i < 80; i++) {
+              const angle = (Math.PI * 2 / 80) * i;
+              game.particles.push({
+                x: px + Math.cos(angle) * 200,
+                y: py + Math.sin(angle) * 200,
+                vx: Math.cos(angle) * 3,
+                vy: Math.sin(angle) * 3,
+                life: 50,
+                color: '#22c55e',
+                size: 8
+              });
+            }
+          } else if (selectedWeapon === 'totem') {
+            // 图腾 - 召唤3个强化中大林
+            game.allies = game.allies || [];
+            for (let i = 0; i < 3; i++) {
+              const angle = (Math.PI * 2 / 3) * i;
+              const spawnDist = 150;
+              game.allies.push({
+                x: px + Math.cos(angle) * spawnDist,
+                y: py + Math.sin(angle) * spawnDist,
+                width: 50,
+                height: 60,
+                health: 100 + weaponLevel * 15,
+                maxHealth: 100 + weaponLevel * 15,
+                damage: 15 + weaponLevel * 2,
+                lifetime: 400 + weaponLevel * 60,
+                lastShot: Date.now(),
+                enhanced: true
+              });
+            }
+            for (let i = 0; i < 50; i++) {
+              game.particles.push({
+                x: px,
+                y: py,
+                vx: (Math.random() - 0.5) * 12,
+                vy: (Math.random() - 0.5) * 12,
+                life: 60,
+                color: '#4ade80',
+                size: 10
+              });
+            }
+          } else {
+            // 默认大招
+            for (let i = 0; i < 100; i++) {
+              const angle = (Math.PI * 2 / 100) * i;
+              const bulletDamage = hasCannonUpgrade ? 30 * upgrades.damage : 15 * upgrades.damage;
+              const bulletSize = hasCannonUpgrade ? 14 : 10;
 
-          // Epic particles
-          const particleColor = hasCannonUpgrade ? '#ff4500' : '#fbbf24';
-          for (let i = 0; i < 50; i++) {
-            game.particles.push({
-              x: game.player.x + game.player.width / 2,
-              y: game.player.y + game.player.height / 2,
-              vx: (Math.random() - 0.5) * 10,
-              vy: (Math.random() - 0.5) * 10,
-              life: 50,
-              color: particleColor,
-              size: 8
-            });
+              game.bullets.push({
+                x: px,
+                y: py,
+                vx: Math.cos(angle) * 12,
+                vy: Math.sin(angle) * 12,
+                damage: bulletDamage,
+                size: bulletSize,
+                fromPlayer: true,
+                isCannon: hasCannonUpgrade,
+                isHoming: false,
+                distanceTraveled: 0,
+                maxDistance: 800
+              });
+            }
+
+            const particleColor = hasCannonUpgrade ? '#ff4500' : '#fbbf24';
+            for (let i = 0; i < 50; i++) {
+              game.particles.push({
+                x: px,
+                y: py,
+                vx: (Math.random() - 0.5) * 10,
+                vy: (Math.random() - 0.5) * 10,
+                life: 50,
+                color: particleColor,
+                size: 8
+              });
+            }
           }
         }
       }
@@ -516,37 +774,95 @@ export default function GameCanvas({
         }
       }
 
+      // P键 - 武器终极技能
       if (e.key.toLowerCase() === 'p') {
         if (allOutAttack()) {
+          const px = game.player.x + game.player.width / 2;
+          const py = game.player.y + game.player.height / 2;
           game.screenShake = 25;
-          // Kill all enemies instantly
-          game.enemies.forEach(enemy => {
-            for (let i = 0; i < 30; i++) {
+
+          if (selectedWeapon === 'chichao') {
+            // 赤潮 - 广志真身
+            game.guangzhiSpirit = {
+              x: px,
+              y: py - 200,
+              width: 150,
+              height: 180,
+              damage: (80 + weaponLevel * 10) * upgrades.damage,
+              lifetime: 150 + weaponLevel * 20,
+              lastAttack: Date.now()
+            };
+            for (let i = 0; i < 100; i++) {
               game.particles.push({
-                x: enemy.x + enemy.width / 2,
-                y: enemy.y + enemy.height / 2,
-                vx: (Math.random() - 0.5) * 15,
-                vy: (Math.random() - 0.5) * 15,
-                life: 60,
-                color: '#ef4444',
-                size: 6
+                x: px,
+                y: py,
+                vx: (Math.random() - 0.5) * 25,
+                vy: (Math.random() - 0.5) * 25,
+                life: 80,
+                color: '#ff4500',
+                size: 12
               });
             }
-            onEnemyKill(enemy.name);
-          });
-          game.enemies = [];
-
-          // Epic explosion particles
-          for (let i = 0; i < 100; i++) {
-            game.particles.push({
-              x: game.player.x + game.player.width / 2,
-              y: game.player.y + game.player.height / 2,
-              vx: (Math.random() - 0.5) * 20,
-              vy: (Math.random() - 0.5) * 20,
-              life: 80,
-              color: '#ef4444',
-              size: 10
+          } else if (selectedWeapon === 'guigui') {
+            // 龟龟之手 - 龟文诅咒
+            for (let i = 0; i < 200; i++) {
+              const angle = Math.random() * Math.PI * 2;
+              const dist = Math.random() * 400;
+              game.particles.push({
+                x: px + Math.cos(angle) * dist,
+                y: py + Math.sin(angle) * dist,
+                vx: 0,
+                vy: 0,
+                life: 100,
+                color: '#22c55e',
+                size: 8,
+                type: 'curse'
+              });
+            }
+            // 诅咒所有敌人
+            game.enemies.forEach(enemy => {
+              enemy.health -= (100 + weaponLevel * 15) * upgrades.damage;
+              for (let i = 0; i < 30; i++) {
+                game.particles.push({
+                  x: enemy.x + enemy.width / 2,
+                  y: enemy.y + enemy.height / 2,
+                  vx: (Math.random() - 0.5) * 12,
+                  vy: (Math.random() - 0.5) * 12,
+                  life: 60,
+                  color: '#22c55e',
+                  size: 6
+                });
+              }
             });
+          } else {
+            // 默认终极技 - 清屏
+            game.enemies.forEach(enemy => {
+              for (let i = 0; i < 30; i++) {
+                game.particles.push({
+                  x: enemy.x + enemy.width / 2,
+                  y: enemy.y + enemy.height / 2,
+                  vx: (Math.random() - 0.5) * 15,
+                  vy: (Math.random() - 0.5) * 15,
+                  life: 60,
+                  color: '#ef4444',
+                  size: 6
+                });
+              }
+              onEnemyKill(enemy.name);
+            });
+            game.enemies = [];
+
+            for (let i = 0; i < 100; i++) {
+              game.particles.push({
+                x: px,
+                y: py,
+                vx: (Math.random() - 0.5) * 20,
+                vy: (Math.random() - 0.5) * 20,
+                life: 80,
+                color: '#ef4444',
+                size: 10
+              });
+            }
           }
         }
       }
