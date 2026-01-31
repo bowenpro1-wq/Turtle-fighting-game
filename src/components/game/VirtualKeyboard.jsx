@@ -59,11 +59,20 @@ export default function VirtualKeyboard() {
           e.stopPropagation();
           handleKeyUp(keyLabel);
         }}
+        onTouchCancel={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          handleKeyUp(keyLabel);
+        }}
         onMouseDown={(e) => {
           e.preventDefault();
           handleKeyDown(keyLabel);
         }}
         onMouseUp={(e) => {
+          e.preventDefault();
+          handleKeyUp(keyLabel);
+        }}
+        onMouseLeave={(e) => {
           e.preventDefault();
           handleKeyUp(keyLabel);
         }}
