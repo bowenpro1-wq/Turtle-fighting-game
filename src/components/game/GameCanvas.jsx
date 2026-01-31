@@ -795,6 +795,47 @@ export default function GameCanvas({
         game.lastHealCheck = Date.now();
       }
 
+      // Render Bus Break boss if in boss state
+      if (gameState === 'boss' && currentBoss && gameMode === 'busbreak') {
+        const bossX = game.player.x - game.camera.x;
+        const bossY = game.player.y - game.camera.y - 200;
+
+        // Draw boss
+        ctx.save();
+        ctx.fillStyle = currentBoss.color;
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 4;
+
+        // Boss body
+        ctx.beginPath();
+        ctx.arc(bossX, bossY, currentBoss.size / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Boss eyes
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(bossX - 15, bossY - 10, 8, 0, Math.PI * 2);
+        ctx.arc(bossX + 15, bossY - 10, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(bossX - 15, bossY - 10, 4, 0, Math.PI * 2);
+        ctx.arc(bossX + 15, bossY - 10, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Boss name tag
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillRect(bossX - 80, bossY - currentBoss.size / 2 - 35, 160, 25);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 16px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(currentBoss.name, bossX, bossY - currentBoss.size / 2 - 15);
+
+        ctx.restore();
+      }
+
       // Update enemies
       game.enemies = game.enemies.filter(enemy => {
         // AI behavior - top-down movement
