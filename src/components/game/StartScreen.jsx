@@ -123,7 +123,7 @@ export default function StartScreen({ onStart, defeatedBosses = [] }) {
             size="lg"
             className="w-full px-12 py-8 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-700 hover:via-pink-700 hover:to-rose-700 rounded-2xl text-white text-3xl font-bold shadow-2xl border-4 border-purple-400/50"
           >
-            💔 Bus失恋模式 💔
+            ⚔️ Boss试炼模式 ⚔️
           </Button>
           <p className="text-purple-300 text-sm text-center">击败特殊BOSS获得武器和升级模板！</p>
           </div>
