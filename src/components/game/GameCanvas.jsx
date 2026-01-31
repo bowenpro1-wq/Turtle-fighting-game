@@ -1111,45 +1111,146 @@ export default function GameCanvas({
         game.lastHealCheck = Date.now();
       }
 
-      // Render Bus Break boss if in boss state
+      // Bus Break boss AI and rendering
       if (gameState === 'boss' && currentBoss && gameMode === 'busbreak') {
-        const bossX = game.player.x - game.camera.x;
-        const bossY = game.player.y - game.camera.y - 200;
+        // Initialize boss position if not set
+        if (!game.busBreakBoss) {
+          game.busBreakBoss = {
+            x: game.player.x,
+            y: game.player.y - 300,
+            vx: 0,
+            vy: 0,
+            lastShot: Date.now(),
+            lastDash: Date.now(),
+            dashCooldown: 3000
+          };
+        }
+
+        const boss = game.busBreakBoss;
+        const dx = game.player.x - boss.x;
+        const dy = game.player.y - boss.y;
+        const distToPlayer = Math.sqrt(dx * dx + dy * dy);
+
+        // Boss AI based on pattern
+        if (currentBoss.pattern === 'chase') {
+          // Simple chase
+          boss.vx = (dx / distToPlayer) * currentBoss.speed;
+          boss.vy = (dy / distToPlayer) * currentBoss.speed;
+        } else if (currentBoss.pattern === 'dash') {
+          // Dash towards player periodically
+          if (Date.now() - boss.lastDash > boss.dashCooldown) {
+            boss.vx = (dx / distToPlayer) * currentBoss.speed * 3;
+            boss.vy = (dy / distToPlayer) * currentBoss.speed * 3;
+            boss.lastDash = Date.now();
+          } else {
+            boss.vx *= 0.95;
+            boss.vy *= 0.95;
+          }
+        } else if (currentBoss.pattern === 'teleport') {
+          // Teleport near player every 2 seconds
+          if (Date.now() - boss.lastDash > 2000 && distToPlayer > 200) {
+            const angle = Math.random() * Math.PI * 2;
+            boss.x = game.player.x + Math.cos(angle) * 150;
+            boss.y = game.player.y + Math.sin(angle) * 150;
+            boss.lastDash = Date.now();
+          }
+          boss.vx = (dx / distToPlayer) * currentBoss.speed * 0.5;
+          boss.vy = (dy / distToPlayer) * currentBoss.speed * 0.5;
+        } else if (currentBoss.pattern === 'spiral') {
+          // Spiral around player
+          const angle = Math.atan2(dy, dx) + Math.sin(frame * 0.05) * 0.5;
+          boss.vx = Math.cos(angle) * currentBoss.speed;
+          boss.vy = Math.sin(angle) * currentBoss.speed;
+        } else if (currentBoss.pattern === 'flame') {
+          // Stay at distance and shoot
+          if (distToPlayer > 250) {
+            boss.vx = (dx / distToPlayer) * currentBoss.speed;
+            boss.vy = (dy / distToPlayer) * currentBoss.speed;
+          } else if (distToPlayer < 200) {
+            boss.vx = -(dx / distToPlayer) * currentBoss.speed;
+            boss.vy = -(dy / distToPlayer) * currentBoss.speed;
+          } else {
+            boss.vx *= 0.9;
+            boss.vy *= 0.9;
+          }
+        }
+
+        // Update boss position
+        boss.x += boss.vx;
+        boss.y += boss.vy;
+
+        // Keep boss in bounds
+        boss.x = Math.max(currentBoss.size, Math.min(WORLD_WIDTH - currentBoss.size, boss.x));
+        boss.y = Math.max(currentBoss.size, Math.min(WORLD_HEIGHT - currentBoss.size, boss.y));
+
+        // Boss shooting
+        if (Date.now() - boss.lastShot > 2000 && distToPlayer < 600) {
+          for (let i = 0; i < 5; i++) {
+            const spreadAngle = Math.atan2(dy, dx) + (i - 2) * 0.2;
+            game.enemyBullets.push({
+              x: boss.x,
+              y: boss.y,
+              vx: Math.cos(spreadAngle) * 8,
+              vy: Math.sin(spreadAngle) * 8,
+              damage: currentBoss.damage,
+              size: 10,
+              color: currentBoss.color
+            });
+          }
+          boss.lastShot = Date.now();
+        }
+
+        // Boss collision damage
+        if (distToPlayer < currentBoss.size + 25 && !isFlying) {
+          if (frame % 30 === 0) {
+            onPlayerDamage(currentBoss.damage * 0.5);
+          }
+        }
 
         // Draw boss
+        const bossScreenX = boss.x - game.camera.x;
+        const bossScreenY = boss.y - game.camera.y;
+
         ctx.save();
         ctx.fillStyle = currentBoss.color;
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 4;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = currentBoss.color;
 
-        // Boss body
+        // Boss body with pulsing effect
+        const pulseSize = currentBoss.size / 2 + Math.sin(frame * 0.1) * 5;
         ctx.beginPath();
-        ctx.arc(bossX, bossY, currentBoss.size / 2, 0, Math.PI * 2);
+        ctx.arc(bossScreenX, bossScreenY, pulseSize, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
 
         // Boss eyes
+        ctx.shadowBlur = 0;
         ctx.fillStyle = '#fff';
         ctx.beginPath();
-        ctx.arc(bossX - 15, bossY - 10, 8, 0, Math.PI * 2);
-        ctx.arc(bossX + 15, bossY - 10, 8, 0, Math.PI * 2);
+        ctx.arc(bossScreenX - 15, bossScreenY - 10, 8, 0, Math.PI * 2);
+        ctx.arc(bossScreenX + 15, bossScreenY - 10, 8, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.fillStyle = '#000';
         ctx.beginPath();
-        ctx.arc(bossX - 15, bossY - 10, 4, 0, Math.PI * 2);
-        ctx.arc(bossX + 15, bossY - 10, 4, 0, Math.PI * 2);
+        ctx.arc(bossScreenX - 15, bossScreenY - 10, 4, 0, Math.PI * 2);
+        ctx.arc(bossScreenX + 15, bossScreenY - 10, 4, 0, Math.PI * 2);
         ctx.fill();
 
         // Boss name tag
         ctx.fillStyle = 'rgba(0,0,0,0.7)';
-        ctx.fillRect(bossX - 80, bossY - currentBoss.size / 2 - 35, 160, 25);
+        ctx.fillRect(bossScreenX - 80, bossScreenY - pulseSize - 35, 160, 25);
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 16px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(currentBoss.name, bossX, bossY - currentBoss.size / 2 - 15);
+        ctx.fillText(currentBoss.name, bossScreenX, bossScreenY - pulseSize - 15);
 
         ctx.restore();
+      } else if (gameMode === 'busbreak') {
+        // Reset boss when not in boss state
+        game.busBreakBoss = null;
       }
 
       // Update enemies
