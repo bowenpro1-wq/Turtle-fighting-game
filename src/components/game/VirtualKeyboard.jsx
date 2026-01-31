@@ -2,54 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 
 export default function VirtualKeyboard() {
-  const [showVirtualKeyboard, setShowVirtualKeyboard] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
   const [activeKeys, setActiveKeys] = useState(new Set());
 
   useEffect(() => {
     // Detect if it's a touch device
     const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    
-    if (!hasTouch) {
-      setShowVirtualKeyboard(false);
-      return;
-    }
-
-    // Initially show virtual keyboard on touch devices
-    setShowVirtualKeyboard(true);
-
-    // Listen for physical keyboard input
-    let keyboardDetectionTimer;
-    const detectPhysicalKeyboard = (e) => {
-      // If we detect actual keyboard input (not from virtual keyboard simulation)
-      if (e.isTrusted) {
-        setShowVirtualKeyboard(false);
-        
-        // Clear timer if exists
-        if (keyboardDetectionTimer) {
-          clearTimeout(keyboardDetectionTimer);
-        }
-      }
-    };
-
-    // Listen for touch events to re-enable virtual keyboard if needed
-    const detectTouch = () => {
-      if (hasTouch) {
-        keyboardDetectionTimer = setTimeout(() => {
-          setShowVirtualKeyboard(true);
-        }, 3000); // Re-show after 3 seconds of no keyboard input
-      }
-    };
-
-    window.addEventListener('keydown', detectPhysicalKeyboard);
-    window.addEventListener('touchstart', detectTouch);
-
-    return () => {
-      window.removeEventListener('keydown', detectPhysicalKeyboard);
-      window.removeEventListener('touchstart', detectTouch);
-      if (keyboardDetectionTimer) {
-        clearTimeout(keyboardDetectionTimer);
-      }
-    };
+    setIsTouchDevice(hasTouch);
   }, []);
 
   const handleKeyDown = (key) => {
@@ -66,7 +25,7 @@ export default function VirtualKeyboard() {
     window.dispatchEvent(new KeyboardEvent('keyup', { key }));
   };
 
-  if (!showVirtualKeyboard) return null;
+  if (!isTouchDevice) return null;
 
   const KeyButton = ({ keyLabel, displayLabel, size = 'default', color = 'gray' }) => {
     const isActive = activeKeys.has(keyLabel.toLowerCase());
