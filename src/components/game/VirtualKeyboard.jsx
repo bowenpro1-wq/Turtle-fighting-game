@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 
 export default function VirtualKeyboard() {
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   const [activeKeys, setActiveKeys] = useState(new Set());
+  const activeKeysRef = useRef(new Set());
 
   useEffect(() => {
     // Detect if it's a touch device
@@ -11,17 +12,36 @@ export default function VirtualKeyboard() {
     setIsTouchDevice(hasTouch);
   }, []);
 
+  // Global cleanup for stuck keys
+  useEffect(() => {
+    const handleGlobalTouchEnd = () => {
+      // Release all active keys
+      activeKeysRef.current.forEach(key => {
+        window.dispatchEvent(new KeyboardEvent('keyup', { key }));
+      });
+      activeKeysRef.current.clear();
+      setActiveKeys(new Set());
+    };
+
+    window.addEventListener('touchend', handleGlobalTouchEnd);
+    window.addEventListener('touchcancel', handleGlobalTouchEnd);
+
+    return () => {
+      handleGlobalTouchEnd();
+      window.removeEventListener('touchend', handleGlobalTouchEnd);
+      window.removeEventListener('touchcancel', handleGlobalTouchEnd);
+    };
+  }, []);
+
   const handleKeyDown = (key) => {
-    setActiveKeys(prev => new Set(prev).add(key));
+    activeKeysRef.current.add(key);
+    setActiveKeys(new Set(activeKeysRef.current));
     window.dispatchEvent(new KeyboardEvent('keydown', { key }));
   };
 
   const handleKeyUp = (key) => {
-    setActiveKeys(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(key);
-      return newSet;
-    });
+    activeKeysRef.current.delete(key);
+    setActiveKeys(new Set(activeKeysRef.current));
     window.dispatchEvent(new KeyboardEvent('keyup', { key }));
   };
 
