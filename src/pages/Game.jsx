@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPageUrl } from '@/utils';
+import { base44 } from '@/api/base44Client';
 import GameCanvas from '@/components/game/GameCanvas';
 import GameUI from '@/components/game/GameUI';
 import GameOver from '@/components/game/GameOver';
@@ -49,15 +50,6 @@ export default function Game() {
     const savedCoins = localStorage.getItem('gameCoins');
     return savedCoins ? parseInt(savedCoins) : 1000;
   });
-  const [difficulty, setDifficulty] = useState('adaptive');
-  const [difficultyMultiplier, setDifficultyMultiplier] = useState(1);
-  const [performanceTracker, setPerformanceTracker] = useState({
-    damagesTaken: [],
-    timesCompleted: [],
-    winsCount: 0,
-    lossesCount: 0
-  });
-  const [gameStartTime, setGameStartTime] = useState(null);
   const [currentBoss, setCurrentBoss] = useState(null);
   const [bossHealth, setBossHealth] = useState(0);
   const [bossMaxHealth, setBossMaxHealth] = useState(0);
@@ -281,7 +273,7 @@ export default function Game() {
     setShowWeaponSelect(true);
   };
 
-  const continueGameAfterWeaponSelect = (mode, fromCheckpoint = false) => {
+  const continueGameAfterWeaponSelect = async (mode, fromCheckpoint = false) => {
     setGameMode(mode);
     setPlayerHealth(100 * upgrades.maxHealth);
     setMaxHealth(100 * upgrades.maxHealth);
@@ -298,6 +290,13 @@ export default function Game() {
     setShowBossIntro(false);
     setBossHealth(0);
     setBossMaxHealth(0);
+    
+    // Track game start
+    if (playerProfile) {
+      await updateProfileStats({
+        games_played: (playerProfile.games_played || 0) + 1
+      });
+    }
     
     if (mode === 'tower') {
       if (fromCheckpoint) {
@@ -479,8 +478,8 @@ export default function Game() {
       
       if (playerProfile) {
         updateProfileStats({
-          bosses_defeated: playerProfile.bosses_defeated + 1,
-          total_gold_earned: playerProfile.total_gold_earned + bonusCoins
+          total_bosses_defeated: (playerProfile.total_bosses_defeated || 0) + 1,
+          total_gold_earned: (playerProfile.total_gold_earned || 0) + bonusCoins
         });
       }
       
@@ -518,6 +517,17 @@ export default function Game() {
         }
         
         if (newDefeatedCount >= 20) {
+          if (playerProfile) {
+            const playtime = gameStartTime ? Math.floor((Date.now() - gameStartTime) / 60000) : 0;
+            updateProfileStats({
+              highest_score: Math.max(playerProfile.highest_score || 0, score),
+              total_playtime_minutes: (playerProfile.total_playtime_minutes || 0) + playtime,
+              performance_stats: {
+                ...playerProfile.performance_stats,
+                win_rate: ((playerProfile.performance_stats?.win_rate || 0) * 0.9) + 0.1
+              }
+            });
+          }
           setGameState('victory');
         }
       }
@@ -533,11 +543,11 @@ export default function Game() {
         if (playerProfile) {
           const playtime = gameStartTime ? Math.floor((Date.now() - gameStartTime) / 60000) : 0;
           updateProfileStats({
-            games_played: playerProfile.games_played + 1,
-            deaths: playerProfile.deaths + 1,
-            current_win_streak: 0,
-            total_playtime_minutes: playerProfile.total_playtime_minutes + playtime,
-            performance_score: Math.max(0, playerProfile.performance_score - 5)
+            total_playtime_minutes: (playerProfile.total_playtime_minutes || 0) + playtime,
+            performance_stats: {
+              ...playerProfile.performance_stats,
+              avg_damage_taken: adjustedDamage
+            }
           });
         }
         setGameState('gameover');
@@ -901,22 +911,7 @@ export default function Game() {
         )}
         
         {(gameState === 'gameover' || gameState === 'victory') && (
-          <>
-            {gameState === 'victory' && playerProfile && (() => {
-              const playtime = gameStartTime ? Math.floor((Date.now() - gameStartTime) / 60000) : 0;
-              updateProfileStats({
-                games_played: playerProfile.games_played + 1,
-                wins: playerProfile.wins + 1,
-                current_win_streak: playerProfile.current_win_streak + 1,
-                best_win_streak: Math.max(playerProfile.best_win_streak, playerProfile.current_win_streak + 1),
-                highest_score: Math.max(playerProfile.highest_score, score),
-                total_playtime_minutes: playerProfile.total_playtime_minutes + playtime,
-                performance_score: Math.min(100, playerProfile.performance_score + 3)
-              });
-              checkAchievements();
-              return null;
-            })()}
-            <GameOver
+          <GameOver
               victory={gameState === 'victory'}
               score={score}
               coins={coins}
@@ -927,7 +922,6 @@ export default function Game() {
               checkpoint={checkpoint}
               hasTheHand={hasTheHand}
             />
-          </>
         )}
         </AnimatePresence>
 

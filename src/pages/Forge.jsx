@@ -96,15 +96,20 @@ export default function ForgePage() {
     const upgradeCost = (weapon.level + 1) * 500;
     
     if (coins >= upgradeCost && weapon.level < data.maxLevel) {
-      setCoins(prev => prev - upgradeCost);
-      setWeapons(prev => ({
-        ...prev,
+      const newCoins = coins - upgradeCost;
+      setCoins(newCoins);
+      localStorage.setItem('gameCoins', newCoins.toString());
+      
+      const newWeapons = {
+        ...weapons,
         [weaponId]: {
-          ...prev[weaponId],
-          level: prev[weaponId].level + 1,
+          ...weapons[weaponId],
+          level: weapons[weaponId].level + 1,
           unlocked: true
         }
-      }));
+      };
+      setWeapons(newWeapons);
+      localStorage.setItem('weapons', JSON.stringify(newWeapons));
     }
   };
 
