@@ -5,9 +5,18 @@ import { Input } from '@/components/ui/input';
 import { Send, Sparkles, X } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
-export default function PreBattleChat({ onClose, onStartBattle }) {
+export default function PreBattleChat({ onClose, onStartBattle, language = 'zh' }) {
+  const greetings = {
+    zh: '嘿，战士！💪 准备好战斗了吗？',
+    en: 'Hey warrior! 💪 Ready for battle?',
+    es: '¡Hola guerrero! 💪 ¿Listo para la batalla?',
+    fr: 'Salut guerrier! 💪 Prêt pour le combat?',
+    ja: 'やあ戦士！💪 戦闘の準備はいいか？',
+    ko: '안녕 전사! 💪 전투 준비됐어?'
+  };
+  
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: '嘿，战士！💪 准备好战斗了吗？' }
+    { role: 'assistant', content: greetings[language] || greetings.zh }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -43,9 +52,10 @@ export default function PreBattleChat({ onClose, onStartBattle }) {
     setLoading(true);
 
     try {
+      const langPrefix = language !== 'zh' ? `[Language: ${language}] ` : '';
       await base44.agents.addMessage(conversation, {
         role: 'user',
-        content: userMessage
+        content: langPrefix + userMessage
       });
 
       const unsubscribe = base44.agents.subscribeToConversation(conversation.id, (data) => {

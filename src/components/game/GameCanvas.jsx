@@ -248,6 +248,98 @@ const ENEMY_TYPES = {
     behaviorType: 'kamikaze',
     attacksBuildings: false,
     explodeOnDeath: true
+  },
+  SCOUT: {
+    name: 'scout',
+    width: 35,
+    height: 45,
+    speed: 3.0,
+    health: 30,
+    damage: 8,
+    shootInterval: 5000,
+    color: '#06b6d4',
+    behaviorType: 'patrol',
+    attacksBuildings: false,
+    canDodge: true
+  },
+  HEAVY: {
+    name: 'heavy',
+    width: 60,
+    height: 70,
+    speed: 0.8,
+    health: 150,
+    damage: 30,
+    shootInterval: 7000,
+    color: '#71717a',
+    behaviorType: 'assault',
+    attacksBuildings: true
+  },
+  ASSASSIN: {
+    name: 'assassin',
+    width: 35,
+    height: 50,
+    speed: 3.5,
+    health: 50,
+    damage: 25,
+    shootInterval: 4000,
+    color: '#8b5cf6',
+    behaviorType: 'stealth',
+    attacksBuildings: false,
+    canDodge: true,
+    teleportAttack: true
+  },
+  MAGE: {
+    name: 'mage',
+    width: 40,
+    height: 55,
+    speed: 1.0,
+    health: 60,
+    damage: 20,
+    shootInterval: 8000,
+    color: '#a855f7',
+    behaviorType: 'stationary',
+    attacksBuildings: false,
+    longRange: true,
+    aoeAttack: true
+  },
+  WARRIOR: {
+    name: 'warrior',
+    width: 50,
+    height: 60,
+    speed: 1.5,
+    health: 100,
+    damage: 20,
+    shootInterval: 6000,
+    color: '#ef4444',
+    behaviorType: 'assault',
+    attacksBuildings: false,
+    shielded: true
+  },
+  COMMANDER: {
+    name: 'commander',
+    width: 55,
+    height: 65,
+    speed: 1.2,
+    health: 120,
+    damage: 18,
+    shootInterval: 7000,
+    color: '#fbbf24',
+    behaviorType: 'support',
+    attacksBuildings: false,
+    buffAllies: true
+  },
+  NECROMANCER: {
+    name: 'necromancer',
+    width: 45,
+    height: 60,
+    speed: 0.8,
+    health: 80,
+    damage: 15,
+    shootInterval: 10000,
+    color: '#6366f1',
+    behaviorType: 'stationary',
+    attacksBuildings: false,
+    summonMinions: true
   }
 };
 
@@ -1941,6 +2033,19 @@ export default function GameCanvas({
           enemy.vx = (dx / distToPlayer) * enemy.speed * 0.3;
           enemy.vy = (dy / distToPlayer) * enemy.speed * 0.3;
           
+          if (enemy.buffAllies && game.animationFrame % 120 === 0) {
+            game.enemies.forEach(ally => {
+              if (ally !== enemy && ally.name !== 'commander') {
+                const adx = ally.x - enemy.x;
+                const ady = ally.y - enemy.y;
+                const adist = Math.sqrt(adx * adx + ady * ady);
+                if (adist < 250) {
+                  ally.buffed = 60;
+                }
+              }
+            });
+          }
+          
           if (Date.now() - game.lastObstacleCheck > 8000 && Math.random() < 0.3) {
             game.obstacles.push({
               x: enemy.x,
@@ -1951,6 +2056,28 @@ export default function GameCanvas({
               health: 50
             });
             game.lastObstacleCheck = Date.now();
+          }
+        } else if (enemy.behaviorType === 'stealth') {
+          if (Date.now() - (enemy.lastTeleport || 0) > 4000 && distToPlayer > 150) {
+            const angle = Math.random() * Math.PI * 2;
+            enemy.x = game.player.x + Math.cos(angle) * 100;
+            enemy.y = game.player.y + Math.sin(angle) * 100;
+            enemy.lastTeleport = Date.now();
+            for (let i = 0; i < 15; i++) {
+              game.particles.push({
+                x: enemy.x,
+                y: enemy.y,
+                vx: (Math.random() - 0.5) * 8,
+                vy: (Math.random() - 0.5) * 8,
+                life: 20,
+                color: '#8b5cf6',
+                size: 4
+              });
+            }
+          } else {
+            const angle = Math.atan2(dy, dx);
+            enemy.vx = Math.cos(angle) * enemy.speed;
+            enemy.vy = Math.sin(angle) * enemy.speed;
           }
         } else if (enemy.behaviorType === 'stationary') {
           enemy.vx = 0;
@@ -2171,7 +2298,6 @@ export default function GameCanvas({
           if (dist < bossRadius) {
             onBossDamage(bullet.damage);
             
-            // Boss hit particles
             const particleCount = bullet.isCannon ? 30 : 15;
             const particleColor = bullet.isCannon ? '#ff4500' : '#fbbf24';
             for (let i = 0; i < particleCount; i++) {
@@ -2196,9 +2322,26 @@ export default function GameCanvas({
         
         // Check enemy collision
         for (let enemy of game.enemies) {
+          if (enemy.canDodge && Math.random() < 0.15) {
+            enemy.dodging = true;
+            setTimeout(() => { enemy.dodging = false; }, 300);
+            continue;
+          }
+          
+          if (enemy.shielded && !enemy.shieldBroken) {
+            enemy.shieldHealth = enemy.shieldHealth || 50;
+            enemy.shieldHealth -= bullet.damage * 0.3;
+            if (enemy.shieldHealth <= 0) {
+              enemy.shieldBroken = true;
+            }
+            continue;
+          }
+          
           if (bullet.x > enemy.x && bullet.x < enemy.x + enemy.width &&
               bullet.y > enemy.y && bullet.y < enemy.y + enemy.height) {
-            enemy.health -= bullet.damage;
+            const damageMultiplier = enemy.buffed ? 0.7 : 1;
+            enemy.health -= bullet.damage * damageMultiplier;
+            if (enemy.buffed) enemy.buffed--;
 
             // Cannon explosion with screen shake
             if (bullet.isCannon) {

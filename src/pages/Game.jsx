@@ -1,7 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
 import GameCanvas from '@/components/game/GameCanvas';
 import GameUI from '@/components/game/GameUI';
 import GameOver from '@/components/game/GameOver';
@@ -12,8 +10,6 @@ import VirtualKeyboard from '@/components/game/VirtualKeyboard';
 import WeaponSelect from '@/components/game/WeaponSelect';
 import Forge from '@/components/game/Forge';
 import BusBreakSelect from '@/components/game/BusBreakSelect';
-import BottomNav from '@/components/BottomNav';
-import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 const BOSSES = [
   { id: 1, name: "海星守卫", health: 100, damage: 15, speed: 1.5, size: 60, color: "#ff6b6b", pattern: "circle" },
@@ -39,7 +35,6 @@ const BOSSES = [
 ];
 
 export default function Game() {
-  const navigate = useNavigate();
   const [gameState, setGameState] = useState('start');
   const [gameMode, setGameMode] = useState('normal');
   const [language, setLanguage] = useState('zh');
@@ -733,12 +728,12 @@ export default function Game() {
         </AnimatePresence>
 
         {(gameState === 'playing' || gameState === 'boss') && (
-        <BottomNav 
-          onLanguageClick={() => {}}
-          onShopClick={() => setShowShop(true)}
-          onMiniGamesClick={() => navigate(createPageUrl('MiniGames'))}
-          showShop={true}
-        />
+          <BottomNav 
+            onLanguageClick={() => {}}
+            onShopClick={() => setShowShop(true)}
+            onMiniGamesClick={() => window.location.href = createPageUrl('MiniGames')}
+            showShop={true}
+          />
         )}
         </div>
         );
