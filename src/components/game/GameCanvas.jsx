@@ -882,7 +882,14 @@ export default function GameCanvas({
                 type: 'curse'
               });
             }
-            // 诅咒所有敌人
+            
+            // 对Boss造成大量伤害，但不秒杀
+            if (currentBoss && gameState === 'boss') {
+              const bossDamage = 600 + weaponLevel * 60;
+              onBossDamage(bossDamage);
+            }
+            
+            // 诅咒所有普通敌人
             game.enemies.forEach(enemy => {
               enemy.health -= (100 + weaponLevel * 15) * upgrades.damage;
               for (let i = 0; i < 30; i++) {
@@ -898,7 +905,27 @@ export default function GameCanvas({
               }
             });
           } else {
-            // 默认终极技 - 清屏
+            // 默认终极技 - 对普通敌人清屏，对Boss造成大量伤害
+            if (currentBoss && gameState === 'boss') {
+              // 对Boss造成大量伤害，但不秒杀
+              const bossDamage = 500 + weaponLevel * 50;
+              onBossDamage(bossDamage);
+              
+              // Boss特效
+              for (let i = 0; i < 80; i++) {
+                game.particles.push({
+                  x: px,
+                  y: py,
+                  vx: (Math.random() - 0.5) * 25,
+                  vy: (Math.random() - 0.5) * 25,
+                  life: 80,
+                  color: '#ef4444',
+                  size: 10
+                });
+              }
+            }
+            
+            // 清除普通敌人
             game.enemies.forEach(enemy => {
               for (let i = 0; i < 30; i++) {
                 game.particles.push({
