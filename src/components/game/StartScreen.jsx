@@ -4,9 +4,9 @@ import { Play, Hammer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import PreBattleChat from '@/components/PreBattleChat';
-import LanguageSwitcher from '@/components/LanguageSwitcher';
-import BottomNav from '@/components/BottomNav';
+import PreBattleChat from '../PreBattleChat';
+import LanguageSwitcher from '../LanguageSwitcher';
+import BottomNav from '../BottomNav';
 
 export default function StartScreen({ onStart, defeatedBosses = [] }) {
   const [selectedMode, setSelectedMode] = useState(null);
