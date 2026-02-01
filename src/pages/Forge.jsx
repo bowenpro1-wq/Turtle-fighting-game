@@ -22,6 +22,8 @@ export default function ForgePage() {
     return saved ? parseInt(saved) : 0;
   });
 
+  const [showAdvisor, setShowAdvisor] = useState(false);
+
   useEffect(() => {
     localStorage.setItem('weapons', JSON.stringify(weapons));
   }, [weapons]);
@@ -86,21 +88,20 @@ export default function ForgePage() {
   };
 
   const handleUpgrade = (weaponId) => {
-    const upgradeCost = 500;
-    if (coins >= upgradeCost) {
-      const weapon = weapons[weaponId];
-      const data = weaponData[weaponId];
-      if (weapon && weapon.level < data.maxLevel) {
-        setCoins(prev => prev - upgradeCost);
-        setWeapons(prev => ({
-          ...prev,
-          [weaponId]: {
-            ...prev[weaponId],
-            level: prev[weaponId].level + 1,
-            unlocked: weaponId === 'guigui' ? prev[weaponId].level + 1 >= 8 : true
-          }
-        }));
-      }
+    const weapon = weapons[weaponId];
+    const data = weaponData[weaponId];
+    const upgradeCost = (weapon.level + 1) * 500;
+    
+    if (coins >= upgradeCost && weapon.level < data.maxLevel) {
+      setCoins(prev => prev - upgradeCost);
+      setWeapons(prev => ({
+        ...prev,
+        [weaponId]: {
+          ...prev[weaponId],
+          level: prev[weaponId].level + 1,
+          unlocked: weaponId === 'guigui' ? prev[weaponId].level + 1 >= 8 : true
+        }
+      }));
     }
   };
 
@@ -115,18 +116,24 @@ export default function ForgePage() {
             </Button>
           </Link>
           
-          <div className="text-center">
+          <div className="text-center flex-1">
             <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-500 mb-2">
               🔨 锻造处 🔨
             </h1>
-            <p className="text-gray-400">升级你的武器，增强战斗力</p>
+            <Button
+              onClick={() => setShowAdvisor(true)}
+              size="sm"
+              className="gap-2 bg-purple-600/20 hover:bg-purple-600/40 border border-purple-500"
+            >
+              <Bot className="w-4 h-4" />
+              AI顾问
+            </Button>
           </div>
 
           <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-2 border-yellow-500/50 rounded-xl px-6 py-3">
             <div className="flex items-center gap-2">
-              <Star className="w-6 h-6 text-yellow-400" />
+              <Coins className="w-6 h-6 text-yellow-400" />
               <span className="text-2xl font-bold text-yellow-400">{coins}</span>
-              <span className="text-gray-300">金币</span>
             </div>
           </div>
         </div>
@@ -138,7 +145,7 @@ export default function ForgePage() {
 
             const Icon = data.icon;
             const isMaxLevel = weapon.level >= data.maxLevel;
-            const upgradeCost = 500;
+            const upgradeCost = (weapon.level + 1) * 500;
             const canUpgrade = coins >= upgradeCost && !isMaxLevel;
             const progressPercent = (weapon.level / data.maxLevel) * 100;
 
@@ -246,7 +253,7 @@ export default function ForgePage() {
                     ) : (
                       <>
                         <ArrowUpCircle className="w-5 h-5 mr-2" />
-                        升级 (500金币)
+                        升级 ({(weapon.level + 1) * 500} 💰)
                       </>
                     )}
                   </Button>
@@ -268,16 +275,16 @@ export default function ForgePage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-black/30 rounded-xl p-4">
-              <h4 className="text-purple-400 font-bold mb-2">💰 获取金币</h4>
-              <p className="text-gray-300 text-sm">通过战斗和小游戏获取金币，用于升级武器</p>
+              <h4 className="text-yellow-400 font-bold mb-2">💰 升级费用</h4>
+              <p className="text-gray-300 text-sm">升级费用递增：Lv1=500, Lv2=1000, Lv3=1500...满级需27,500金币</p>
             </div>
             <div className="bg-black/30 rounded-xl p-4">
               <h4 className="text-cyan-400 font-bold mb-2">⚔️ 解锁武器</h4>
-              <p className="text-gray-300 text-sm">击败Boss随机获得武器，龟龟之手需要升级到8级才能完全解锁</p>
+              <p className="text-gray-300 text-sm">击败Boss试炼解锁武器，龟龟之手需8级解锁</p>
             </div>
             <div className="bg-black/30 rounded-xl p-4">
-              <h4 className="text-orange-400 font-bold mb-2">🔥 升级效果</h4>
-              <p className="text-gray-300 text-sm">每次升级提升伤害和效果，解锁强大技能</p>
+              <h4 className="text-purple-400 font-bold mb-2">🤖 AI顾问</h4>
+              <p className="text-gray-300 text-sm">点击AI顾问获取智能升级建议和战力预测</p>
             </div>
           </div>
         </motion.div>
