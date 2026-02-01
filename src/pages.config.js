@@ -52,6 +52,7 @@ import Game from './pages/Game';
 import MiniGames from './pages/MiniGames';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
+import Admin from './pages/Admin';
 
 
 export const PAGES = {
@@ -60,6 +61,7 @@ export const PAGES = {
     "MiniGames": MiniGames,
     "Profile": Profile,
     "Settings": Settings,
+    "Admin": Admin,
 }
 
 export const pagesConfig = {

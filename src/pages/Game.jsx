@@ -69,11 +69,14 @@ export default function Game() {
   // Weapon system
   const [selectedWeapon, setSelectedWeapon] = useState('none');
   const [upgradeTemplates, setUpgradeTemplates] = useState(0);
-  const [weapons, setWeapons] = useState({
-    chichao: { level: 0, unlocked: false },
-    guigui: { level: 0, unlocked: false },
-    dianchao: { level: 0, unlocked: false },
-    totem: { level: 0, unlocked: false }
+  const [weapons, setWeapons] = useState(() => {
+    const saved = localStorage.getItem('weapons');
+    return saved ? JSON.parse(saved) : {
+      chichao: { level: 0, unlocked: false },
+      guigui: { level: 0, unlocked: false },
+      dianchao: { level: 0, unlocked: false },
+      totem: { level: 0, unlocked: false }
+    };
   });
   const [dailyBossesDefeated, setDailyBossesDefeated] = useState({
     zhongdalin: false,
@@ -398,14 +401,18 @@ export default function Game() {
   const handleWeaponUpgrade = (weaponId) => {
     if (upgradeTemplates > 0) {
       setUpgradeTemplates(prev => prev - 1);
-      setWeapons(prev => ({
-        ...prev,
-        [weaponId]: {
-          ...prev[weaponId],
-          level: prev[weaponId].level + 1,
-          unlocked: weaponId === 'guigui' ? prev[weaponId].level + 1 >= 8 : true
-        }
-      }));
+      setWeapons(prev => {
+        const newWeapons = {
+          ...prev,
+          [weaponId]: {
+            ...prev[weaponId],
+            level: prev[weaponId].level + 1,
+            unlocked: weaponId === 'guigui' ? prev[weaponId].level + 1 >= 8 : true
+          }
+        };
+        localStorage.setItem('weapons', JSON.stringify(newWeapons));
+        return newWeapons;
+      });
     }
   };
 
@@ -428,14 +435,18 @@ export default function Game() {
       
       const weaponToUnlock = bossWeaponMap[bossName];
       if (weaponToUnlock) {
-        setWeapons(prev => ({
-          ...prev,
-          [weaponToUnlock]: {
-            ...prev[weaponToUnlock],
-            unlocked: true,
-            level: Math.max(prev[weaponToUnlock].level, 1)
-          }
-        }));
+        setWeapons(prev => {
+          const newWeapons = {
+            ...prev,
+            [weaponToUnlock]: {
+              ...prev[weaponToUnlock],
+              unlocked: true,
+              level: Math.max(prev[weaponToUnlock].level, 1)
+            }
+          };
+          localStorage.setItem('weapons', JSON.stringify(newWeapons));
+          return newWeapons;
+        });
       }
       
       // Every 4 bosses defeated, give 1 upgrade template

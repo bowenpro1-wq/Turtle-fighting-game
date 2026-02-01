@@ -1,17 +1,20 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Hammer, User, Settings } from 'lucide-react';
+import { Play, Hammer, User, Settings, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import PreBattleChat from '../PreBattleChat';
 import LanguageSwitcher from '../LanguageSwitcher';
 import BottomNav from '../BottomNav';
+import PromoCodeInput from '../PromoCodeInput';
+import { AnimatePresence } from 'framer-motion';
 
 export default function StartScreen({ onStart, defeatedBosses = [] }) {
   const [selectedMode, setSelectedMode] = useState(null);
   const [showPreBattleChat, setShowPreBattleChat] = useState(false);
   const [language, setLanguage] = useState('zh');
+  const [showPromoCode, setShowPromoCode] = useState(false);
 
   const handleModeSelect = (mode) => {
     setSelectedMode(mode);
@@ -21,6 +24,12 @@ export default function StartScreen({ onStart, defeatedBosses = [] }) {
   const handleStartBattle = () => {
     setShowPreBattleChat(false);
     onStart(selectedMode);
+  };
+
+  const handlePromoRedeem = (value) => {
+    const currentCoins = parseInt(localStorage.getItem('gameCoins') || '0');
+    const newCoins = currentCoins + value;
+    localStorage.setItem('gameCoins', newCoins.toString());
   };
 
   return (
@@ -40,6 +49,12 @@ export default function StartScreen({ onStart, defeatedBosses = [] }) {
             onClose={() => setShowPreBattleChat(false)} 
             onStartBattle={handleStartBattle}
             language={language}
+          />
+        )}
+        {showPromoCode && (
+          <PromoCodeInput
+            onRedeem={handlePromoRedeem}
+            onClose={() => setShowPromoCode(false)}
           />
         )}
       </AnimatePresence>
@@ -173,6 +188,24 @@ export default function StartScreen({ onStart, defeatedBosses = [] }) {
             >
               <Settings className="w-4 h-4 mr-1" />
               游戏设置
+            </Button>
+          </Link>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-2 md:gap-3">
+          <Button
+            onClick={() => setShowPromoCode(true)}
+            className="px-4 py-5 md:py-6 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 rounded-xl text-white text-base md:text-lg font-bold border-2 border-pink-400/50 active:scale-95 transition-transform"
+          >
+            <Gift className="w-4 h-4 mr-1" />
+            优惠码
+          </Button>
+          
+          <Link to={createPageUrl('Admin')} className="block">
+            <Button
+              className="px-4 py-5 md:py-6 bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-800 hover:to-black rounded-xl text-white text-base md:text-lg font-bold border-2 border-slate-500/50 active:scale-95 transition-transform"
+            >
+              🔧 管理员
             </Button>
           </Link>
         </div>
