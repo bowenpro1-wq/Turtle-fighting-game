@@ -13,6 +13,7 @@ import Forge from '@/components/game/Forge';
 import BusBreakSelect from '@/components/game/BusBreakSelect';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import BottomNav from '@/components/BottomNav';
+import GoldShop from '@/components/GoldShop';
 
 const BOSSES = [
   { id: 1, name: "海星守卫", health: 100, damage: 15, speed: 1.5, size: 60, color: "#ff6b6b", pattern: "circle" },
@@ -57,6 +58,7 @@ export default function Game() {
   const [showShop, setShowShop] = useState(false);
   const [showWeaponSelect, setShowWeaponSelect] = useState(false);
   const [showForge, setShowForge] = useState(false);
+  const [showGoldShop, setShowGoldShop] = useState(false);
   const [waveNumber, setWaveNumber] = useState(1);
   const [survivalTime, setSurvivalTime] = useState(0);
   
@@ -600,6 +602,9 @@ export default function Game() {
       if (e.key.toLowerCase() === 'f' && (gameState === 'playing' || gameState === 'boss')) {
         setShowForge(prev => !prev);
       }
+      if (e.key.toLowerCase() === 'g' && (gameState === 'playing' || gameState === 'boss')) {
+        setShowGoldShop(prev => !prev);
+      }
     };
 
     window.addEventListener('keydown', handleKeyPress);
@@ -723,6 +728,14 @@ export default function Game() {
                   onClose={() => setShowForge(false)}
                 />
               )}
+
+              {showGoldShop && (
+                <GoldShop
+                  currentCoins={coins}
+                  onCoinsUpdate={setCoins}
+                  onClose={() => setShowGoldShop(false)}
+                />
+              )}
             </AnimatePresence>
           </>
         )}
@@ -754,12 +767,21 @@ export default function Game() {
         </AnimatePresence>
 
         {(gameState === 'playing' || gameState === 'boss') && (
-          <BottomNav 
-            onLanguageClick={() => {}}
-            onShopClick={() => setShowShop(true)}
-            onMiniGamesClick={() => window.location.href = createPageUrl('MiniGames')}
-            showShop={true}
-          />
+          <>
+            <BottomNav 
+              onLanguageClick={() => {}}
+              onShopClick={() => setShowShop(true)}
+              onMiniGamesClick={() => window.location.href = createPageUrl('MiniGames')}
+              showShop={true}
+            />
+            <Button
+              onClick={() => setShowGoldShop(true)}
+              className="fixed bottom-20 right-4 z-40 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 shadow-xl"
+            >
+              <Coins className="w-5 h-5 mr-2" />
+              购买金币
+            </Button>
+          </>
         )}
         </div>
         );
