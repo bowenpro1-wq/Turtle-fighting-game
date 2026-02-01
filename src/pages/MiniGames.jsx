@@ -7,7 +7,10 @@ import { createPageUrl } from '@/utils';
 import BottomNav from '@/components/BottomNav';
 
 export default function MiniGames() {
-  const [coins, setCoins] = useState(() => parseInt(localStorage.getItem('gameCoins') || '0'));
+  const [coins, setCoins] = useState(() => {
+    const savedCoins = localStorage.getItem('gameCoins');
+    return savedCoins ? parseInt(savedCoins) : 0;
+  });
   const [clickerScore, setClickerScore] = useState(0);
   const [memoryCards, setMemoryCards] = useState([]);
   const [flippedCards, setFlippedCards] = useState([]);

@@ -44,7 +44,10 @@ export default function Game() {
   const [playerHealth, setPlayerHealth] = useState(100);
   const [maxHealth, setMaxHealth] = useState(100);
   const [score, setScore] = useState(0);
-  const [coins, setCoins] = useState(1000);
+  const [coins, setCoins] = useState(() => {
+    const savedCoins = localStorage.getItem('gameCoins');
+    return savedCoins ? parseInt(savedCoins) : 1000;
+  });
   const [currentBoss, setCurrentBoss] = useState(null);
   const [bossHealth, setBossHealth] = useState(0);
   const [bossMaxHealth, setBossMaxHealth] = useState(0);
@@ -331,7 +334,11 @@ export default function Game() {
       const newDefeatedCount = defeatedBosses.length + 1;
       setDefeatedBosses(prev => [...prev, currentBoss.id]);
       setScore(prev => prev + currentBoss.health * 10);
-      setCoins(prev => prev + 100);
+      setCoins(prev => {
+        const newCoins = prev + 100;
+        localStorage.setItem('gameCoins', newCoins.toString());
+        return newCoins;
+      });
       setPlayerHealth(prev => Math.min(maxHealth, prev + 50));
       
       // Bus break mode - mark boss as defeated and give rewards
@@ -414,7 +421,11 @@ export default function Game() {
       }
       return newScore;
     });
-    setCoins(prev => prev + 10);
+    setCoins(prev => {
+      const newCoins = prev + 10;
+      localStorage.setItem('gameCoins', newCoins.toString());
+      return newCoins;
+    });
 
     // Life steal passive
     if (upgrades.lifeSteal > 0) {
@@ -438,7 +449,11 @@ export default function Game() {
 
   const handleBoostBoss = useCallback(() => {
     if (coins >= 500 && currentBoss) {
-      setCoins(prev => prev - 500);
+      setCoins(prev => {
+        const newCoins = prev - 500;
+        localStorage.setItem('gameCoins', newCoins.toString());
+        return newCoins;
+      });
       setBossBoostLevel(prev => prev + 1);
 
       // 增加Boss血量和伤害
@@ -505,7 +520,11 @@ export default function Game() {
 
   const handlePurchase = (upgrade, cost) => {
     if (coins >= cost) {
-      setCoins(prev => prev - cost);
+      setCoins(prev => {
+        const newCoins = prev - cost;
+        localStorage.setItem('gameCoins', newCoins.toString());
+        return newCoins;
+      });
       
       if (upgrade === 'homingBullets') {
         setHasHomingBullets(true);
@@ -538,7 +557,11 @@ export default function Game() {
         setHasPiercingShots(false);
         setHasExplosiveShots(false);
         setWeaponType('normal');
-        setCoins(prev => prev + Math.floor(cost * 0.5));
+        setCoins(prev => {
+          const newCoins = prev + Math.floor(cost * 0.5);
+          localStorage.setItem('gameCoins', newCoins.toString());
+          return newCoins;
+        });
       } else {
         setUpgrades(prev => ({
           ...prev,

@@ -172,12 +172,14 @@ export default function StartScreen({ onStart, defeatedBosses = [] }) {
         </p>
       </motion.div>
       
-      <BottomNav 
-        onLanguageClick={() => {}}
-        onShopClick={() => {}}
-        onMiniGamesClick={() => window.location.href = createPageUrl('MiniGames')}
-        showShop={false}
-      />
+      <div className="fixed bottom-0 left-0 right-0 z-50 pb-2">
+        <BottomNav 
+          onLanguageClick={() => {}}
+          onShopClick={() => {}}
+          onMiniGamesClick={() => window.location.href = createPageUrl('MiniGames')}
+          showShop={false}
+        />
+      </div>
     </motion.div>
   );
 }
