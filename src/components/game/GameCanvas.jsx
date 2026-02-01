@@ -340,6 +340,138 @@ const ENEMY_TYPES = {
     behaviorType: 'stationary',
     attacksBuildings: false,
     summonMinions: true
+  },
+  BERSERKER: {
+    name: 'berserker',
+    width: 55,
+    height: 65,
+    speed: 2.8,
+    health: 120,
+    damage: 35,
+    shootInterval: 5000,
+    color: '#dc2626',
+    behaviorType: 'rage',
+    attacksBuildings: false,
+    enrageOnLowHealth: true
+  },
+  SHIELD_BEARER: {
+    name: 'shield_bearer',
+    width: 50,
+    height: 60,
+    speed: 1.0,
+    health: 180,
+    damage: 15,
+    shootInterval: 8000,
+    color: '#94a3b8',
+    behaviorType: 'tank',
+    attacksBuildings: false,
+    reflectsDamage: true
+  },
+  SUMMONER: {
+    name: 'summoner',
+    width: 40,
+    height: 55,
+    speed: 0.9,
+    health: 70,
+    damage: 10,
+    shootInterval: 12000,
+    color: '#7c3aed',
+    behaviorType: 'support',
+    attacksBuildings: false,
+    spawnMinions: true
+  },
+  RANGER: {
+    name: 'ranger',
+    width: 38,
+    height: 50,
+    speed: 2.2,
+    health: 55,
+    damage: 22,
+    shootInterval: 6000,
+    color: '#16a34a',
+    behaviorType: 'kiting',
+    attacksBuildings: false,
+    longRange: true
+  },
+  KAMIKAZE: {
+    name: 'kamikaze',
+    width: 35,
+    height: 40,
+    speed: 4.0,
+    health: 40,
+    damage: 50,
+    shootInterval: 0,
+    color: '#f59e0b',
+    behaviorType: 'suicide',
+    attacksBuildings: false,
+    explodeOnContact: true
+  },
+  FROST_MAGE: {
+    name: 'frost_mage',
+    width: 42,
+    height: 58,
+    speed: 0.7,
+    health: 65,
+    damage: 18,
+    shootInterval: 9000,
+    color: '#38bdf8',
+    behaviorType: 'stationary',
+    attacksBuildings: false,
+    slowsPlayer: true,
+    longRange: true
+  },
+  VAMPIRE: {
+    name: 'vampire',
+    width: 45,
+    height: 55,
+    speed: 2.5,
+    health: 90,
+    damage: 28,
+    shootInterval: 7000,
+    color: '#991b1b',
+    behaviorType: 'lifesteal',
+    attacksBuildings: false,
+    healsOnHit: true
+  },
+  GHOST: {
+    name: 'ghost',
+    width: 40,
+    height: 50,
+    speed: 1.5,
+    health: 50,
+    damage: 20,
+    shootInterval: 8000,
+    color: '#a78bfa',
+    behaviorType: 'phase',
+    attacksBuildings: false,
+    canPhase: true,
+    phaseInterval: 4000
+  },
+  JUGGERNAUT: {
+    name: 'juggernaut',
+    width: 70,
+    height: 80,
+    speed: 0.6,
+    health: 250,
+    damage: 40,
+    shootInterval: 10000,
+    color: '#44403c',
+    behaviorType: 'unstoppable',
+    attacksBuildings: true,
+    immuneToKnockback: true
+  },
+  TELEPORTER: {
+    name: 'teleporter',
+    width: 38,
+    height: 48,
+    speed: 1.8,
+    health: 60,
+    damage: 24,
+    shootInterval: 6000,
+    color: '#ec4899',
+    behaviorType: 'blink',
+    attacksBuildings: false,
+    teleportFrequency: 3000
   }
 };
 
@@ -2927,12 +3059,21 @@ function drawPlayer(ctx, player, isFlying, camera, frame) {
   }
   
   const bobOffset = Math.sin(frame * 0.15) * 1.5;
-  
-  // Shell - detailed with gradient
+
+  // Custom player color support
+  const shellColors = {
+    green: { light: '#4a7c2f', mid: '#2d5016', dark: '#1a3010', accent: '#6b9b4c' },
+    blue: { light: '#3b82f6', mid: '#1d4ed8', dark: '#1e3a8a', accent: '#60a5fa' },
+    red: { light: '#ef4444', mid: '#b91c1c', dark: '#7f1d1d', accent: '#f87171' },
+    purple: { light: '#a855f7', mid: '#7e22ce', dark: '#581c87', accent: '#c084fc' },
+    yellow: { light: '#eab308', mid: '#ca8a04', dark: '#854d0e', accent: '#fde047' }
+  };
+  const colors = shellColors[playerColor] || shellColors.green;
+
   const shellGradient = ctx.createRadialGradient(0, bobOffset - 15, 0, 0, bobOffset - 15, 22);
-  shellGradient.addColorStop(0, '#4a7c2f');
-  shellGradient.addColorStop(0.5, '#2d5016');
-  shellGradient.addColorStop(1, '#1a3010');
+  shellGradient.addColorStop(0, colors.light);
+  shellGradient.addColorStop(0.5, colors.mid);
+  shellGradient.addColorStop(1, colors.dark);
   ctx.fillStyle = shellGradient;
   ctx.strokeStyle = '#1a3010';
   ctx.lineWidth = 3;
@@ -2942,8 +3083,8 @@ function drawPlayer(ctx, player, isFlying, camera, frame) {
   ctx.stroke();
   
   // Shell hexagon pattern
-  ctx.fillStyle = '#6b9b4c';
-  ctx.strokeStyle = '#4a7c2f';
+  ctx.fillStyle = colors.accent;
+  ctx.strokeStyle = colors.light;
   ctx.lineWidth = 1.5;
   for (let i = 0; i < 6; i++) {
     const angle = (Math.PI * 2 / 6) * i;
@@ -2962,8 +3103,8 @@ function drawPlayer(ctx, player, isFlying, camera, frame) {
   ctx.fill();
   
   // Head
-  ctx.fillStyle = '#6b9b4c';
-  ctx.strokeStyle = '#4a7c2f';
+  ctx.fillStyle = colors.accent;
+  ctx.strokeStyle = colors.light;
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.ellipse(0, bobOffset - 22, 8, 7, 0, 0, Math.PI * 2);
@@ -2984,8 +3125,8 @@ function drawPlayer(ctx, player, isFlying, camera, frame) {
   
   // Legs
   const legBob = Math.sin(frame * 0.2) * 2;
-  ctx.fillStyle = '#6b9b4c';
-  ctx.strokeStyle = '#4a7c2f';
+  ctx.fillStyle = colors.accent;
+  ctx.strokeStyle = colors.light;
   ctx.lineWidth = 2;
   
   ctx.beginPath();

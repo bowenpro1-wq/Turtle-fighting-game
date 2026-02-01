@@ -322,9 +322,9 @@ function CooldownButton({ label, cooldown, color, active, large }) {
   return (
     <div className="flex flex-col items-center gap-1">
       <div
-        className={`relative w-14 h-14 rounded-lg overflow-hidden border-2 ${
+        className={`relative w-16 h-16 md:w-14 md:h-14 rounded-lg overflow-hidden border-2 ${
           isReady ? colorClasses[color] : 'border-gray-600'
-        } ${active ? 'ring-2 ring-white' : ''}`}
+        } ${active ? 'ring-2 ring-white' : ''} transition-all`}
       >
         <div className={`absolute inset-0 ${
           isReady 

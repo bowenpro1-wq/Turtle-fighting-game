@@ -80,12 +80,12 @@ export default function ForgeAdvisor({ weapons, coins, onClose }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4"
     >
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="bg-gradient-to-br from-orange-900 to-slate-900 rounded-2xl w-full max-w-2xl border-2 border-orange-500/30 shadow-2xl overflow-hidden"
+        className="bg-gradient-to-br from-orange-900 to-slate-900 rounded-2xl w-full max-w-2xl border-2 border-orange-500/30 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
       >
         <div className="bg-gradient-to-r from-orange-600 to-red-600 p-2 md:p-3 flex justify-between items-center">
           <div className="flex items-center gap-2">
