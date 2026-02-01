@@ -16,8 +16,8 @@ export default function ForgePage() {
     };
   });
 
-  const [templates, setTemplates] = useState(() => {
-    const saved = localStorage.getItem('upgradeTemplates');
+  const [coins, setCoins] = useState(() => {
+    const saved = localStorage.getItem('gameCoins');
     return saved ? parseInt(saved) : 0;
   });
 
@@ -26,8 +26,8 @@ export default function ForgePage() {
   }, [weapons]);
 
   useEffect(() => {
-    localStorage.setItem('upgradeTemplates', templates.toString());
-  }, [templates]);
+    localStorage.setItem('gameCoins', coins.toString());
+  }, [coins]);
 
   const weaponData = {
     chichao: {
@@ -85,11 +85,12 @@ export default function ForgePage() {
   };
 
   const handleUpgrade = (weaponId) => {
-    if (templates > 0) {
+    const upgradeCost = 500;
+    if (coins >= upgradeCost) {
       const weapon = weapons[weaponId];
       const data = weaponData[weaponId];
       if (weapon && weapon.level < data.maxLevel) {
-        setTemplates(prev => prev - 1);
+        setCoins(prev => prev - upgradeCost);
         setWeapons(prev => ({
           ...prev,
           [weaponId]: {
@@ -123,8 +124,8 @@ export default function ForgePage() {
           <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-2 border-yellow-500/50 rounded-xl px-6 py-3">
             <div className="flex items-center gap-2">
               <Star className="w-6 h-6 text-yellow-400" />
-              <span className="text-2xl font-bold text-yellow-400">{templates}</span>
-              <span className="text-gray-300">模板</span>
+              <span className="text-2xl font-bold text-yellow-400">{coins}</span>
+              <span className="text-gray-300">金币</span>
             </div>
           </div>
         </div>
@@ -136,7 +137,8 @@ export default function ForgePage() {
 
             const Icon = data.icon;
             const isMaxLevel = weapon.level >= data.maxLevel;
-            const canUpgrade = templates > 0 && !isMaxLevel;
+            const upgradeCost = 500;
+            const canUpgrade = coins >= upgradeCost && !isMaxLevel;
             const progressPercent = (weapon.level / data.maxLevel) * 100;
 
             return (
@@ -243,7 +245,7 @@ export default function ForgePage() {
                     ) : (
                       <>
                         <ArrowUpCircle className="w-5 h-5 mr-2" />
-                        升级 (消耗1模板)
+                        升级 (500金币)
                       </>
                     )}
                   </Button>
@@ -265,8 +267,8 @@ export default function ForgePage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-black/30 rounded-xl p-4">
-              <h4 className="text-purple-400 font-bold mb-2">📜 获取模板</h4>
-              <p className="text-gray-300 text-sm">进入Boss试炼模式，击败特殊Boss每天可获得1个升级模板</p>
+              <h4 className="text-purple-400 font-bold mb-2">💰 获取金币</h4>
+              <p className="text-gray-300 text-sm">通过战斗和小游戏获取金币，用于升级武器</p>
             </div>
             <div className="bg-black/30 rounded-xl p-4">
               <h4 className="text-cyan-400 font-bold mb-2">⚔️ 解锁武器</h4>

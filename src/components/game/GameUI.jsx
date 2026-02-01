@@ -93,12 +93,12 @@ export default function GameUI({
   const skillNames = getSkillNames();
   return (
     <div className="absolute inset-0 pointer-events-none">
-      <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-start">
-        <div className="space-y-3 bg-black/40 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-          <div className="flex items-center gap-3">
-            <Heart className="w-8 h-8 text-red-500" fill="#ef4444" />
+      <div className="absolute top-0 left-0 right-0 p-2 flex justify-between items-start">
+        <div className="space-y-2 bg-black/40 backdrop-blur-sm rounded-xl p-3 border border-white/10">
+          <div className="flex items-center gap-2">
+            <Heart className="w-6 h-6 text-red-500" fill="#ef4444" />
             <div className="relative">
-              <div className="w-48 h-8 bg-gray-800 rounded-lg overflow-hidden border-2 border-red-900">
+              <div className="w-32 h-6 bg-gray-800 rounded-lg overflow-hidden border-2 border-red-900">
                 <motion.div
                   className="h-full bg-gradient-to-r from-red-600 to-red-400"
                   initial={false}
@@ -106,47 +106,47 @@ export default function GameUI({
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 />
               </div>
-              <span className="absolute inset-0 flex items-center justify-center text-white text-sm font-bold drop-shadow-lg">
-                {Math.round(health)} / {maxHealth}
+              <span className="absolute inset-0 flex items-center justify-center text-white text-xs font-bold drop-shadow-lg">
+                {Math.round(health)}/{maxHealth}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 text-yellow-400">
-            <span className="text-xl font-bold">分数:</span>
-            <span className="text-2xl font-bold">{score.toLocaleString()}</span>
+          <div className="flex items-center gap-2 text-yellow-400">
+            <span className="text-sm font-bold">分数:</span>
+            <span className="text-lg font-bold">{score.toLocaleString()}</span>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Coins className="w-6 h-6 text-yellow-400" />
-            <span className="text-yellow-400 text-xl font-bold">{coins}</span>
+          <div className="flex items-center gap-2">
+            <Coins className="w-5 h-5 text-yellow-400" />
+            <span className="text-yellow-400 text-lg font-bold">{coins}</span>
           </div>
 
           {gameMode !== 'tower' && (
-            <div className="text-orange-400 text-sm font-semibold">
-              BOSS: {defeatedBosses} / 20
+            <div className="text-orange-400 text-xs font-semibold">
+              BOSS: {defeatedBosses}/20
             </div>
           )}
 
           {gameMode === 'tower' && (
-            <div className="space-y-2">
-              <div className="text-green-400 text-2xl font-bold">
-                第 {currentFloor} 层 / 100
+            <div className="space-y-1">
+              <div className="text-green-400 text-lg font-bold">
+                {currentFloor}/100层
               </div>
-              <div className="text-emerald-300 text-sm">
-                存档点: 第 {checkpoint} 层
+              <div className="text-emerald-300 text-xs">
+                存档: {checkpoint}层
               </div>
               {towerSpecialFloor && (
-                <div className="text-yellow-300 text-sm font-bold bg-yellow-500/20 px-2 py-1 rounded">
-                  ⚠️ 特殊关卡: {towerSpecialFloor}
+                <div className="text-yellow-300 text-xs font-bold bg-yellow-500/20 px-2 py-1 rounded">
+                  ⚠️ {towerSpecialFloor}
                 </div>
               )}
             </div>
           )}
 
           {!hasCannonUpgrade && defeatedBosses < 5 && (
-            <div className="text-cyan-400 text-sm font-semibold">
-              大炮解锁: {defeatedBosses} / 5 BOSS 🎯
+            <div className="text-cyan-400 text-xs font-semibold">
+              大炮: {defeatedBosses}/5🎯
             </div>
           )}
 
@@ -154,9 +154,9 @@ export default function GameUI({
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              className="px-3 py-1 bg-gradient-to-r from-orange-500/80 to-red-500/80 rounded-full text-white text-xs font-bold"
+              className="px-2 py-1 bg-gradient-to-r from-orange-500/80 to-red-500/80 rounded-full text-white text-xs font-bold"
             >
-              🎯 大炮已解锁
+              🎯大炮
             </motion.div>
           )}
 
@@ -164,9 +164,9 @@ export default function GameUI({
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              className="px-3 py-1 bg-gradient-to-r from-purple-500/80 to-pink-500/80 rounded-full text-white text-xs font-bold"
+              className="px-2 py-1 bg-gradient-to-r from-purple-500/80 to-pink-500/80 rounded-full text-white text-xs font-bold"
             >
-              🎯 追踪弹
+              🎯追踪
             </motion.div>
           )}
           </div>
@@ -262,14 +262,14 @@ export default function GameUI({
         </motion.div>
       )}
 
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3">
+      <div className="absolute bottom-16 left-1/2 -translate-x-1/2 flex gap-2">
         <CooldownButton
           label={skillNames.shoot}
           cooldown={shootCooldown}
           color="red"
         />
         <CooldownButton
-          label="J - 近战"
+          label="J-近战"
           cooldown={0}
           color="cyan"
         />
@@ -299,9 +299,9 @@ export default function GameUI({
         />
       </div>
 
-      <div className="absolute bottom-6 right-6 text-white/70 text-sm bg-black/40 px-4 py-2 rounded-lg backdrop-blur-sm space-y-1">
-        <div>按 B 打开商店</div>
-        <div>按 F 打开锻造处</div>
+      <div className="absolute bottom-16 right-2 text-white/70 text-xs bg-black/40 px-3 py-2 rounded-lg backdrop-blur-sm space-y-1">
+        <div>B-商店</div>
+        <div>F-锻造</div>
       </div>
     </div>
   );
@@ -322,7 +322,7 @@ function CooldownButton({ label, cooldown, color, active, large }) {
   return (
     <div className="flex flex-col items-center gap-1">
       <div
-        className={`relative w-20 h-20 rounded-xl overflow-hidden border-2 ${
+        className={`relative w-14 h-14 rounded-lg overflow-hidden border-2 ${
           isReady ? colorClasses[color] : 'border-gray-600'
         } ${active ? 'ring-2 ring-white' : ''}`}
       >
@@ -342,7 +342,7 @@ function CooldownButton({ label, cooldown, color, active, large }) {
         )}
 
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-white font-bold text-xs text-center px-1">{label}</span>
+          <span className="text-white font-bold text-[10px] text-center px-1">{label}</span>
         </div>
       </div>
     </div>
