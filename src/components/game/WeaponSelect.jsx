@@ -19,7 +19,7 @@ export default function WeaponSelect({ availableWeapons, onSelect, onClose }) {
       name: '赤潮',
       icon: Flame,
       color: 'from-red-500 to-orange-500',
-      description: '击败小王解锁',
+      description: '击败广智解锁',
       skills: [
         '火焰喷射 - 发射火焰弹',
         '火焰斩 - 近距离火焰攻击',
@@ -46,7 +46,7 @@ export default function WeaponSelect({ availableWeapons, onSelect, onClose }) {
       name: '电巢',
       icon: Zap,
       color: 'from-yellow-500 to-blue-500',
-      description: '击败龙海星解锁',
+      description: '击败小黄龙解锁',
       skills: [
         '电流四射 - 四周释放电流',
         '雷暴 - 大量电气伤害'
@@ -58,7 +58,7 @@ export default function WeaponSelect({ availableWeapons, onSelect, onClose }) {
       name: '中大林图腾',
       icon: Users,
       color: 'from-green-400 to-green-600',
-      description: '击败中大林广志解锁',
+      description: '击败中大林解锁',
       skills: [
         '图腾射击 - 每5次召唤中大林',
         '召唤军团 - 召唤强化中大林'

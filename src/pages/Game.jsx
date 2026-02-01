@@ -174,7 +174,7 @@ export default function Game() {
   const triggerBusBreakBoss = useCallback((bossId) => {
     const BUSBREAK_BOSSES = {
       zhongdalin: {
-        name: '中大林广志',
+        name: '中大林',
         health: 3000,
         damage: 40,
         speed: 2.0,
@@ -183,7 +183,7 @@ export default function Game() {
         pattern: 'chase'
       },
       xiaowang: {
-        name: '小王',
+        name: '小黄龙',
         health: 2500,
         damage: 35,
         speed: 3.0,
@@ -192,7 +192,7 @@ export default function Game() {
         pattern: 'dash'
       },
       longhaixing: {
-        name: '龙海星',
+        name: '海星',
         health: 2800,
         damage: 38,
         speed: 2.5,
@@ -201,7 +201,7 @@ export default function Game() {
         pattern: 'teleport'
       },
       qigong: {
-        name: '启功大师',
+        name: '气功大师',
         health: 3500,
         damage: 45,
         speed: 1.5,
@@ -271,10 +271,10 @@ export default function Game() {
       // Unlock specific weapon for each boss
       const bossWeaponMap = {
         zhongdalin: 'totem',
-        xiaowang: 'chichao',
-        longhaixing: 'dianchao',
-        qigong: null, // No weapon unlock
-        guangzhi: null // No weapon unlock
+        xiaowang: 'dianchao',
+        longhaixing: null,
+        qigong: null,
+        guangzhi: 'chichao'
       };
       
       const weaponToUnlock = bossWeaponMap[bossName];
