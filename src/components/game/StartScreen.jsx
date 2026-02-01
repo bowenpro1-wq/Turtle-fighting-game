@@ -132,32 +132,31 @@ export default function StartScreen({ onStart, defeatedBosses = [] }) {
           >
             连战
           </Button>
-          </div>
-          
+        </div>
+        
+        <Button
+          onClick={() => handleModeSelect('tower')}
+          className="w-full px-6 py-6 md:py-7 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 rounded-xl text-white text-lg md:text-xl font-bold border-2 border-green-400/50 active:scale-95 transition-transform"
+        >
+          🗿 中大林之塔
+        </Button>
+        
+        <Button
+          onClick={() => handleModeSelect('busbreak')}
+          className="w-full px-6 py-6 md:py-7 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-700 hover:via-pink-700 hover:to-rose-700 rounded-xl text-white text-lg md:text-xl font-bold border-2 border-purple-400/50 active:scale-95 transition-transform"
+        >
+          ⚔️ Boss试炼
+        </Button>
+        
+        <Link to={createPageUrl('Forge')} className="block">
           <Button
-            onClick={() => handleModeSelect('tower')}
-            className="w-full px-6 py-6 md:py-7 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 rounded-xl text-white text-lg md:text-xl font-bold border-2 border-green-400/50 active:scale-95 transition-transform"
+            className="w-full px-6 py-6 md:py-7 bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 hover:from-amber-700 hover:via-orange-700 hover:to-red-700 rounded-xl text-white text-lg md:text-xl font-bold border-2 border-amber-400/50 active:scale-95 transition-transform"
           >
-            🗿 中大林之塔
+            <Hammer className="w-5 h-5 mr-2" />
+            🔨 锻造处
           </Button>
-          
-          <Button
-            onClick={() => handleModeSelect('busbreak')}
-            className="w-full px-6 py-6 md:py-7 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-700 hover:via-pink-700 hover:to-rose-700 rounded-xl text-white text-lg md:text-xl font-bold border-2 border-purple-400/50 active:scale-95 transition-transform"
-          >
-            ⚔️ Boss试炼
-          </Button>
-          
-          <Link to={createPageUrl('Forge')} className="block">
-            <Button
-              className="w-full px-6 py-6 md:py-7 bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 hover:from-amber-700 hover:via-orange-700 hover:to-red-700 rounded-xl text-white text-lg md:text-xl font-bold border-2 border-amber-400/50 active:scale-95 transition-transform"
-            >
-              <Hammer className="w-5 h-5 mr-2" />
-              🔨 锻造处
-            </Button>
-          </Link>
-          </div>
-          </motion.div>
+        </Link>
+      </motion.div>
 
       <motion.div
         initial={{ opacity: 0 }}
