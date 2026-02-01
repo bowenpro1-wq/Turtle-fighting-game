@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Coins } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import BottomNav from '@/components/BottomNav';
 
 export default function MiniGames() {
   const [coins, setCoins] = useState(() => parseInt(localStorage.getItem('gameCoins') || '0'));
@@ -12,6 +13,18 @@ export default function MiniGames() {
   const [flippedCards, setFlippedCards] = useState([]);
   const [matchedCards, setMatchedCards] = useState([]);
   const [currentGame, setCurrentGame] = useState(null);
+  const [hasSubscribed, setHasSubscribed] = useState(() => localStorage.getItem('youtubeSubscribed') === 'true');
+
+  useEffect(() => {
+    // Load YouTube API
+    if (!document.getElementById('youtube-platform-script')) {
+      const script = document.createElement('script');
+      script.id = 'youtube-platform-script';
+      script.src = 'https://apis.google.com/js/platform.js';
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  }, []);
 
   // Coin Clicker Game
   const handleCoinClick = () => {
@@ -24,6 +37,22 @@ export default function MiniGames() {
       setClickerScore(0);
       alert(`恭喜！获得 ${earnedCoins} 金币！`);
     }
+  };
+
+  // YouTube Subscribe Handler
+  const handleYouTubeSubscribe = () => {
+    if (hasSubscribed) {
+      alert('你已经订阅过了！');
+      return;
+    }
+    
+    const earnedCoins = 8888;
+    const newTotal = coins + earnedCoins;
+    setCoins(newTotal);
+    localStorage.setItem('gameCoins', newTotal.toString());
+    localStorage.setItem('youtubeSubscribed', 'true');
+    setHasSubscribed(true);
+    alert(`感谢订阅！获得 ${earnedCoins} 金币！🎉`);
   };
 
   // Memory Card Game
@@ -123,6 +152,15 @@ export default function MiniGames() {
               <h2 className="text-2xl font-bold text-white mb-2">🧠 知识问答</h2>
               <p className="text-white/80">即将推出...</p>
             </motion.div>
+
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              className={`bg-gradient-to-br from-red-600 to-pink-600 p-6 rounded-xl cursor-pointer ${hasSubscribed ? 'opacity-50' : ''}`}
+              onClick={() => setCurrentGame('youtube')}
+            >
+              <h2 className="text-2xl font-bold text-white mb-2">📺 订阅YouTube</h2>
+              <p className="text-white/80">{hasSubscribed ? '已领取' : '订阅获得8888金币！'}</p>
+            </motion.div>
           </div>
         )}
 
@@ -181,6 +219,48 @@ export default function MiniGames() {
                   </motion.button>
                 ))}
               </div>
+            </div>
+          </div>
+        )}
+
+        {currentGame === 'youtube' && (
+          <div className="text-center">
+            <Button
+              onClick={() => setCurrentGame(null)}
+              variant="outline"
+              className="mb-4"
+            >
+              返回
+            </Button>
+            <div className="bg-slate-800 p-8 rounded-xl max-w-md mx-auto">
+              <h2 className="text-3xl font-bold text-white mb-4">📺 订阅YouTube频道</h2>
+              <p className="text-white/80 mb-6">订阅我们的频道即可获得 8888 金币！</p>
+              
+              {!hasSubscribed ? (
+                <>
+                  <div className="youtube-subscribe flex justify-center mb-6">
+                    <div 
+                      className="g-ytsubscribe"
+                      data-channelid="UCmcm-JjZJ7oQ9BrF7YUi7ww"
+                      data-layout="full"
+                      data-count="default"
+                      data-theme="dark"
+                    />
+                  </div>
+                  
+                  <Button
+                    onClick={handleYouTubeSubscribe}
+                    className="w-full bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-500 hover:to-pink-500 text-lg py-6"
+                  >
+                    ✅ 我已订阅，领取奖励！
+                  </Button>
+                </>
+              ) : (
+                <div className="bg-green-600/20 border border-green-500 rounded-lg p-6">
+                  <p className="text-green-400 text-xl font-bold">✅ 已领取奖励！</p>
+                  <p className="text-white/60 mt-2">感谢你的订阅！</p>
+                </div>
+              )}
             </div>
           </div>
         )}
