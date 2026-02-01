@@ -132,7 +132,7 @@ export default function GameOver({ victory, score, coins, defeatedBosses, onRest
         >
           {!victory && (
             <Button
-              onClick={() => onRestart()}
+              onClick={() => window.location.reload()}
               size="lg"
               className="px-10 py-6 text-xl font-bold rounded-full bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-400 hover:to-gray-500 shadow-lg shadow-gray-500/30"
             >

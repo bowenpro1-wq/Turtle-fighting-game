@@ -93,12 +93,12 @@ export default function GameUI({
   const skillNames = getSkillNames();
   return (
     <div className="absolute inset-0 pointer-events-none">
-      <div className="absolute top-0 left-0 right-0 p-2 sm:p-4 flex justify-between items-start">
-        <div className="space-y-2 sm:space-y-3 bg-black/40 backdrop-blur-sm rounded-lg sm:rounded-xl p-2 sm:p-4 border border-white/10 max-w-[90vw]">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-red-500" fill="#ef4444" />
+      <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-start">
+        <div className="space-y-3 bg-black/40 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+          <div className="flex items-center gap-3">
+            <Heart className="w-8 h-8 text-red-500" fill="#ef4444" />
             <div className="relative">
-              <div className="w-32 h-6 sm:w-48 sm:h-8 bg-gray-800 rounded-lg overflow-hidden border-2 border-red-900">
+              <div className="w-48 h-8 bg-gray-800 rounded-lg overflow-hidden border-2 border-red-900">
                 <motion.div
                   className="h-full bg-gradient-to-r from-red-600 to-red-400"
                   initial={false}
@@ -106,20 +106,20 @@ export default function GameUI({
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 />
               </div>
-              <span className="absolute inset-0 flex items-center justify-center text-white text-xs sm:text-sm font-bold drop-shadow-lg">
+              <span className="absolute inset-0 flex items-center justify-center text-white text-sm font-bold drop-shadow-lg">
                 {Math.round(health)} / {maxHealth}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-yellow-400">
-            <span className="text-sm sm:text-xl font-bold">分数:</span>
-            <span className="text-lg sm:text-2xl font-bold">{score.toLocaleString()}</span>
+          <div className="flex items-center gap-3 text-yellow-400">
+            <span className="text-xl font-bold">分数:</span>
+            <span className="text-2xl font-bold">{score.toLocaleString()}</span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Coins className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400" />
-            <span className="text-yellow-400 text-lg sm:text-xl font-bold">{coins}</span>
+          <div className="flex items-center gap-3">
+            <Coins className="w-6 h-6 text-yellow-400" />
+            <span className="text-yellow-400 text-xl font-bold">{coins}</span>
           </div>
 
           {gameMode !== 'tower' && (
@@ -262,7 +262,7 @@ export default function GameUI({
         </motion.div>
       )}
 
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-1 sm:gap-2 md:gap-3 overflow-x-auto max-w-[90vw] px-2">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3">
         <CooldownButton
           label={skillNames.shoot}
           cooldown={shootCooldown}
@@ -299,7 +299,7 @@ export default function GameUI({
         />
       </div>
 
-      <div className="hidden md:block absolute bottom-6 right-6 text-white/70 text-sm bg-black/40 px-4 py-2 rounded-lg backdrop-blur-sm space-y-1 pointer-events-auto">
+      <div className="absolute bottom-6 right-6 text-white/70 text-sm bg-black/40 px-4 py-2 rounded-lg backdrop-blur-sm space-y-1">
         <div>按 B 打开商店</div>
         <div>按 F 打开锻造处</div>
       </div>
@@ -322,9 +322,9 @@ function CooldownButton({ label, cooldown, color, active, large }) {
   return (
     <div className="flex flex-col items-center gap-1">
       <div
-        className={`relative w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-lg sm:rounded-xl overflow-hidden border-2 ${
+        className={`relative w-20 h-20 rounded-xl overflow-hidden border-2 ${
           isReady ? colorClasses[color] : 'border-gray-600'
-        } ${active ? 'ring-2 ring-white' : ''} flex-shrink-0`}
+        } ${active ? 'ring-2 ring-white' : ''}`}
       >
         <div className={`absolute inset-0 ${
           isReady 
@@ -342,7 +342,7 @@ function CooldownButton({ label, cooldown, color, active, large }) {
         )}
 
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-white font-bold text-[10px] sm:text-xs text-center px-1 leading-tight">{label}</span>
+          <span className="text-white font-bold text-xs text-center px-1">{label}</span>
         </div>
       </div>
     </div>

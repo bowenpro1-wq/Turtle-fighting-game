@@ -3,11 +3,8 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { X, Flame, Zap, Shield, Users, ArrowUpCircle, Star } from 'lucide-react';
 
-export default function Forge({ weapons, templates, onUpgrade, onClose, coins, onUnlock }) {
+export default function Forge({ weapons, templates, onUpgrade, onClose }) {
   const [selectedWeapon, setSelectedWeapon] = useState(null);
-  
-  const UPGRADE_COST = 100;
-  const UNLOCK_COST = 500;
 
   const weaponData = {
     chichao: {
@@ -42,7 +39,7 @@ export default function Forge({ weapons, templates, onUpgrade, onClose, coins, o
   };
 
   const handleUpgrade = (weaponId) => {
-    if (coins >= UPGRADE_COST) {
+    if (templates > 0) {
       const weapon = weapons[weaponId];
       const data = weaponData[weaponId];
       if (weapon && weapon.level < data.maxLevel) {
@@ -68,7 +65,7 @@ export default function Forge({ weapons, templates, onUpgrade, onClose, coins, o
             <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-500">
               锻造处
             </h2>
-            <p className="text-yellow-400 text-xl mt-2">金币: {coins} 💰</p>
+            <p className="text-yellow-400 text-xl mt-2">升级模板: {templates}</p>
           </div>
           <Button
             variant="ghost"
@@ -87,9 +84,7 @@ export default function Forge({ weapons, templates, onUpgrade, onClose, coins, o
 
             const Icon = data.icon;
             const isMaxLevel = weapon.level >= data.maxLevel;
-            const isLocked = !weapon.unlocked;
-            const canUnlock = coins >= UNLOCK_COST && isLocked;
-            const canUpgrade = coins >= UPGRADE_COST && !isMaxLevel && !isLocked;
+            const canUpgrade = templates > 0 && !isMaxLevel;
 
             return (
               <motion.div
@@ -143,47 +138,32 @@ export default function Forge({ weapons, templates, onUpgrade, onClose, coins, o
                     {data.special && weapon.level < data.maxLevel && (
                       <div className="bg-yellow-500/20 border border-yellow-500/30 rounded-lg p-3 text-center">
                         <p className="text-yellow-400 text-xs">
-                          需要升到 {data.maxLevel} 级解锁全部技能
+                          需要 {data.maxLevel - weapon.level} 个模板解锁全部技能
                         </p>
                       </div>
                     )}
 
-                    {isLocked ? (
-                      <Button
-                        onClick={() => onUnlock(weaponId)}
-                        disabled={!canUnlock}
-                        className={`w-full ${
-                          canUnlock
-                            ? `bg-gradient-to-r ${data.color} hover:opacity-90`
-                            : 'bg-gray-600 cursor-not-allowed'
-                        }`}
-                      >
-                        <Star className="w-5 h-5 mr-2" />
-                        解锁 ({UNLOCK_COST}💰)
-                      </Button>
-                    ) : (
-                      <Button
-                        onClick={() => handleUpgrade(weaponId)}
-                        disabled={!canUpgrade}
-                        className={`w-full ${
-                          canUpgrade
-                            ? `bg-gradient-to-r ${data.color} hover:opacity-90`
-                            : 'bg-gray-600 cursor-not-allowed'
-                        }`}
-                      >
-                        {isMaxLevel ? (
-                          <>
-                            <Star className="w-5 h-5 mr-2" />
-                            已满级
-                          </>
-                        ) : (
-                          <>
-                            <ArrowUpCircle className="w-5 h-5 mr-2" />
-                            升级 ({UPGRADE_COST}💰)
-                          </>
-                        )}
-                      </Button>
-                    )}
+                    <Button
+                      onClick={() => handleUpgrade(weaponId)}
+                      disabled={!canUpgrade}
+                      className={`w-full ${
+                        canUpgrade
+                          ? `bg-gradient-to-r ${data.color} hover:opacity-90`
+                          : 'bg-gray-600 cursor-not-allowed'
+                      }`}
+                    >
+                      {isMaxLevel ? (
+                        <>
+                          <Star className="w-5 h-5 mr-2" />
+                          已满级
+                        </>
+                      ) : (
+                        <>
+                          <ArrowUpCircle className="w-5 h-5 mr-2" />
+                          升级 (消耗1模板)
+                        </>
+                      )}
+                    </Button>
                   </div>
                 </div>
               </motion.div>
@@ -199,7 +179,7 @@ export default function Forge({ weapons, templates, onUpgrade, onClose, coins, o
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="text-gray-300">
               <span className="text-purple-400">• </span>
-              使用金币升级武器
+              每天挑战Boss获得模板
             </div>
             <div className="text-gray-300">
               <span className="text-purple-400">• </span>
@@ -211,7 +191,7 @@ export default function Forge({ weapons, templates, onUpgrade, onClose, coins, o
             </div>
             <div className="text-gray-300">
               <span className="text-purple-400">• </span>
-              每次升级消耗{UPGRADE_COST}金币
+              每次升级消耗1模板
             </div>
           </div>
         </div>
