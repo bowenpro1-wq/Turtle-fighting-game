@@ -120,6 +120,14 @@ export default function Game() {
   const MELEE_DURATION = 150;
 
   const startGame = (mode = 'normal', fromCheckpoint = false) => {
+    // Reset all state first
+    setGameState('start');
+    setCurrentBoss(null);
+    setBossHealth(0);
+    setBossMaxHealth(0);
+    setShowBossIntro(false);
+    setSelectedBusBreakBoss(null);
+    
     if (mode === 'busbreak') {
       // Boss试炼模式直接开始,显示boss选择
       setGameMode(mode);

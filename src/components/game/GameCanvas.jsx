@@ -1212,7 +1212,9 @@ export default function GameCanvas({
             vy: 0,
             lastShot: Date.now(),
             lastDash: Date.now(),
-            dashCooldown: 3000
+            lastSpecialAttack: Date.now(),
+            dashCooldown: 3000,
+            specialAttackCooldown: 5000
           };
         }
 
@@ -1223,36 +1225,136 @@ export default function GameCanvas({
 
         // Boss AI based on pattern
         if (currentBoss.pattern === 'chase') {
-          // Simple chase
+          // 中大林 - 冲撞攻击
           boss.vx = (dx / distToPlayer) * currentBoss.speed;
           boss.vy = (dy / distToPlayer) * currentBoss.speed;
+          
+          // 特殊攻击：召唤石柱
+          if (Date.now() - boss.lastSpecialAttack > boss.specialAttackCooldown) {
+            for (let i = 0; i < 4; i++) {
+              const angle = (Math.PI * 2 / 4) * i;
+              const dist = 200;
+              game.hazardZones.push({
+                x: game.player.x + Math.cos(angle) * dist,
+                y: game.player.y + Math.sin(angle) * dist,
+                radius: 60,
+                damage: 30,
+                life: 100,
+                warning: 40
+              });
+            }
+            boss.lastSpecialAttack = Date.now();
+          }
         } else if (currentBoss.pattern === 'dash') {
-          // Dash towards player periodically
+          // 小黄龙 - 龙卷风冲刺
           if (Date.now() - boss.lastDash > boss.dashCooldown) {
-            boss.vx = (dx / distToPlayer) * currentBoss.speed * 3;
-            boss.vy = (dy / distToPlayer) * currentBoss.speed * 3;
+            boss.vx = (dx / distToPlayer) * currentBoss.speed * 4;
+            boss.vy = (dy / distToPlayer) * currentBoss.speed * 4;
             boss.lastDash = Date.now();
+            
+            // 冲刺时散发能量波
+            for (let i = 0; i < 20; i++) {
+              game.particles.push({
+                x: boss.x,
+                y: boss.y,
+                vx: (Math.random() - 0.5) * 10,
+                vy: (Math.random() - 0.5) * 10,
+                life: 30,
+                color: '#fbbf24',
+                size: 6
+              });
+            }
           } else {
             boss.vx *= 0.95;
             boss.vy *= 0.95;
           }
+          
+          // 特殊攻击：龙息
+          if (Date.now() - boss.lastSpecialAttack > boss.specialAttackCooldown) {
+            for (let i = 0; i < 12; i++) {
+              const angle = Math.atan2(dy, dx) + (i - 6) * 0.15;
+              game.enemyBullets.push({
+                x: boss.x,
+                y: boss.y,
+                vx: Math.cos(angle) * 10,
+                vy: Math.sin(angle) * 10,
+                damage: currentBoss.damage * 0.8,
+                size: 12,
+                color: '#fbbf24'
+              });
+            }
+            boss.lastSpecialAttack = Date.now();
+          }
         } else if (currentBoss.pattern === 'teleport') {
-          // Teleport near player every 2 seconds
+          // 海星 - 瞬移攻击
           if (Date.now() - boss.lastDash > 2000 && distToPlayer > 200) {
             const angle = Math.random() * Math.PI * 2;
             boss.x = game.player.x + Math.cos(angle) * 150;
             boss.y = game.player.y + Math.sin(angle) * 150;
             boss.lastDash = Date.now();
+            
+            // 瞬移时产生水波
+            for (let i = 0; i < 30; i++) {
+              game.particles.push({
+                x: boss.x,
+                y: boss.y,
+                vx: (Math.random() - 0.5) * 12,
+                vy: (Math.random() - 0.5) * 12,
+                life: 40,
+                color: '#22d3ee',
+                size: 5
+              });
+            }
           }
           boss.vx = (dx / distToPlayer) * currentBoss.speed * 0.5;
           boss.vy = (dy / distToPlayer) * currentBoss.speed * 0.5;
+          
+          // 特殊攻击：五芒星攻击
+          if (Date.now() - boss.lastSpecialAttack > boss.specialAttackCooldown) {
+            for (let i = 0; i < 5; i++) {
+              const angle = (Math.PI * 2 / 5) * i;
+              for (let j = 1; j <= 3; j++) {
+                game.enemyBullets.push({
+                  x: boss.x,
+                  y: boss.y,
+                  vx: Math.cos(angle) * (6 * j),
+                  vy: Math.sin(angle) * (6 * j),
+                  damage: currentBoss.damage * 0.6,
+                  size: 10,
+                  color: '#06b6d4'
+                });
+              }
+            }
+            boss.lastSpecialAttack = Date.now();
+          }
         } else if (currentBoss.pattern === 'spiral') {
-          // Spiral around player
-          const angle = Math.atan2(dy, dx) + Math.sin(frame * 0.05) * 0.5;
+          // 气功大师 - 螺旋气功
+          const angle = Math.atan2(dy, dx) + Math.sin(game.animationFrame * 0.05) * 0.5;
           boss.vx = Math.cos(angle) * currentBoss.speed;
           boss.vy = Math.sin(angle) * currentBoss.speed;
+          
+          // 特殊攻击：能量波动
+          if (Date.now() - boss.lastSpecialAttack > boss.specialAttackCooldown) {
+            for (let ring = 1; ring <= 3; ring++) {
+              for (let i = 0; i < 16; i++) {
+                const angle = (Math.PI * 2 / 16) * i;
+                setTimeout(() => {
+                  game.enemyBullets.push({
+                    x: boss.x,
+                    y: boss.y,
+                    vx: Math.cos(angle) * (4 * ring),
+                    vy: Math.sin(angle) * (4 * ring),
+                    damage: currentBoss.damage * 0.5,
+                    size: 8,
+                    color: '#a855f7'
+                  });
+                }, ring * 200);
+              }
+            }
+            boss.lastSpecialAttack = Date.now();
+          }
         } else if (currentBoss.pattern === 'flame') {
-          // Stay at distance and shoot
+          // 广智 - 火焰攻击
           if (distToPlayer > 250) {
             boss.vx = (dx / distToPlayer) * currentBoss.speed;
             boss.vy = (dy / distToPlayer) * currentBoss.speed;
@@ -1262,6 +1364,23 @@ export default function GameCanvas({
           } else {
             boss.vx *= 0.9;
             boss.vy *= 0.9;
+          }
+          
+          // 特殊攻击：火焰风暴
+          if (Date.now() - boss.lastSpecialAttack > boss.specialAttackCooldown) {
+            for (let i = 0; i < 3; i++) {
+              setTimeout(() => {
+                game.flameAttacks.push({
+                  x: game.player.x + (Math.random() - 0.5) * 200,
+                  y: game.player.y + (Math.random() - 0.5) * 200,
+                  radius: 30,
+                  damage: 80,
+                  life: 100,
+                  maxLife: 100
+                });
+              }, i * 500);
+            }
+            boss.lastSpecialAttack = Date.now();
           }
         }
 
@@ -1275,8 +1394,9 @@ export default function GameCanvas({
 
         // Boss shooting
         if (Date.now() - boss.lastShot > 2000 && distToPlayer < 600) {
-          for (let i = 0; i < 5; i++) {
-            const spreadAngle = Math.atan2(dy, dx) + (i - 2) * 0.2;
+          const bulletCount = currentBoss.id === 'guangzhi' ? 8 : 5;
+          for (let i = 0; i < bulletCount; i++) {
+            const spreadAngle = Math.atan2(dy, dx) + (i - bulletCount/2) * 0.2;
             game.enemyBullets.push({
               x: boss.x,
               y: boss.y,
@@ -1297,50 +1417,130 @@ export default function GameCanvas({
           }
         }
 
-        // Draw boss
+        // Draw boss with custom visuals
         const bossScreenX = boss.x - game.camera.x;
         const bossScreenY = boss.y - game.camera.y;
-
-        ctx.save();
-        ctx.fillStyle = currentBoss.color;
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 4;
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = currentBoss.color;
-
-        // Boss body with pulsing effect
-        const pulseSize = currentBoss.size / 2 + Math.sin(game.animationFrame * 0.1) * 5;
-        ctx.beginPath();
-        ctx.arc(bossScreenX, bossScreenY, pulseSize, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-
-        // Boss eyes
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = '#fff';
-        ctx.beginPath();
-        ctx.arc(bossScreenX - 15, bossScreenY - 10, 8, 0, Math.PI * 2);
-        ctx.arc(bossScreenX + 15, bossScreenY - 10, 8, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = '#000';
-        ctx.beginPath();
-        ctx.arc(bossScreenX - 15, bossScreenY - 10, 4, 0, Math.PI * 2);
-        ctx.arc(bossScreenX + 15, bossScreenY - 10, 4, 0, Math.PI * 2);
-        ctx.fill();
+        
+        // Import and use custom boss drawing
+        drawBusBreakBoss(ctx, boss, game.camera, game.animationFrame, bossScreenX, bossScreenY, currentBoss);
 
         // Boss name tag
+        ctx.save();
         ctx.fillStyle = 'rgba(0,0,0,0.7)';
-        ctx.fillRect(bossScreenX - 80, bossScreenY - pulseSize - 35, 160, 25);
+        ctx.fillRect(bossScreenX - 80, bossScreenY - currentBoss.size/2 - 50, 160, 25);
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 16px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(currentBoss.name, bossScreenX, bossScreenY - pulseSize - 15);
-
+        ctx.fillText(currentBoss.name, bossScreenX, bossScreenY - currentBoss.size/2 - 30);
         ctx.restore();
       } else if (gameMode === 'busbreak') {
         // Reset boss when not in boss state
         game.busBreakBoss = null;
+      }
+      
+      // Helper function to draw custom boss visuals
+      function drawBusBreakBoss(ctx, boss, camera, frame, bossScreenX, bossScreenY, currentBoss) {
+        ctx.save();
+        
+        if (currentBoss.id === 'zhongdalin') {
+          // 中大林 - 石头巨人
+          const baseSize = currentBoss.size || 120;
+          ctx.fillStyle = '#4ade80';
+          ctx.strokeStyle = '#166534';
+          ctx.lineWidth = 4;
+          
+          const bodyWidth = baseSize * 0.8;
+          const bodyHeight = baseSize;
+          ctx.fillRect(bossScreenX - bodyWidth/2, bossScreenY - bodyHeight/2, bodyWidth, bodyHeight);
+          ctx.strokeRect(bossScreenX - bodyWidth/2, bossScreenY - bodyHeight/2, bodyWidth, bodyHeight);
+          
+          ctx.fillStyle = '#22c55e';
+          for (let i = 0; i < 5; i++) {
+            ctx.fillRect(bossScreenX - bodyWidth/2 + 10, bossScreenY - bodyHeight/2 + i * 20, bodyWidth - 20, 8);
+          }
+          
+          const headSize = baseSize * 0.35;
+          ctx.fillStyle = '#4ade80';
+          ctx.beginPath();
+          ctx.arc(bossScreenX, bossScreenY - bodyHeight/2 - headSize, headSize, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          
+          ctx.fillStyle = '#166534';
+          ctx.beginPath();
+          ctx.arc(bossScreenX - 12, bossScreenY - bodyHeight/2 - headSize, 5, 0, Math.PI * 2);
+          ctx.arc(bossScreenX + 12, bossScreenY - bodyHeight/2 - headSize, 5, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (currentBoss.id === 'xiaowang') {
+          // 小黄龙
+          const baseSize = currentBoss.size || 100;
+          ctx.fillStyle = '#f59e0b';
+          ctx.strokeStyle = '#92400e';
+          ctx.lineWidth = 4;
+          
+          const bodySegments = 5;
+          for (let i = 0; i < bodySegments; i++) {
+            const offsetX = Math.sin((frame * 0.05) + i * 0.5) * 15;
+            const y = bossScreenY - baseSize/2 + (i * 20);
+            ctx.beginPath();
+            ctx.ellipse(bossScreenX + offsetX, y, 25, 18, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+          }
+          
+          ctx.beginPath();
+          ctx.ellipse(bossScreenX, bossScreenY - baseSize/2 - 25, 35, 30, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          
+          ctx.shadowBlur = 15;
+          ctx.shadowColor = '#ef4444';
+          ctx.fillStyle = '#ef4444';
+          ctx.beginPath();
+          ctx.arc(bossScreenX - 12, bossScreenY - baseSize/2 - 28, 6, 0, Math.PI * 2);
+          ctx.arc(bossScreenX + 12, bossScreenY - baseSize/2 - 28, 6, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        } else if (currentBoss.id === 'guangzhi') {
+          // 广智 - 火焰战神
+          const baseSize = currentBoss.size || 150;
+          const gradient = ctx.createRadialGradient(bossScreenX, bossScreenY, 0, bossScreenX, bossScreenY, baseSize * 0.6);
+          gradient.addColorStop(0, '#ff4500');
+          gradient.addColorStop(0.5, '#ff6347');
+          gradient.addColorStop(1, '#dc2626');
+          
+          ctx.fillStyle = gradient;
+          ctx.strokeStyle = '#7f1d1d';
+          ctx.lineWidth = 5;
+          ctx.beginPath();
+          ctx.ellipse(bossScreenX, bossScreenY, baseSize * 0.5, baseSize * 0.6, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          
+          ctx.fillStyle = '#fff';
+          ctx.strokeStyle = '#000';
+          ctx.lineWidth = 3;
+          ctx.font = 'bold 40px Arial';
+          ctx.textAlign = 'center';
+          ctx.strokeText('广', bossScreenX, bossScreenY - 15);
+          ctx.fillText('广', bossScreenX, bossScreenY - 15);
+          ctx.strokeText('智', bossScreenX, bossScreenY + 25);
+          ctx.fillText('智', bossScreenX, bossScreenY + 25);
+        } else {
+          // 默认形象
+          ctx.fillStyle = currentBoss.color;
+          ctx.strokeStyle = '#000';
+          ctx.lineWidth = 4;
+          ctx.shadowBlur = 20;
+          ctx.shadowColor = currentBoss.color;
+          const pulseSize = currentBoss.size / 2 + Math.sin(frame * 0.1) * 5;
+          ctx.beginPath();
+          ctx.arc(bossScreenX, bossScreenY, pulseSize, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
+        
+        ctx.restore();
       }
 
       // Update enemies
