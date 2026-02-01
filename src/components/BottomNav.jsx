@@ -29,16 +29,15 @@ export default function BottomNav({ onLanguageClick, onShopClick, onMiniGamesCli
         </Button>
       )}
       
-      <Link to={createPageUrl('Login')}>
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-1 text-xs h-8"
-        >
-          <LogIn className="w-3 h-3" />
-          登录
-        </Button>
-      </Link>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => window.location.href = createPageUrl('Game')}
+        className="gap-1 text-xs h-8"
+      >
+        <LogIn className="w-3 h-3" />
+        登录
+      </Button>
       
       <Button
         variant="outline"
