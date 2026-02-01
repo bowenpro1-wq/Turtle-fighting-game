@@ -49,6 +49,15 @@ export default function Game() {
     const savedCoins = localStorage.getItem('gameCoins');
     return savedCoins ? parseInt(savedCoins) : 1000;
   });
+  const [difficulty, setDifficulty] = useState('adaptive');
+  const [difficultyMultiplier, setDifficultyMultiplier] = useState(1);
+  const [performanceTracker, setPerformanceTracker] = useState({
+    damagesTaken: [],
+    timesCompleted: [],
+    winsCount: 0,
+    lossesCount: 0
+  });
+  const [gameStartTime, setGameStartTime] = useState(null);
   const [currentBoss, setCurrentBoss] = useState(null);
   const [bossHealth, setBossHealth] = useState(0);
   const [bossMaxHealth, setBossMaxHealth] = useState(0);
@@ -222,7 +231,35 @@ export default function Game() {
     }
   };
 
+  useEffect(() => {
+    const loadDifficulty = async () => {
+      try {
+        const user = await base44.auth.me();
+        const profiles = await base44.entities.PlayerProfile.filter({
+          user_email: user.email
+        });
+        if (profiles.length > 0) {
+          setDifficulty(profiles[0].difficulty_preference || 'adaptive');
+        }
+      } catch (error) {
+        console.error('Error loading difficulty:', error);
+      }
+    };
+    loadDifficulty();
+  }, []);
+
+  useEffect(() => {
+    const multipliers = {
+      easy: 0.7,
+      normal: 1.0,
+      hard: 1.5,
+      adaptive: difficultyMultiplier
+    };
+    setDifficultyMultiplier(multipliers[difficulty] || 1.0);
+  }, [difficulty]);
+
   const startGame = (mode = 'normal', fromCheckpoint = false) => {
+    setGameStartTime(Date.now());
     // Reset all state first
     setGameState('start');
     setCurrentBoss(null);
@@ -777,6 +814,7 @@ export default function Game() {
               defeatedBosses={defeatedBosses}
               score={score}
               upgrades={upgrades}
+              difficultyMultiplier={difficultyMultiplier}
               hasCannonUpgrade={hasCannonUpgrade}
               hasHomingBullets={hasHomingBullets}
               hasPiercingShots={hasPiercingShots}
