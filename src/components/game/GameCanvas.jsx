@@ -23,7 +23,7 @@ const ZHONGDALIN = {
 // Boss试炼 special bosses
 const BUSBREAK_BOSSES = {
   zhongdalin: {
-    name: '中大林广志',
+    name: '中大林',
     width: 120,
     height: 150,
     speed: 2.0,
@@ -35,7 +35,7 @@ const BUSBREAK_BOSSES = {
     isSpecialBoss: true
   },
   xiaowang: {
-    name: '小王',
+    name: '小黄龙',
     width: 100,
     height: 120,
     speed: 3.0,
@@ -47,7 +47,7 @@ const BUSBREAK_BOSSES = {
     isSpecialBoss: true
   },
   longhaixing: {
-    name: '龙海星',
+    name: '海星',
     width: 110,
     height: 130,
     speed: 2.5,
@@ -59,7 +59,7 @@ const BUSBREAK_BOSSES = {
     isSpecialBoss: true
   },
   qigong: {
-    name: '启功大师',
+    name: '气功大师',
     width: 130,
     height: 160,
     speed: 1.5,

@@ -6,28 +6,28 @@ import { X } from 'lucide-react';
 const BUSBREAK_BOSSES = [
   {
     id: 'zhongdalin',
-    name: '中大林广志',
+    name: '中大林',
     color: '#4ade80',
     health: 3000,
     reward: '🗿 中大林图腾'
   },
   {
     id: 'xiaowang',
-    name: '小王',
+    name: '小黄龙',
     color: '#f59e0b',
     health: 2500,
-    reward: '🔥 赤潮'
-  },
-  {
-    id: 'longhaixing',
-    name: '龙海星',
-    color: '#06b6d4',
-    health: 2800,
     reward: '⚡ 电巢'
   },
   {
+    id: 'longhaixing',
+    name: '海星',
+    color: '#06b6d4',
+    health: 2800,
+    reward: '📦 升级模板'
+  },
+  {
     id: 'qigong',
-    name: '启功大师',
+    name: '气功大师',
     color: '#8b5cf6',
     health: 3500,
     reward: '📦 升级模板'
@@ -37,7 +37,7 @@ const BUSBREAK_BOSSES = [
     name: '广智',
     color: '#ff4500',
     health: 5000,
-    reward: '📦 升级模板'
+    reward: '🔥 赤潮'
   }
 ];
 
