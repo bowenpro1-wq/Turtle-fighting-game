@@ -50,6 +50,9 @@ export default function Game() {
     const savedCoins = localStorage.getItem('gameCoins');
     return savedCoins ? parseInt(savedCoins) : 1000;
   });
+  const [difficulty, setDifficulty] = useState('adaptive');
+  const [difficultyMultiplier, setDifficultyMultiplier] = useState(1);
+  const [gameStartTime, setGameStartTime] = useState(null);
   const [currentBoss, setCurrentBoss] = useState(null);
   const [bossHealth, setBossHealth] = useState(0);
   const [bossMaxHealth, setBossMaxHealth] = useState(0);
