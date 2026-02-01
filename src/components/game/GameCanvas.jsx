@@ -1472,60 +1472,274 @@ export default function GameCanvas({
           ctx.arc(bossScreenX + 12, bossScreenY - bodyHeight/2 - headSize, 5, 0, Math.PI * 2);
           ctx.fill();
         } else if (currentBoss.id === 'xiaowang') {
-          // 小黄龙
+          // 小黄龙 - 东方神龙形象
           const baseSize = currentBoss.size || 100;
-          ctx.fillStyle = '#f59e0b';
+          
+          // 龙身 - 金色渐变蛇形身体
+          const bodySegments = 6;
+          for (let i = 0; i < bodySegments; i++) {
+            const offsetX = Math.sin((frame * 0.08) + i * 0.7) * 20;
+            const offsetY = Math.cos((frame * 0.08) + i * 0.5) * 8;
+            const y = bossScreenY - baseSize/2 + (i * 18) + offsetY;
+            const segmentSize = 28 - i * 2;
+            
+            // 龙鳞渐变色
+            const gradient = ctx.createRadialGradient(bossScreenX + offsetX, y, 0, bossScreenX + offsetX, y, segmentSize);
+            gradient.addColorStop(0, '#fbbf24');
+            gradient.addColorStop(0.5, '#f59e0b');
+            gradient.addColorStop(1, '#d97706');
+            
+            ctx.fillStyle = gradient;
+            ctx.strokeStyle = '#92400e';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.ellipse(bossScreenX + offsetX, y, segmentSize, 20, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            
+            // 龙鳞纹理
+            ctx.fillStyle = '#fed7aa';
+            for (let j = 0; j < 4; j++) {
+              const scaleX = bossScreenX + offsetX - segmentSize + j * (segmentSize / 2);
+              const scaleY = y;
+              ctx.beginPath();
+              ctx.arc(scaleX, scaleY, 3, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+          
+          // 龙头 - 更威严的形状
+          const headX = bossScreenX;
+          const headY = bossScreenY - baseSize/2 - 30;
+          
+          // 头部轮廓
+          const headGradient = ctx.createRadialGradient(headX, headY, 0, headX, headY, 40);
+          headGradient.addColorStop(0, '#fbbf24');
+          headGradient.addColorStop(0.6, '#f59e0b');
+          headGradient.addColorStop(1, '#ea580c');
+          
+          ctx.fillStyle = headGradient;
           ctx.strokeStyle = '#92400e';
           ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.ellipse(headX, headY, 40, 35, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
           
-          const bodySegments = 5;
-          for (let i = 0; i < bodySegments; i++) {
-            const offsetX = Math.sin((frame * 0.05) + i * 0.5) * 15;
-            const y = bossScreenY - baseSize/2 + (i * 20);
+          // 龙角 - 金色威武
+          ctx.strokeStyle = '#fcd34d';
+          ctx.lineWidth = 6;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(headX - 25, headY - 25);
+          ctx.quadraticCurveTo(headX - 35, headY - 45, headX - 30, headY - 60);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(headX + 25, headY - 25);
+          ctx.quadraticCurveTo(headX + 35, headY - 45, headX + 30, headY - 60);
+          ctx.stroke();
+          
+          // 龙须 - 飘逸的须髯
+          ctx.strokeStyle = '#fbbf24';
+          ctx.lineWidth = 4;
+          const whiskerWave = Math.sin(frame * 0.1) * 10;
+          ctx.beginPath();
+          ctx.moveTo(headX - 40, headY - 10);
+          ctx.quadraticCurveTo(headX - 60 + whiskerWave, headY, headX - 55 + whiskerWave, headY + 20);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(headX + 40, headY - 10);
+          ctx.quadraticCurveTo(headX + 60 - whiskerWave, headY, headX + 55 - whiskerWave, headY + 20);
+          ctx.stroke();
+          
+          // 龙眼 - 威严的金色眼睛
+          ctx.shadowBlur = 20;
+          ctx.shadowColor = '#fbbf24';
+          ctx.fillStyle = '#fef3c7';
+          ctx.beginPath();
+          ctx.ellipse(headX - 15, headY - 5, 10, 12, 0.3, 0, Math.PI * 2);
+          ctx.ellipse(headX + 15, headY - 5, 10, 12, -0.3, 0, Math.PI * 2);
+          ctx.fill();
+          
+          ctx.fillStyle = '#dc2626';
+          ctx.beginPath();
+          ctx.arc(headX - 15, headY - 5, 5, 0, Math.PI * 2);
+          ctx.arc(headX + 15, headY - 5, 5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+          
+          // 龙鼻和嘴
+          ctx.strokeStyle = '#92400e';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(headX - 8, headY + 15);
+          ctx.quadraticCurveTo(headX, headY + 18, headX + 8, headY + 15);
+          ctx.stroke();
+          
+          // 龙爪装饰
+          for (let i = 1; i <= 2; i++) {
+            const clawY = bossScreenY - baseSize/2 + (i * 35);
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 4;
             ctx.beginPath();
-            ctx.ellipse(bossScreenX + offsetX, y, 25, 18, 0, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.moveTo(bossScreenX - 25, clawY);
+            ctx.lineTo(bossScreenX - 40, clawY + 10);
+            ctx.moveTo(bossScreenX + 25, clawY);
+            ctx.lineTo(bossScreenX + 40, clawY + 10);
             ctx.stroke();
           }
           
+          // 能量光环
+          ctx.strokeStyle = '#fbbf24';
+          ctx.lineWidth = 3;
+          ctx.globalAlpha = 0.4 + Math.sin(frame * 0.15) * 0.3;
           ctx.beginPath();
-          ctx.ellipse(bossScreenX, bossScreenY - baseSize/2 - 25, 35, 30, 0, 0, Math.PI * 2);
+          ctx.arc(headX, headY, 50 + Math.sin(frame * 0.1) * 5, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+        } else if (currentBoss.id === 'guangzhi') {
+          // 广智 - 火焰战神，参考天命人形态
+          const baseSize = currentBoss.size || 150;
+          
+          // 火焰斗篷 - 动态火焰效果
+          const cloakFlames = 16;
+          for (let i = 0; i < cloakFlames; i++) {
+            const angle = (Math.PI * 2 / cloakFlames) * i;
+            const flameHeight = 35 + Math.sin(frame * 0.15 + i * 0.5) * 15;
+            const x1 = bossScreenX + Math.cos(angle) * (baseSize * 0.4);
+            const y1 = bossScreenY + Math.sin(angle) * (baseSize * 0.45);
+            const x2 = bossScreenX + Math.cos(angle) * (baseSize * 0.4 + flameHeight);
+            const y2 = bossScreenY + Math.sin(angle) * (baseSize * 0.45 + flameHeight);
+            
+            const flameGradient = ctx.createLinearGradient(x1, y1, x2, y2);
+            flameGradient.addColorStop(0, '#ff6347');
+            flameGradient.addColorStop(0.5, '#ff4500');
+            flameGradient.addColorStop(1, '#dc2626');
+            
+            ctx.fillStyle = flameGradient;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            const nextAngle = angle + (Math.PI * 2 / cloakFlames);
+            ctx.lineTo(
+              bossScreenX + Math.cos(nextAngle) * (baseSize * 0.4),
+              bossScreenY + Math.sin(nextAngle) * (baseSize * 0.45)
+            );
+            ctx.closePath();
+            ctx.fill();
+          }
+          
+          // 身体主体 - 战甲形态
+          const bodyGradient = ctx.createRadialGradient(bossScreenX, bossScreenY, 0, bossScreenX, bossScreenY, baseSize * 0.4);
+          bodyGradient.addColorStop(0, '#fbbf24');
+          bodyGradient.addColorStop(0.3, '#f59e0b');
+          bodyGradient.addColorStop(0.6, '#dc2626');
+          bodyGradient.addColorStop(1, '#7f1d1d');
+          
+          ctx.fillStyle = bodyGradient;
+          ctx.strokeStyle = '#451a03';
+          ctx.lineWidth = 6;
+          ctx.beginPath();
+          ctx.ellipse(bossScreenX, bossScreenY, baseSize * 0.4, baseSize * 0.5, 0, 0, Math.PI * 2);
           ctx.fill();
           ctx.stroke();
           
-          ctx.shadowBlur = 15;
-          ctx.shadowColor = '#ef4444';
-          ctx.fillStyle = '#ef4444';
-          ctx.beginPath();
-          ctx.arc(bossScreenX - 12, bossScreenY - baseSize/2 - 28, 6, 0, Math.PI * 2);
-          ctx.arc(bossScreenX + 12, bossScreenY - baseSize/2 - 28, 6, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.shadowBlur = 0;
-        } else if (currentBoss.id === 'guangzhi') {
-          // 广智 - 火焰战神
-          const baseSize = currentBoss.size || 150;
-          const gradient = ctx.createRadialGradient(bossScreenX, bossScreenY, 0, bossScreenX, bossScreenY, baseSize * 0.6);
-          gradient.addColorStop(0, '#ff4500');
-          gradient.addColorStop(0.5, '#ff6347');
-          gradient.addColorStop(1, '#dc2626');
+          // 战甲纹路
+          ctx.strokeStyle = '#fbbf24';
+          ctx.lineWidth = 3;
+          ctx.globalAlpha = 0.8;
+          for (let i = 0; i < 6; i++) {
+            const angle = (Math.PI * 2 / 6) * i;
+            const x = bossScreenX + Math.cos(angle) * (baseSize * 0.25);
+            const y = bossScreenY + Math.sin(angle) * (baseSize * 0.3);
+            ctx.beginPath();
+            ctx.arc(x, y, 8, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(bossScreenX, bossScreenY);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+          }
+          ctx.globalAlpha = 1;
           
-          ctx.fillStyle = gradient;
+          // 头部 - 威严的面具
+          const headY = bossScreenY - baseSize * 0.35;
+          ctx.fillStyle = '#dc2626';
           ctx.strokeStyle = '#7f1d1d';
           ctx.lineWidth = 5;
           ctx.beginPath();
-          ctx.ellipse(bossScreenX, bossScreenY, baseSize * 0.5, baseSize * 0.6, 0, 0, Math.PI * 2);
+          ctx.arc(bossScreenX, headY, 35, 0, Math.PI * 2);
           ctx.fill();
           ctx.stroke();
           
-          ctx.fillStyle = '#fff';
-          ctx.strokeStyle = '#000';
+          // 面具装饰 - 火焰纹样
+          ctx.strokeStyle = '#fbbf24';
           ctx.lineWidth = 3;
-          ctx.font = 'bold 40px Arial';
+          ctx.beginPath();
+          ctx.moveTo(bossScreenX - 25, headY - 10);
+          ctx.quadraticCurveTo(bossScreenX - 20, headY - 25, bossScreenX - 10, headY - 30);
+          ctx.moveTo(bossScreenX + 25, headY - 10);
+          ctx.quadraticCurveTo(bossScreenX + 20, headY - 25, bossScreenX + 10, headY - 30);
+          ctx.stroke();
+          
+          // 眼睛 - 炽热的火焰之眼
+          ctx.shadowBlur = 25;
+          ctx.shadowColor = '#ff4500';
+          ctx.fillStyle = '#fff';
+          ctx.beginPath();
+          ctx.ellipse(bossScreenX - 15, headY, 10, 14, 0.2, 0, Math.PI * 2);
+          ctx.ellipse(bossScreenX + 15, headY, 10, 14, -0.2, 0, Math.PI * 2);
+          ctx.fill();
+          
+          ctx.fillStyle = '#ff4500';
+          ctx.beginPath();
+          ctx.arc(bossScreenX - 15, headY, 6, 0, Math.PI * 2);
+          ctx.arc(bossScreenX + 15, headY, 6, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+          
+          // 火焰王冠
+          for (let i = 0; i < 5; i++) {
+            const crownX = bossScreenX - 30 + i * 15;
+            const crownHeight = 20 + (i === 2 ? 15 : 0);
+            const flameGradient = ctx.createLinearGradient(crownX, headY - 35, crownX, headY - 35 - crownHeight);
+            flameGradient.addColorStop(0, '#fbbf24');
+            flameGradient.addColorStop(1, '#ff4500');
+            
+            ctx.fillStyle = flameGradient;
+            ctx.beginPath();
+            ctx.moveTo(crownX - 5, headY - 35);
+            ctx.lineTo(crownX, headY - 35 - crownHeight);
+            ctx.lineTo(crownX + 5, headY - 35);
+            ctx.closePath();
+            ctx.fill();
+          }
+          
+          // 神力标记 - "广智"符文
+          ctx.fillStyle = '#fef3c7';
+          ctx.strokeStyle = '#92400e';
+          ctx.lineWidth = 2;
+          ctx.font = 'bold 28px "STKaiti", "KaiTi", serif';
           ctx.textAlign = 'center';
-          ctx.strokeText('广', bossScreenX, bossScreenY - 15);
-          ctx.fillText('广', bossScreenX, bossScreenY - 15);
-          ctx.strokeText('智', bossScreenX, bossScreenY + 25);
-          ctx.fillText('智', bossScreenX, bossScreenY + 25);
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = '#ff4500';
+          ctx.strokeText('广', bossScreenX, bossScreenY - 5);
+          ctx.fillText('广', bossScreenX, bossScreenY - 5);
+          ctx.strokeText('智', bossScreenX, bossScreenY + 20);
+          ctx.fillText('智', bossScreenX, bossScreenY + 20);
+          ctx.shadowBlur = 0;
+          
+          // 能量光环 - 脉动的火焰能量
+          ctx.strokeStyle = '#ff6347';
+          ctx.lineWidth = 4;
+          ctx.globalAlpha = 0.5 + Math.sin(frame * 0.2) * 0.3;
+          for (let i = 1; i <= 2; i++) {
+            ctx.beginPath();
+            ctx.arc(bossScreenX, bossScreenY, (baseSize * 0.5 + i * 15) + Math.sin(frame * 0.15 + i) * 8, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          ctx.globalAlpha = 1;
         } else {
           // 默认形象
           ctx.fillStyle = currentBoss.color;
