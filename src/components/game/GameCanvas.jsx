@@ -595,6 +595,30 @@ export default function GameCanvas({
             const meleeRange = 120;
             const meleeDamage = (25 + weaponLevel * 3) * upgrades.damage;
 
+            // Damage boss
+            if (gameMode === 'busbreak' && game.busBreakBoss && currentBoss) {
+              const boss = game.busBreakBoss;
+              const dx = boss.x - px;
+              const dy = boss.y - py;
+              const dist = Math.sqrt(dx * dx + dy * dy);
+              
+              if (dist < meleeRange + currentBoss.size / 2) {
+                onBossDamage(meleeDamage);
+                
+                for (let i = 0; i < 20; i++) {
+                  game.particles.push({
+                    x: boss.x,
+                    y: boss.y,
+                    vx: (Math.random() - 0.5) * 12,
+                    vy: (Math.random() - 0.5) * 12,
+                    life: 30,
+                    color: '#ff4500',
+                    size: 7
+                  });
+                }
+              }
+            }
+
             game.enemies.forEach(enemy => {
               const dx = enemy.x + enemy.width / 2 - px;
               const dy = enemy.y + enemy.height / 2 - py;
@@ -1143,6 +1167,31 @@ export default function GameCanvas({
       if (isMeleeAttacking) {
         const meleeRange = 80;
         const meleeDamage = 10 * upgrades.damage;
+
+        // Damage boss
+        if (gameMode === 'busbreak' && game.busBreakBoss && currentBoss) {
+          const boss = game.busBreakBoss;
+          const dx = boss.x - (game.player.x + game.player.width / 2);
+          const dy = boss.y - (game.player.y + game.player.height / 2);
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          
+          if (dist < meleeRange + currentBoss.size / 2) {
+            onBossDamage(meleeDamage);
+            
+            // Boss melee hit particles
+            for (let i = 0; i < 20; i++) {
+              game.particles.push({
+                x: boss.x,
+                y: boss.y,
+                vx: (Math.random() - 0.5) * 12,
+                vy: (Math.random() - 0.5) * 12,
+                life: 35,
+                color: '#60a5fa',
+                size: 6
+              });
+            }
+          }
+        }
 
         game.enemies.forEach(enemy => {
           const dx = enemy.x + enemy.width / 2 - (game.player.x + game.player.width / 2);
@@ -2050,6 +2099,40 @@ export default function GameCanvas({
           return false;
         }
 
+        // Check boss collision (Bus Break mode)
+        if (gameMode === 'busbreak' && game.busBreakBoss && currentBoss) {
+          const boss = game.busBreakBoss;
+          const bossRadius = currentBoss.size / 2;
+          const dx = bullet.x - boss.x;
+          const dy = bullet.y - boss.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          
+          if (dist < bossRadius) {
+            onBossDamage(bullet.damage);
+            
+            // Boss hit particles
+            const particleCount = bullet.isCannon ? 30 : 15;
+            const particleColor = bullet.isCannon ? '#ff4500' : '#fbbf24';
+            for (let i = 0; i < particleCount; i++) {
+              game.particles.push({
+                x: bullet.x,
+                y: bullet.y,
+                vx: (Math.random() - 0.5) * (bullet.isCannon ? 15 : 10),
+                vy: (Math.random() - 0.5) * (bullet.isCannon ? 15 : 10),
+                life: bullet.isCannon ? 35 : 25,
+                color: particleColor,
+                size: bullet.isCannon ? 6 : 4
+              });
+            }
+            
+            if (bullet.isCannon) {
+              game.screenShake = 5;
+            }
+            
+            return false;
+          }
+        }
+        
         // Check enemy collision
         for (let enemy of game.enemies) {
           if (bullet.x > enemy.x && bullet.x < enemy.x + enemy.width &&
