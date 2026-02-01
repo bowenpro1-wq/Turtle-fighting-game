@@ -99,6 +99,67 @@ const ENEMY_TYPES = {
     behaviorType: 'patrol',
     attacksBuildings: false
   },
+  SCOUT: {
+    name: 'scout',
+    width: 35,
+    height: 45,
+    speed: 2.5,
+    health: 30,
+    damage: 8,
+    shootInterval: 5000,
+    color: '#06b6d4',
+    behaviorType: 'patrol',
+    attacksBuildings: false
+  },
+  HEAVY: {
+    name: 'heavy',
+    width: 60,
+    height: 70,
+    speed: 0.8,
+    health: 150,
+    damage: 30,
+    shootInterval: 7000,
+    color: '#71717a',
+    behaviorType: 'assault',
+    attacksBuildings: true
+  },
+  ASSASSIN: {
+    name: 'assassin',
+    width: 35,
+    height: 50,
+    speed: 3.0,
+    health: 50,
+    damage: 25,
+    shootInterval: 4000,
+    color: '#8b5cf6',
+    behaviorType: 'kamikaze',
+    attacksBuildings: false
+  },
+  MAGE: {
+    name: 'mage',
+    width: 40,
+    height: 55,
+    speed: 1.0,
+    health: 60,
+    damage: 20,
+    shootInterval: 8000,
+    color: '#a855f7',
+    behaviorType: 'stationary',
+    attacksBuildings: false,
+    longRange: true
+  },
+  WARRIOR: {
+    name: 'warrior',
+    width: 50,
+    height: 60,
+    speed: 1.2,
+    health: 100,
+    damage: 20,
+    shootInterval: 6000,
+    color: '#ef4444',
+    behaviorType: 'assault',
+    attacksBuildings: false
+  },
   TANK: {
     name: 'tank',
     width: 80,
@@ -3006,6 +3067,145 @@ function drawEnemy(ctx, enemy, camera, frame) {
     ctx.arc(x + 19, y + 30, 25, 0, Math.PI * 2);
     ctx.stroke();
     ctx.globalAlpha = 1;
+
+  } else if (enemy.name === 'scout') {
+    // Scout - fast light unit
+    ctx.fillStyle = enemy.color;
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+
+    // Slim body
+    ctx.fillRect(x + 12, y + 18, 14, 22);
+    ctx.strokeRect(x + 12, y + 18, 14, 22);
+
+    // Head
+    ctx.fillRect(x + 14, y + 5, 10, 13);
+    ctx.strokeRect(x + 14, y + 5, 10, 13);
+
+    // Visor
+    ctx.fillStyle = '#60a5fa';
+    ctx.fillRect(x + 16, y + 9, 6, 4);
+
+  } else if (enemy.name === 'heavy') {
+    // Heavy armored unit
+    ctx.fillStyle = enemy.color;
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 3;
+
+    // Large body
+    ctx.fillRect(x + 5, y + 25, 50, 35);
+    ctx.strokeRect(x + 5, y + 25, 50, 35);
+
+    // Head
+    ctx.fillRect(x + 15, y + 5, 30, 20);
+    ctx.strokeRect(x + 15, y + 5, 30, 20);
+
+    // Armor plates
+    ctx.fillStyle = '#52525b';
+    for (let i = 0; i < 3; i++) {
+      ctx.fillRect(x + 10 + i * 13, y + 30, 10, 10);
+    }
+
+  } else if (enemy.name === 'assassin') {
+    // Assassin - ninja style
+    ctx.fillStyle = enemy.color;
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+
+    // Body
+    ctx.fillRect(x + 12, y + 18, 14, 25);
+    ctx.strokeRect(x + 12, y + 18, 14, 25);
+
+    // Head with mask
+    ctx.fillRect(x + 14, y + 5, 10, 13);
+    ctx.strokeRect(x + 14, y + 5, 10, 13);
+
+    // Eyes only
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(x + 16, y + 9, 2, 2);
+    ctx.fillRect(x + 20, y + 9, 2, 2);
+
+    // Shadow trail
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = '#8b5cf6';
+    ctx.beginPath();
+    ctx.arc(x + 19 - 5, y + 30, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+  } else if (enemy.name === 'mage') {
+    // Mage with staff
+    ctx.fillStyle = enemy.color;
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+
+    // Robe
+    ctx.beginPath();
+    ctx.moveTo(x + 19, y + 15);
+    ctx.lineTo(x + 10, y + 50);
+    ctx.lineTo(x + 28, y + 50);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Head
+    ctx.fillRect(x + 14, y + 5, 10, 10);
+    ctx.strokeRect(x + 14, y + 5, 10, 10);
+
+    // Hat
+    ctx.fillStyle = '#6b21a8';
+    ctx.beginPath();
+    ctx.moveTo(x + 19, y);
+    ctx.lineTo(x + 12, y + 5);
+    ctx.lineTo(x + 26, y + 5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Staff
+    ctx.strokeStyle = '#78350f';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x + 5, y + 20);
+    ctx.lineTo(x + 5, y + 45);
+    ctx.stroke();
+
+    // Magic orb
+    ctx.fillStyle = '#c084fc';
+    ctx.beginPath();
+    ctx.arc(x + 5, y + 17, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+  } else if (enemy.name === 'warrior') {
+    // Warrior with sword
+    ctx.fillStyle = enemy.color;
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+
+    // Body
+    ctx.fillRect(x + 12, y + 20, 24, 30);
+    ctx.strokeRect(x + 12, y + 20, 24, 30);
+
+    // Head
+    ctx.fillRect(x + 15, y + 5, 18, 15);
+    ctx.strokeRect(x + 15, y + 5, 18, 15);
+
+    // Helmet horn
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.moveTo(x + 24, y);
+    ctx.lineTo(x + 20, y + 5);
+    ctx.lineTo(x + 28, y + 5);
+    ctx.closePath();
+    ctx.fill();
+
+    // Sword
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(x + 38, y + 25);
+    ctx.lineTo(x + 48, y + 20);
+    ctx.stroke();
 
   } else if (enemy.name === 'bomber') {
     // Bomber unit

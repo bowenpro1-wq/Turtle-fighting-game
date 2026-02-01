@@ -35,8 +35,10 @@ const BOSSES = [
 ];
 
 export default function Game() {
+  const navigate = useNavigate();
   const [gameState, setGameState] = useState('start');
   const [gameMode, setGameMode] = useState('normal');
+  const [language, setLanguage] = useState('zh');
   const [playerHealth, setPlayerHealth] = useState(100);
   const [maxHealth, setMaxHealth] = useState(100);
   const [score, setScore] = useState(0);
@@ -580,7 +582,13 @@ export default function Game() {
   }, [gameState]);
 
   return (
-    <div className="w-full h-screen bg-gradient-to-b from-[#87CEEB] via-[#5F9EA0] to-[#2F4F4F] overflow-hidden relative">
+    <div className="w-full h-screen bg-gradient-to-b from-[#87CEEB] via-[#5F9EA0] to-[#2F4F4F] overflow-hidden relative pb-12">
+      {(gameState === 'playing' || gameState === 'boss') && (
+        <div className="absolute top-2 right-2 z-40">
+          <LanguageSwitcher currentLang={language} onLanguageChange={setLanguage} />
+        </div>
+      )}
+
       <AnimatePresence mode="wait">
         {gameState === 'start' && (
           <StartScreen onStart={startGame} defeatedBosses={defeatedBosses} />
@@ -718,7 +726,16 @@ export default function Game() {
             hasTheHand={hasTheHand}
           />
         )}
-      </AnimatePresence>
-    </div>
-  );
-}
+        </AnimatePresence>
+
+        {(gameState === 'playing' || gameState === 'boss') && (
+        <BottomNav 
+          onLanguageClick={() => {}}
+          onShopClick={() => setShowShop(true)}
+          onMiniGamesClick={() => navigate(createPageUrl('MiniGames'))}
+          showShop={true}
+        />
+        )}
+        </div>
+        );
+        }
