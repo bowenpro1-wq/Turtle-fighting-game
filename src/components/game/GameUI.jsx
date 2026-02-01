@@ -94,11 +94,11 @@ export default function GameUI({
   return (
     <div className="absolute inset-0 pointer-events-none">
       <div className="absolute top-0 left-0 right-0 p-2 flex justify-between items-start">
-        <div className="space-y-2 bg-black/40 backdrop-blur-sm rounded-xl p-3 border border-white/10">
+        <div className="space-y-2 bg-black/40 backdrop-blur-sm rounded-xl p-2 md:p-3 border border-white/10">
           <div className="flex items-center gap-2">
-            <Heart className="w-6 h-6 text-red-500" fill="#ef4444" />
+            <Heart className="w-5 h-5 md:w-6 md:h-6 text-red-500" fill="#ef4444" />
             <div className="relative">
-              <div className="w-32 h-6 bg-gray-800 rounded-lg overflow-hidden border-2 border-red-900">
+              <div className="w-24 md:w-32 h-5 md:h-6 bg-gray-800 rounded-lg overflow-hidden border-2 border-red-900">
                 <motion.div
                   className="h-full bg-gradient-to-r from-red-600 to-red-400"
                   initial={false}
@@ -106,21 +106,21 @@ export default function GameUI({
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 />
               </div>
-              <span className="absolute inset-0 flex items-center justify-center text-white text-xs font-bold drop-shadow-lg">
+              <span className="absolute inset-0 flex items-center justify-center text-white text-[10px] md:text-xs font-bold drop-shadow-lg">
                 {Math.round(health)}/{maxHealth}
               </span>
-            </div>
-          </div>
+              </div>
+              </div>
 
-          <div className="flex items-center gap-2 text-yellow-400">
-            <span className="text-sm font-bold">分数:</span>
-            <span className="text-lg font-bold">{score.toLocaleString()}</span>
-          </div>
+              <div className="flex items-center gap-2 text-yellow-400">
+              <span className="text-xs md:text-sm font-bold">分数:</span>
+              <span className="text-sm md:text-lg font-bold">{score.toLocaleString()}</span>
+              </div>
 
-          <div className="flex items-center gap-2">
-            <Coins className="w-5 h-5 text-yellow-400" />
-            <span className="text-yellow-400 text-lg font-bold">{coins}</span>
-          </div>
+              <div className="flex items-center gap-2">
+              <Coins className="w-4 h-4 md:w-5 md:h-5 text-yellow-400" />
+              <span className="text-yellow-400 text-sm md:text-lg font-bold">{coins}</span>
+              </div>
 
           {gameMode !== 'tower' && (
             <div className="text-orange-400 text-xs font-semibold">
@@ -262,7 +262,7 @@ export default function GameUI({
         </motion.div>
       )}
 
-      <div className="absolute bottom-16 left-1/2 -translate-x-1/2 flex gap-2">
+      <div className="absolute bottom-16 md:bottom-20 left-1/2 -translate-x-1/2 flex gap-1 md:gap-2 scale-75 md:scale-100">
         <CooldownButton
           label={skillNames.shoot}
           cooldown={shootCooldown}
@@ -299,7 +299,7 @@ export default function GameUI({
         />
       </div>
 
-      <div className="absolute bottom-16 right-2 text-white/70 text-xs bg-black/40 px-3 py-2 rounded-lg backdrop-blur-sm space-y-1">
+      <div className="hidden md:block absolute bottom-16 right-2 text-white/70 text-xs bg-black/40 px-3 py-2 rounded-lg backdrop-blur-sm space-y-1">
         <div>B-商店</div>
         <div>F-锻造</div>
       </div>

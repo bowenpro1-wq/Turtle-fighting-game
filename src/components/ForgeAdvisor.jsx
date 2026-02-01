@@ -29,11 +29,11 @@ export default function ForgeAdvisor({ weapons, coins, onClose }) {
       setConversation(conv);
 
       // Send initial context about player stats
-      const context = `Player stats: Coins: ${coins}, Weapons: ${Object.entries(weapons).map(([id, w]) => `${id} Lv${w.level}`).join(', ')}`;
+      const context = `Player stats: Coins: ${coins}, Weapons: ${Object.entries(weapons).map(([id, w]) => `${id} Lv${w.level} ${w.unlocked ? 'unlocked' : 'locked'}`).join(', ')}. Upgrade costs: Level N costs N×500 coins. Total to max level 10: 27,500 coins.`;
       
       await base44.agents.addMessage(conv, {
         role: 'user',
-        content: `${context}\n\nHello! Can you analyze my weapons and recommend what to upgrade?`
+        content: `${context}\n\n你好！请分析我的武器状态，推荐最优升级路径，并预测战力提升。`
       });
 
       const unsubscribe = base44.agents.subscribeToConversation(conv.id, (data) => {
@@ -87,22 +87,22 @@ export default function ForgeAdvisor({ weapons, coins, onClose }) {
         animate={{ scale: 1, opacity: 1 }}
         className="bg-gradient-to-br from-orange-900 to-slate-900 rounded-2xl w-full max-w-2xl border-2 border-orange-500/30 shadow-2xl overflow-hidden"
       >
-        <div className="bg-gradient-to-r from-orange-600 to-red-600 p-3 flex justify-between items-center">
+        <div className="bg-gradient-to-r from-orange-600 to-red-600 p-2 md:p-3 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-white" />
-            <h2 className="text-lg font-bold text-white">AI锻造顾问</h2>
+            <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-white" />
+            <h2 className="text-sm md:text-lg font-bold text-white">AI锻造顾问</h2>
           </div>
           <Button
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="text-white hover:bg-white/20"
+            className="text-white hover:bg-white/20 h-8 w-8"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4 md:w-5 md:h-5" />
           </Button>
         </div>
 
-        <div className="h-96 overflow-y-auto p-4 space-y-3 bg-slate-900/50">
+        <div className="h-64 md:h-96 overflow-y-auto p-3 md:p-4 space-y-2 md:space-y-3 bg-slate-900/50">
           <AnimatePresence>
             {messages.map((msg, idx) => (
               <motion.div
@@ -112,13 +112,13 @@ export default function ForgeAdvisor({ weapons, coins, onClose }) {
                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[85%] p-3 rounded-lg text-sm ${
+                  className={`max-w-[85%] p-2 md:p-3 rounded-lg text-xs md:text-sm ${
                     msg.role === 'user'
                       ? 'bg-orange-600 text-white'
                       : 'bg-slate-700 text-white'
                   }`}
                 >
-                  <div className="whitespace-pre-wrap">{msg.content}</div>
+                  <div className="whitespace-pre-wrap leading-relaxed">{msg.content}</div>
                 </div>
               </motion.div>
             ))}
@@ -141,26 +141,26 @@ export default function ForgeAdvisor({ weapons, coins, onClose }) {
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="p-4 border-t border-slate-700 bg-slate-900/80">
+        <div className="p-3 md:p-4 border-t border-slate-700 bg-slate-900/80">
           <div className="flex gap-2">
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && !loading && sendMessage()}
               placeholder="询问升级建议..."
-              className="bg-slate-800 border-slate-700 text-sm"
+              className="bg-slate-800 border-slate-700 text-xs md:text-sm h-9"
               disabled={loading}
             />
             <Button
               onClick={sendMessage}
               disabled={loading || !input.trim()}
-              className="bg-orange-600 hover:bg-orange-500"
+              className="bg-orange-600 hover:bg-orange-500 h-9 px-3"
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-3 h-3 md:w-4 md:h-4" />
             </Button>
           </div>
-          <p className="text-xs text-gray-400 mt-2">
-            💡 AI会分析你的武器并推荐最佳升级路径
+          <p className="text-[10px] md:text-xs text-gray-400 mt-2">
+            💡 AI会分析你的武器并推荐最佳升级路径和战力预测
           </p>
         </div>
       </motion.div>

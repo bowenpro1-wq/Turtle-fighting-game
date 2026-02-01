@@ -22,31 +22,31 @@ export default function BottomNav({ onLanguageClick, onShopClick, onMiniGamesCli
           variant="outline"
           size="sm"
           onClick={onShopClick}
-          className="gap-1 text-xs h-8"
+          className="gap-1 text-xs h-7 md:h-8 px-2 md:px-3"
         >
           <ShoppingBag className="w-3 h-3" />
-          商店
+          <span className="hidden sm:inline">商店</span>
         </Button>
       )}
-      
+
       <Button
         variant="outline"
         size="sm"
         onClick={() => window.location.href = createPageUrl('Game')}
-        className="gap-1 text-xs h-8"
+        className="gap-1 text-xs h-7 md:h-8 px-2 md:px-3"
       >
         <LogIn className="w-3 h-3" />
-        登录
+        <span className="hidden sm:inline">游戏</span>
       </Button>
-      
+
       <Button
         variant="outline"
         size="sm"
         onClick={onMiniGamesClick}
-        className="gap-1 text-xs h-8"
+        className="gap-1 text-xs h-7 md:h-8 px-2 md:px-3"
       >
         <Gamepad2 className="w-3 h-3" />
-        小游戏
+        <span className="hidden sm:inline">小游戏</span>
       </Button>
     </div>
   );

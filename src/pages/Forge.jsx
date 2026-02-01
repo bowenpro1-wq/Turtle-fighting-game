@@ -109,38 +109,38 @@ export default function ForgePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 p-6 pb-20">
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 p-4 md:p-6 pb-20">
       <div className="absolute top-4 right-4 z-10">
         <LanguageSwitcher currentLang={language} onLanguageChange={setLanguage} />
       </div>
 
       <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
           <Link to={createPageUrl('Game')}>
-            <Button variant="outline" className="gap-2">
-              <ArrowLeft className="w-5 h-5" />
+            <Button variant="outline" className="gap-2 text-sm md:text-base">
+              <ArrowLeft className="w-4 h-4 md:w-5 md:h-5" />
               返回游戏
             </Button>
           </Link>
           
           <div className="text-center flex-1">
-            <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-500 mb-2">
+            <h1 className="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-500 mb-2">
               🔨 锻造处 🔨
             </h1>
             <Button
               onClick={() => setShowAdvisor(true)}
               size="sm"
-              className="gap-2 bg-purple-600/20 hover:bg-purple-600/40 border border-purple-500"
+              className="gap-2 bg-purple-600/20 hover:bg-purple-600/40 border border-purple-500 text-xs md:text-sm"
             >
-              <Bot className="w-4 h-4" />
+              <Bot className="w-3 h-3 md:w-4 md:h-4" />
               AI顾问
             </Button>
           </div>
 
-          <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-2 border-yellow-500/50 rounded-xl px-6 py-3">
+          <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-2 border-yellow-500/50 rounded-xl px-4 md:px-6 py-2 md:py-3">
             <div className="flex items-center gap-2">
-              <Coins className="w-6 h-6 text-yellow-400" />
-              <span className="text-2xl font-bold text-yellow-400">{coins}</span>
+              <Coins className="w-5 h-5 md:w-6 md:h-6 text-yellow-400" />
+              <span className="text-xl md:text-2xl font-bold text-yellow-400">{coins}</span>
             </div>
           </div>
         </div>

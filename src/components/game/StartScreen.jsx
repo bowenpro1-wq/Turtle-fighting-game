@@ -75,70 +75,63 @@ export default function StartScreen({ onStart, defeatedBosses = [] }) {
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: "spring", delay: 0.7 }}
-        className="space-y-4"
+        className="space-y-3 md:space-y-4 px-4 w-full max-w-2xl"
       >
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-2 md:gap-4">
           <Button
             onClick={() => handleModeSelect('normal')}
-            size="lg"
-            className="px-8 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 rounded-2xl text-white text-lg font-bold shadow-2xl"
+            className="px-4 md:px-8 py-3 md:py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 rounded-xl md:rounded-2xl text-white text-sm md:text-lg font-bold shadow-2xl"
           >
-            <Play className="w-5 h-5 mr-2" fill="white" />
-            正常模式
+            <Play className="w-4 h-4 md:w-5 md:h-5 mr-1 md:mr-2" fill="white" />
+            正常
           </Button>
           <Button
             onClick={() => handleModeSelect('endless')}
-            size="lg"
-            className="px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-2xl text-white text-lg font-bold shadow-2xl"
+            className="px-4 md:px-8 py-3 md:py-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-xl md:rounded-2xl text-white text-sm md:text-lg font-bold shadow-2xl"
           >
-            无尽模式
+            无尽
           </Button>
           <Button
             onClick={() => handleModeSelect('survival')}
-            size="lg"
-            className="px-8 py-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 rounded-2xl text-white text-lg font-bold shadow-2xl"
+            className="px-4 md:px-8 py-3 md:py-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 rounded-xl md:rounded-2xl text-white text-sm md:text-lg font-bold shadow-2xl"
           >
-            生存模式
+            生存
           </Button>
           {defeatedBosses.length > 0 && (
             <Button
               onClick={() => handleModeSelect('bossrush')}
-              size="lg"
-              className="px-8 py-4 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 rounded-2xl text-white text-lg font-bold shadow-2xl"
+              className="px-4 md:px-8 py-3 md:py-4 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 rounded-xl md:rounded-2xl text-white text-sm md:text-lg font-bold shadow-2xl"
             >
-              BOSS连战
+              BOSS
             </Button>
           )}
           </div>
-          <div className="mt-4 space-y-3">
+          <div className="mt-3 md:mt-4 space-y-2 md:space-y-3">
           <Button
             onClick={() => handleModeSelect('tower')}
-            size="lg"
-            className="w-full px-8 py-6 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 rounded-2xl text-white text-2xl font-bold shadow-2xl border-4 border-green-400/50"
+            className="w-full px-6 md:px-8 py-4 md:py-6 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 rounded-xl md:rounded-2xl text-white text-lg md:text-2xl font-bold shadow-2xl border-2 md:border-4 border-green-400/50"
           >
-            🗿 中大林之塔 🗿
+            🗿 中大林之塔
           </Button>
-          <p className="text-green-300 text-xs text-center">挑战100层塔，击败中大林真身！</p>
+          <p className="text-green-300 text-xs text-center">挑战100层塔！</p>
           
           <Button
             onClick={() => handleModeSelect('busbreak')}
-            size="lg"
-            className="w-full px-8 py-6 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-700 hover:via-pink-700 hover:to-rose-700 rounded-2xl text-white text-2xl font-bold shadow-2xl border-4 border-purple-400/50"
+            className="w-full px-6 md:px-8 py-4 md:py-6 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-700 hover:via-pink-700 hover:to-rose-700 rounded-xl md:rounded-2xl text-white text-lg md:text-2xl font-bold shadow-2xl border-2 md:border-4 border-purple-400/50"
           >
-            ⚔️ Boss试炼模式 ⚔️
+            ⚔️ Boss试炼
           </Button>
-          <p className="text-purple-300 text-xs text-center">击败特殊BOSS获得武器！</p>
+          <p className="text-purple-300 text-xs text-center">击败BOSS获得武器！</p>
           
-          <Link to={createPageUrl('Forge')}>
+          <Link to={createPageUrl('Forge')} className="block">
             <Button
-              size="lg"
-              className="w-full px-8 py-6 bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 hover:from-amber-700 hover:via-orange-700 hover:to-red-700 rounded-2xl text-white text-2xl font-bold shadow-2xl border-4 border-amber-400/50"
+              className="w-full px-6 md:px-8 py-4 md:py-6 bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 hover:from-amber-700 hover:via-orange-700 hover:to-red-700 rounded-xl md:rounded-2xl text-white text-lg md:text-2xl font-bold shadow-2xl border-2 md:border-4 border-amber-400/50"
             >
-              <Hammer className="w-6 h-6 mr-2" />
-              🔨 锻造处 🔨
+              <Hammer className="w-5 h-5 md:w-6 md:h-6 mr-2" />
+              锻造处
             </Button>
           </Link>
-          <p className="text-amber-300 text-xs text-center">AI智能升级建议！</p>
+          <p className="text-amber-300 text-xs text-center">AI智能升级！</p>
           </div>
           </motion.div>
 

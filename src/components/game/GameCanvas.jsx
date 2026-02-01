@@ -1233,27 +1233,29 @@ export default function GameCanvas({
       // Remove destroyed buildings
       game.buildings = game.buildings.filter(b => b.health > 0);
 
-      // Spawn enemies every 5 seconds in normal mode (not tower or busbreak mode)
-      if (gameMode !== 'tower' && gameMode !== 'busbreak' && gameState === 'playing' && Date.now() - game.lastEnemySpawn > 5000) {
-        const spawnCount = Math.floor(Math.random() * 2) + 2;
+      // Spawn LOTS of enemies every 2 seconds in normal mode
+      if (gameMode !== 'tower' && gameMode !== 'busbreak' && gameState === 'playing' && Date.now() - game.lastEnemySpawn > 2000) {
+        const baseSpawn = Math.floor(score / 1000) + 5;
+        const spawnCount = Math.floor(Math.random() * baseSpawn) + baseSpawn;
         for (let i = 0; i < spawnCount; i++) {
           game.enemies.push(spawnEnemy());
         }
         game.lastEnemySpawn = Date.now();
       }
 
-      // Boss mode: spawn 3 enemies every 2 seconds (not in tower or busbreak mode)
+      // Boss mode: spawn LOTS of enemies continuously
       if (gameMode !== 'tower' && gameMode !== 'busbreak' && gameState === 'boss') {
-        // Initial spawn of 10-20 enemies when boss appears
+        // Initial spawn of 30-50 enemies when boss appears
         if (game.lastBossEnemySpawn === 0) {
-          const initialCount = Math.floor(Math.random() * 11) + 10;
+          const initialCount = Math.floor(Math.random() * 21) + 30;
           for (let i = 0; i < initialCount; i++) {
             game.enemies.push(spawnEnemy());
           }
           game.lastBossEnemySpawn = Date.now();
-        } else if (Date.now() - game.lastBossEnemySpawn > 2000) {
-          // Spawn 3 enemies every 2 seconds
-          for (let i = 0; i < 3; i++) {
+        } else if (Date.now() - game.lastBossEnemySpawn > 1500) {
+          // Spawn 8-15 enemies every 1.5 seconds
+          const spawnCount = Math.floor(Math.random() * 8) + 8;
+          for (let i = 0; i < spawnCount; i++) {
             game.enemies.push(spawnEnemy());
           }
           game.lastBossEnemySpawn = Date.now();
