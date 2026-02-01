@@ -50,12 +50,16 @@
 import Forge from './pages/Forge';
 import Game from './pages/Game';
 import MiniGames from './pages/MiniGames';
+import Profile from './pages/Profile';
+import Settings from './pages/Settings';
 
 
 export const PAGES = {
     "Forge": Forge,
     "Game": Game,
     "MiniGames": MiniGames,
+    "Profile": Profile,
+    "Settings": Settings,
 }
 
 export const pagesConfig = {

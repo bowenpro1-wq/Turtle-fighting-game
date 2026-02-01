@@ -86,6 +86,11 @@ export default function Game() {
   const [hasTheHand, setHasTheHand] = useState(false);
   const [towerSpecialFloor, setTowerSpecialFloor] = useState(null);
   const [gemDefeated, setGemDefeated] = useState(false);
+
+  // Profile and difficulty
+  const [playerProfile, setPlayerProfile] = useState(null);
+  const [difficultyMultiplier, setDifficultyMultiplier] = useState(1);
+  const [gameStartTime, setGameStartTime] = useState(null);
   
   const [shootCooldown, setShootCooldown] = useState(0);
   const [healCooldown, setHealCooldown] = useState(0);
@@ -95,6 +100,29 @@ export default function Game() {
   const [isFlying, setIsFlying] = useState(false);
   const [isAllOutAttack, setIsAllOutAttack] = useState(false);
   const [isMeleeAttacking, setIsMeleeAttacking] = useState(false);
+
+  // Load player profile
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const user = await base44.auth.me();
+        const profiles = await base44.entities.PlayerProfile.filter({ user_email: user.email });
+        
+        if (profiles.length > 0) {
+          setPlayerProfile(profiles[0]);
+          calculateDifficulty(profiles[0]);
+        } else {
+          const newProfile = await base44.entities.PlayerProfile.create({
+            user_email: user.email
+          });
+          setPlayerProfile(newProfile);
+        }
+      } catch (error) {
+        console.error('Failed to load profile:', error);
+      }
+    };
+    loadProfile();
+  }, []);
 
   // Bullet upgrades
   const [hasCannonUpgrade, setHasCannonUpgrade] = useState(false);
@@ -128,6 +156,72 @@ export default function Game() {
   const ALL_OUT_DURATION = 800 + (upgrades.abilityPower - 1) * 200;
   const MELEE_DURATION = 150;
 
+  const calculateDifficulty = (profile) => {
+    if (!profile) return;
+    
+    const pref = profile.difficulty_preference || 'auto';
+    
+    if (pref === 'easy') {
+      setDifficultyMultiplier(0.7);
+    } else if (pref === 'normal') {
+      setDifficultyMultiplier(1.0);
+    } else if (pref === 'hard') {
+      setDifficultyMultiplier(1.4);
+    } else if (pref === 'expert') {
+      setDifficultyMultiplier(1.8);
+    } else if (pref === 'auto') {
+      const performance = profile.performance_score || 50;
+      const multiplier = 0.5 + (performance / 100) * 1.5;
+      setDifficultyMultiplier(multiplier);
+    }
+  };
+
+  const updateProfileStats = async (stats) => {
+    if (!playerProfile) return;
+    
+    try {
+      await base44.entities.PlayerProfile.update(playerProfile.id, stats);
+      setPlayerProfile({ ...playerProfile, ...stats });
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+    }
+  };
+
+  const checkAchievements = async () => {
+    if (!playerProfile) return;
+    
+    const newAchievements = [...playerProfile.achievements];
+    
+    if (playerProfile.wins >= 1 && !newAchievements.includes('first_win')) {
+      newAchievements.push('first_win');
+    }
+    if (playerProfile.bosses_defeated >= 10 && !newAchievements.includes('boss_slayer')) {
+      newAchievements.push('boss_slayer');
+    }
+    if (playerProfile.bosses_defeated >= 50 && !newAchievements.includes('boss_master')) {
+      newAchievements.push('boss_master');
+    }
+    if (playerProfile.total_gold_earned >= 100000 && !newAchievements.includes('gold_collector')) {
+      newAchievements.push('gold_collector');
+    }
+    if (playerProfile.games_played >= 20 && !newAchievements.includes('survivor')) {
+      newAchievements.push('survivor');
+    }
+    if (playerProfile.games_played >= 100 && !newAchievements.includes('veteran')) {
+      newAchievements.push('veteran');
+    }
+    if (playerProfile.current_win_streak >= 5 && !newAchievements.includes('perfectionist')) {
+      newAchievements.push('perfectionist');
+    }
+    if (playerProfile.current_win_streak >= 10 && !newAchievements.includes('legend')) {
+      newAchievements.push('legend');
+    }
+    
+    if (newAchievements.length > playerProfile.achievements.length) {
+      await updateProfileStats({ achievements: newAchievements });
+    }
+  };
+
   const startGame = (mode = 'normal', fromCheckpoint = false) => {
     // Reset all state first
     setGameState('start');
@@ -136,6 +230,7 @@ export default function Game() {
     setBossMaxHealth(0);
     setShowBossIntro(false);
     setSelectedBusBreakBoss(null);
+    setGameStartTime(Date.now());
     
     if (mode === 'busbreak') {
       // Boss试炼模式直接开始,显示boss选择
@@ -336,12 +431,21 @@ export default function Game() {
       const newDefeatedCount = defeatedBosses.length + 1;
       setDefeatedBosses(prev => [...prev, currentBoss.id]);
       setScore(prev => prev + currentBoss.health * 10);
+      
+      const bonusCoins = difficultyMultiplier >= 1.4 ? 200 : difficultyMultiplier >= 1.0 ? 100 : 150;
       setCoins(prev => {
-        const newCoins = prev + 100;
+        const newCoins = prev + bonusCoins;
         localStorage.setItem('gameCoins', newCoins.toString());
         return newCoins;
       });
       setPlayerHealth(prev => Math.min(maxHealth, prev + 50));
+      
+      if (playerProfile) {
+        updateProfileStats({
+          bosses_defeated: playerProfile.bosses_defeated + 1,
+          total_gold_earned: playerProfile.total_gold_earned + bonusCoins
+        });
+      }
       
       // Bus break mode - mark boss as defeated and give rewards
       if (gameMode === 'busbreak') {
@@ -381,19 +485,30 @@ export default function Game() {
         }
       }
     }
-  }, [currentBoss, defeatedBosses.length, maxHealth, hasCannonUpgrade, gameMode, currentFloor, handleBusBreakBossDefeat]);
+  }, [currentBoss, defeatedBosses.length, maxHealth, hasCannonUpgrade, gameMode, currentFloor, handleBusBreakBossDefeat, difficultyMultiplier, playerProfile]);
 
   const handlePlayerDamage = useCallback((damage) => {
     if (isFlying) return;
+    const adjustedDamage = damage * difficultyMultiplier;
     setPlayerHealth(prev => {
-      const newHealth = prev - damage;
+      const newHealth = prev - adjustedDamage;
       if (newHealth <= 0) {
+        if (playerProfile) {
+          const playtime = gameStartTime ? Math.floor((Date.now() - gameStartTime) / 60000) : 0;
+          updateProfileStats({
+            games_played: playerProfile.games_played + 1,
+            deaths: playerProfile.deaths + 1,
+            current_win_streak: 0,
+            total_playtime_minutes: playerProfile.total_playtime_minutes + playtime,
+            performance_score: Math.max(0, playerProfile.performance_score - 5)
+          });
+        }
         setGameState('gameover');
         return 0;
       }
       return newHealth;
     });
-  }, [isFlying]);
+  }, [isFlying, difficultyMultiplier, playerProfile, gameStartTime]);
 
   const handleEnemyKill = useCallback((enemyType) => {
     // Floor complete trigger for tower mode
@@ -748,17 +863,33 @@ export default function Game() {
         )}
         
         {(gameState === 'gameover' || gameState === 'victory') && (
-          <GameOver
-            victory={gameState === 'victory'}
-            score={score}
-            coins={coins}
-            defeatedBosses={defeatedBosses.length}
-            onRestart={startGame}
-            gameMode={gameMode}
-            currentFloor={currentFloor}
-            checkpoint={checkpoint}
-            hasTheHand={hasTheHand}
-          />
+          <>
+            {gameState === 'victory' && playerProfile && (() => {
+              const playtime = gameStartTime ? Math.floor((Date.now() - gameStartTime) / 60000) : 0;
+              updateProfileStats({
+                games_played: playerProfile.games_played + 1,
+                wins: playerProfile.wins + 1,
+                current_win_streak: playerProfile.current_win_streak + 1,
+                best_win_streak: Math.max(playerProfile.best_win_streak, playerProfile.current_win_streak + 1),
+                highest_score: Math.max(playerProfile.highest_score, score),
+                total_playtime_minutes: playerProfile.total_playtime_minutes + playtime,
+                performance_score: Math.min(100, playerProfile.performance_score + 3)
+              });
+              checkAchievements();
+              return null;
+            })()}
+            <GameOver
+              victory={gameState === 'victory'}
+              score={score}
+              coins={coins}
+              defeatedBosses={defeatedBosses.length}
+              onRestart={startGame}
+              gameMode={gameMode}
+              currentFloor={currentFloor}
+              checkpoint={checkpoint}
+              hasTheHand={hasTheHand}
+            />
+          </>
         )}
         </AnimatePresence>
 
