@@ -49,11 +49,13 @@
  */
 import Forge from './pages/Forge';
 import Game from './pages/Game';
+import MiniGames from './pages/MiniGames';
 
 
 export const PAGES = {
     "Forge": Forge,
     "Game": Game,
+    "MiniGames": MiniGames,
 }
 
 export const pagesConfig = {
