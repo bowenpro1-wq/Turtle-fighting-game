@@ -2778,6 +2778,34 @@ export default function GameCanvas({
         return particle.life > 0;
       });
 
+      // Draw aiming indicator
+      if (moveX !== 0 || moveY !== 0) {
+        const screenX = game.player.x - game.camera.x + game.player.width / 2;
+        const screenY = game.player.y - game.camera.y + game.player.height / 2;
+        const aimLength = 80;
+        const aimEndX = screenX + Math.cos(game.player.angle) * aimLength;
+        const aimEndY = screenY + Math.sin(game.player.angle) * aimLength;
+
+        ctx.save();
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 3;
+        ctx.globalAlpha = 0.7;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(screenX, screenY);
+        ctx.lineTo(aimEndX, aimEndY);
+        ctx.stroke();
+        
+        // Aim point
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.arc(aimEndX, aimEndY, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.setLineDash([]);
+        ctx.restore();
+      }
+
       // Draw player
       drawPlayer(ctx, game.player, isFlying, game.camera, game.animationFrame, playerColor);
 

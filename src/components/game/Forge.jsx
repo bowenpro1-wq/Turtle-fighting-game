@@ -12,7 +12,8 @@ export default function Forge({ weapons, templates, onUpgrade, onClose }) {
       name: '赤潮',
       icon: Flame,
       color: 'from-red-500 to-orange-500',
-      maxLevel: 5
+      maxLevel: 5,
+      maxBenefit: '满级召唤广智助战1分钟'
     },
     guigui: {
       id: 'guigui',
@@ -20,21 +21,24 @@ export default function Forge({ weapons, templates, onUpgrade, onClose }) {
       icon: Shield,
       color: 'from-green-500 to-emerald-500',
       maxLevel: 8,
-      special: true
+      special: true,
+      maxBenefit: '满级召唤海星助战1分钟'
     },
     dianchao: {
       id: 'dianchao',
       name: '电巢',
       icon: Zap,
       color: 'from-yellow-500 to-blue-500',
-      maxLevel: 5
+      maxLevel: 5,
+      maxBenefit: '满级召唤小黄龙助战1分钟'
     },
     totem: {
       id: 'totem',
       name: '中大林图腾',
       icon: Users,
       color: 'from-green-400 to-green-600',
-      maxLevel: 5
+      maxLevel: 5,
+      maxBenefit: '满级召唤中大林助战1分钟'
     }
   };
 
@@ -134,6 +138,14 @@ export default function Forge({ weapons, templates, onUpgrade, onClose }) {
                         <span className="text-cyan-400">+{weapon.level * 15}%</span>
                       </div>
                     </div>
+
+                    {weapon.level >= data.maxLevel && data.maxBenefit && (
+                      <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/50 rounded-lg p-3 text-center">
+                        <p className="text-yellow-400 text-sm font-bold">
+                          ✨ MAX: {data.maxBenefit}
+                        </p>
+                      </div>
+                    )}
 
                     {data.special && weapon.level < data.maxLevel && (
                       <div className="bg-yellow-500/20 border border-yellow-500/30 rounded-lg p-3 text-center">

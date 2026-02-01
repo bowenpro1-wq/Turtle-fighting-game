@@ -26,7 +26,9 @@ export default function GameUI({
   checkpoint,
   towerSpecialFloor,
   selectedWeapon,
-  onBoostBoss
+  onBoostBoss,
+  maxLevelHelper,
+  helperTimer
 }) {
   const [prevBossHealth, setPrevBossHealth] = useState(bossHealth);
   const [healthShake, setHealthShake] = useState(false);

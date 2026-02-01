@@ -78,6 +78,8 @@ export default function Game() {
       totem: { level: 0, unlocked: false }
     };
   });
+  const [maxLevelHelper, setMaxLevelHelper] = useState(null);
+  const [helperTimer, setHelperTimer] = useState(0);
   const [dailyBossesDefeated, setDailyBossesDefeated] = useState({
     zhongdalin: false,
     guangzhi: false,
@@ -389,6 +391,21 @@ export default function Game() {
   const handleWeaponSelect = (weaponId) => {
     setSelectedWeapon(weaponId);
     setShowWeaponSelect(false);
+    
+    // Check if weapon is MAX level and spawn helper
+    const weapon = weapons[weaponId];
+    const maxLevels = { chichao: 5, guigui: 8, dianchao: 5, totem: 5 };
+    if (weapon && weapon.level >= maxLevels[weaponId]) {
+      const helpers = {
+        chichao: 'guangzhi',
+        guigui: 'longhaixing',
+        dianchao: 'xiaowang',
+        totem: 'zhongdalin'
+      };
+      setMaxLevelHelper(helpers[weaponId]);
+      setHelperTimer(60); // 60 seconds
+    }
+    
     continueGameAfterWeaponSelect(gameMode);
   };
 
@@ -763,10 +780,18 @@ export default function Game() {
       setFlyCooldown(prev => Math.max(0, prev - 50));
       setLargeAttackCooldown(prev => Math.max(0, prev - 50));
       setAllOutAttackCooldown(prev => Math.max(0, prev - 50));
+      
+      // Helper timer
+      if (maxLevelHelper && helperTimer > 0) {
+        setHelperTimer(prev => Math.max(0, prev - 0.05));
+        if (helperTimer <= 0) {
+          setMaxLevelHelper(null);
+        }
+      }
     }, 50);
 
     return () => clearInterval(interval);
-  }, [gameState]);
+  }, [gameState, maxLevelHelper, helperTimer]);
 
   useEffect(() => {
     const handleKeyPress = (e) => {
@@ -849,6 +874,8 @@ export default function Game() {
               onTowerSpecialFloor={setTowerSpecialFloor}
               gemDefeated={gemDefeated}
               onGemDefeated={setGemDefeated}
+              maxLevelHelper={maxLevelHelper}
+              helperTimer={helperTimer}
             />
             
             <GameUI
@@ -875,6 +902,8 @@ export default function Game() {
               towerSpecialFloor={towerSpecialFloor}
               selectedWeapon={selectedWeapon}
               onBoostBoss={handleBoostBoss}
+              maxLevelHelper={maxLevelHelper}
+              helperTimer={helperTimer}
             />
             
             <AnimatePresence>
