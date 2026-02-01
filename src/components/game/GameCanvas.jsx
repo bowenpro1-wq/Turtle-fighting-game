@@ -497,6 +497,7 @@ export default function GameCanvas({
   defeatedBosses,
   score,
   upgrades,
+  difficultyMultiplier = 1,
   hasCannonUpgrade,
   hasHomingBullets,
   hasPiercingShots,
@@ -636,14 +637,18 @@ export default function GameCanvas({
       }
     }
     
+    const adjustedHealth = type.health * difficultyMultiplier;
+    const adjustedDamage = type.damage * difficultyMultiplier;
+    
     return {
       ...type,
       x: spawnX,
       y: spawnY,
       vx: 0,
       vy: 0,
-      health: type.health,
-      maxHealth: type.health,
+      health: adjustedHealth,
+      maxHealth: adjustedHealth,
+      damage: adjustedDamage,
       lastShot: Date.now(),
       state: 'patrol',
       target: null,
@@ -651,7 +656,7 @@ export default function GameCanvas({
       stunned: false,
       floorMultiplier: gameMode === 'tower' ? Math.floor(currentFloor / 10) + 1 : 1
     };
-  }, [gameMode, currentFloor]);
+  }, [gameMode, currentFloor, difficultyMultiplier]);
 
   useEffect(() => {
     const canvas = canvasRef.current;

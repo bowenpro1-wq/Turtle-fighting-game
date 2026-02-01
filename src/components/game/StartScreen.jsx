@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Hammer, User } from 'lucide-react';
+import { Play, Hammer, User, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -148,21 +148,31 @@ export default function StartScreen({ onStart, defeatedBosses = [] }) {
           ⚔️ Boss试炼
         </Button>
         
+        <Link to={createPageUrl('Forge')} className="block">
+          <Button
+            className="w-full px-6 py-6 md:py-7 bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 hover:from-amber-700 hover:via-orange-700 hover:to-red-700 rounded-xl text-white text-lg md:text-xl font-bold border-2 border-amber-400/50 active:scale-95 transition-transform"
+          >
+            <Hammer className="w-5 h-5 mr-2" />
+            🔨 锻造处
+          </Button>
+        </Link>
+
         <div className="grid grid-cols-2 gap-2 md:gap-3">
-          <Link to={createPageUrl('Forge')} className="block">
-            <Button
-              className="w-full px-4 py-5 md:py-6 bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 hover:from-amber-700 hover:via-orange-700 hover:to-red-700 rounded-xl text-white text-base md:text-lg font-bold border-2 border-amber-400/50 active:scale-95 transition-transform"
-            >
-              <Hammer className="w-4 h-4 mr-1" />
-              锻造处
-            </Button>
-          </Link>
           <Link to={createPageUrl('Profile')} className="block">
             <Button
-              className="w-full px-4 py-5 md:py-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 rounded-xl text-white text-base md:text-lg font-bold border-2 border-blue-400/50 active:scale-95 transition-transform"
+              className="w-full px-4 py-5 md:py-6 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 rounded-xl text-white text-base md:text-lg font-bold border-2 border-blue-400/50 active:scale-95 transition-transform"
             >
               <User className="w-4 h-4 mr-1" />
-              个人档案
+              玩家档案
+            </Button>
+          </Link>
+          
+          <Link to={createPageUrl('Settings')} className="block">
+            <Button
+              className="w-full px-4 py-5 md:py-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-xl text-white text-base md:text-lg font-bold border-2 border-purple-400/50 active:scale-95 transition-transform"
+            >
+              <Settings className="w-4 h-4 mr-1" />
+              游戏设置
             </Button>
           </Link>
         </div>
