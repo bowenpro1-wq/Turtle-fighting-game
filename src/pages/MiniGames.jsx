@@ -194,6 +194,13 @@ export default function MiniGames() {
           </div>
         )}
       </div>
+
+      <BottomNav 
+        onLanguageClick={() => {}}
+        onShopClick={() => {}}
+        onMiniGamesClick={() => {}}
+        showShop={false}
+      />
     </div>
   );
 }
