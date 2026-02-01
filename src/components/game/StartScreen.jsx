@@ -8,7 +8,6 @@ import PreBattleChat from '../PreBattleChat';
 import LanguageSwitcher from '../LanguageSwitcher';
 import BottomNav from '../BottomNav';
 import PromoCodeInput from '../PromoCodeInput';
-import { AnimatePresence } from 'framer-motion';
 
 export default function StartScreen({ onStart, defeatedBosses = [] }) {
   const [selectedMode, setSelectedMode] = useState(null);
