@@ -10,6 +10,7 @@ import VirtualKeyboard from '@/components/game/VirtualKeyboard';
 import WeaponSelect from '@/components/game/WeaponSelect';
 import Forge from '@/components/game/Forge';
 import BusBreakSelect from '@/components/game/BusBreakSelect';
+import BusBreakShop from '@/components/game/BusBreakShop';
 
 const BOSSES = [
   { id: 1, name: "海星守卫", health: 100, damage: 15, speed: 1.5, size: 60, color: "#ff6b6b", pattern: "circle" },
@@ -50,6 +51,12 @@ export default function Game() {
   const [showShop, setShowShop] = useState(false);
   const [showWeaponSelect, setShowWeaponSelect] = useState(false);
   const [showForge, setShowForge] = useState(false);
+  const [showBusBreakShop, setShowBusBreakShop] = useState(false);
+  const [busBreakBuffs, setBusBreakBuffs] = useState({
+    attackBoost: false,
+    defenseBoost: false,
+    cooldownReduction: false
+  });
   const [waveNumber, setWaveNumber] = useState(1);
   const [survivalTime, setSurvivalTime] = useState(0);
   
@@ -256,6 +263,20 @@ export default function Game() {
           ...prev[weaponId],
           level: prev[weaponId].level + 1,
           unlocked: weaponId === 'guigui' ? prev[weaponId].level + 1 >= 8 : true
+        }
+      }));
+    }
+  };
+
+  const handleWeaponUnlock = (weaponId) => {
+    const UNLOCK_COST = 500;
+    if (coins >= UNLOCK_COST) {
+      setCoins(prev => prev - UNLOCK_COST);
+      setWeapons(prev => ({
+        ...prev,
+        [weaponId]: {
+          ...prev[weaponId],
+          unlocked: true
         }
       }));
     }
@@ -558,10 +579,39 @@ export default function Game() {
     return () => clearInterval(interval);
   }, [gameState]);
 
+  const handleBusBreakPurchase = (itemId, cost) => {
+    if (coins >= cost) {
+      setCoins(prev => prev - cost);
+
+      switch (itemId) {
+        case 'health_potion':
+          setPlayerHealth(prev => Math.min(maxHealth, prev + maxHealth * 0.5));
+          break;
+        case 'attack_boost':
+          setBusBreakBuffs(prev => ({ ...prev, attackBoost: true }));
+          setUpgrades(prev => ({ ...prev, damage: prev.damage + 0.3 }));
+          break;
+        case 'defense_boost':
+          setBusBreakBuffs(prev => ({ ...prev, defenseBoost: true }));
+          break;
+        case 'energy_drink':
+          setBusBreakBuffs(prev => ({ ...prev, cooldownReduction: true }));
+          setUpgrades(prev => ({ ...prev, cooldownReduction: prev.cooldownReduction + 0.5 }));
+          break;
+      }
+      return true;
+    }
+    return false;
+  };
+
   useEffect(() => {
     const handleKeyPress = (e) => {
       if (e.key.toLowerCase() === 'b' && (gameState === 'playing' || gameState === 'boss')) {
-        setShowShop(prev => !prev);
+        if (gameMode === 'busbreak') {
+          setShowBusBreakShop(prev => !prev);
+        } else {
+          setShowShop(prev => !prev);
+        }
       }
       if (e.key.toLowerCase() === 'f' && (gameState === 'playing' || gameState === 'boss')) {
         setShowForge(prev => !prev);
@@ -570,7 +620,7 @@ export default function Game() {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [gameState]);
+  }, [gameState, gameMode]);
 
   return (
     <div className="w-full h-screen bg-gradient-to-b from-[#87CEEB] via-[#5F9EA0] to-[#2F4F4F] overflow-hidden relative">
@@ -681,7 +731,16 @@ export default function Game() {
                   templates={upgradeTemplates}
                   coins={coins}
                   onUpgrade={handleWeaponUpgrade}
+                  onUnlock={handleWeaponUnlock}
                   onClose={() => setShowForge(false)}
+                />
+              )}
+
+              {showBusBreakShop && (
+                <BusBreakShop
+                  coins={coins}
+                  onPurchase={handleBusBreakPurchase}
+                  onClose={() => setShowBusBreakShop(false)}
                 />
               )}
             </AnimatePresence>

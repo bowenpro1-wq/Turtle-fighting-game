@@ -3,10 +3,11 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { X, Flame, Zap, Shield, Users, ArrowUpCircle, Star } from 'lucide-react';
 
-export default function Forge({ weapons, templates, onUpgrade, onClose, coins }) {
+export default function Forge({ weapons, templates, onUpgrade, onClose, coins, onUnlock }) {
   const [selectedWeapon, setSelectedWeapon] = useState(null);
   
   const UPGRADE_COST = 100;
+  const UNLOCK_COST = 500;
 
   const weaponData = {
     chichao: {
@@ -86,7 +87,9 @@ export default function Forge({ weapons, templates, onUpgrade, onClose, coins })
 
             const Icon = data.icon;
             const isMaxLevel = weapon.level >= data.maxLevel;
-            const canUpgrade = coins >= UPGRADE_COST && !isMaxLevel;
+            const isLocked = !weapon.unlocked;
+            const canUnlock = coins >= UNLOCK_COST && isLocked;
+            const canUpgrade = coins >= UPGRADE_COST && !isMaxLevel && !isLocked;
 
             return (
               <motion.div
@@ -145,27 +148,42 @@ export default function Forge({ weapons, templates, onUpgrade, onClose, coins })
                       </div>
                     )}
 
-                    <Button
-                      onClick={() => handleUpgrade(weaponId)}
-                      disabled={!canUpgrade}
-                      className={`w-full ${
-                        canUpgrade
-                          ? `bg-gradient-to-r ${data.color} hover:opacity-90`
-                          : 'bg-gray-600 cursor-not-allowed'
-                      }`}
-                    >
-                      {isMaxLevel ? (
-                        <>
-                          <Star className="w-5 h-5 mr-2" />
-                          已满级
-                        </>
-                      ) : (
-                        <>
-                          <ArrowUpCircle className="w-5 h-5 mr-2" />
-                          升级 ({UPGRADE_COST}💰)
-                        </>
-                      )}
-                    </Button>
+                    {isLocked ? (
+                      <Button
+                        onClick={() => onUnlock(weaponId)}
+                        disabled={!canUnlock}
+                        className={`w-full ${
+                          canUnlock
+                            ? `bg-gradient-to-r ${data.color} hover:opacity-90`
+                            : 'bg-gray-600 cursor-not-allowed'
+                        }`}
+                      >
+                        <Star className="w-5 h-5 mr-2" />
+                        解锁 ({UNLOCK_COST}💰)
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={() => handleUpgrade(weaponId)}
+                        disabled={!canUpgrade}
+                        className={`w-full ${
+                          canUpgrade
+                            ? `bg-gradient-to-r ${data.color} hover:opacity-90`
+                            : 'bg-gray-600 cursor-not-allowed'
+                        }`}
+                      >
+                        {isMaxLevel ? (
+                          <>
+                            <Star className="w-5 h-5 mr-2" />
+                            已满级
+                          </>
+                        ) : (
+                          <>
+                            <ArrowUpCircle className="w-5 h-5 mr-2" />
+                            升级 ({UPGRADE_COST}💰)
+                          </>
+                        )}
+                      </Button>
+                    )}
                   </div>
                 </div>
               </motion.div>
