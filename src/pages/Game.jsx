@@ -90,8 +90,6 @@ export default function Game() {
 
   // Profile and difficulty
   const [playerProfile, setPlayerProfile] = useState(null);
-  const [difficultyMultiplier, setDifficultyMultiplier] = useState(1);
-  const [gameStartTime, setGameStartTime] = useState(null);
   
   const [shootCooldown, setShootCooldown] = useState(0);
   const [healCooldown, setHealCooldown] = useState(0);
