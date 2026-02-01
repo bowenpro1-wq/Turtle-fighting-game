@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Flame, Zap, Shield, Users, ArrowUpCircle, Star, Sparkles } from 'lucide-react';
+import { ArrowLeft, Flame, Zap, Shield, Users, ArrowUpCircle, Star, Sparkles, Coins, Bot } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import ForgeAdvisor from '@/components/ForgeAdvisor';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
+import BottomNav from '@/components/BottomNav';
 
 export default function ForgePage() {
   const [weapons, setWeapons] = useState(() => {
@@ -104,7 +107,11 @@ export default function ForgePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 p-6">
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 p-6 pb-20">
+      <div className="absolute top-4 right-4 z-10">
+        <LanguageSwitcher currentLang={language} onLanguageChange={setLanguage} />
+      </div>
+
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <Link to={createPageUrl('Game')}>
@@ -280,7 +287,24 @@ export default function ForgePage() {
             </div>
           </div>
         </motion.div>
+
+        <AnimatePresence>
+          {showAdvisor && (
+            <ForgeAdvisor
+              weapons={weapons}
+              coins={coins}
+              onClose={() => setShowAdvisor(false)}
+            />
+          )}
+        </AnimatePresence>
       </div>
+
+      <BottomNav 
+        onLanguageClick={() => {}}
+        onShopClick={() => {}}
+        onMiniGamesClick={() => window.location.href = createPageUrl('MiniGames')}
+        showShop={false}
+      />
     </div>
   );
 }
