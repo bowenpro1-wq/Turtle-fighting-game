@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Hammer, User, Settings, Gift } from 'lucide-react';
+import { Play, Hammer, User, Settings, Gift, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -161,6 +161,15 @@ export default function StartScreen({ onStart, defeatedBosses = [] }) {
         >
           ⚔️ Boss试炼
         </Button>
+        
+        <Link to={createPageUrl('Multiplayer')} className="block">
+          <Button
+            className="w-full px-6 py-6 md:py-7 bg-gradient-to-r from-cyan-600 via-blue-600 to-purple-600 hover:from-cyan-700 hover:via-blue-700 hover:to-purple-700 rounded-xl text-white text-lg md:text-xl font-bold border-2 border-cyan-400/50 active:scale-95 transition-transform"
+          >
+            <Users className="w-6 h-6 mr-2" />
+            🎮 多人模式
+          </Button>
+        </Link>
         
         <Link to={createPageUrl('Forge')} className="block">
           <Button

@@ -53,6 +53,8 @@ import MiniGames from './pages/MiniGames';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Admin from './pages/Admin';
+import Leaderboard from './pages/Leaderboard';
+import Multiplayer from './pages/Multiplayer';
 
 
 export const PAGES = {
@@ -62,6 +64,8 @@ export const PAGES = {
     "Profile": Profile,
     "Settings": Settings,
     "Admin": Admin,
+    "Leaderboard": Leaderboard,
+    "Multiplayer": Multiplayer,
 }
 
 export const pagesConfig = {
