@@ -2774,7 +2774,7 @@ export default function GameCanvas({
       });
 
       // Draw player
-      drawPlayer(ctx, game.player, isFlying, game.camera, game.animationFrame);
+      drawPlayer(ctx, game.player, isFlying, game.camera, game.animationFrame, playerColor);
 
       // Draw melee attack circle - 360 degrees
       if (isMeleeAttacking) {
@@ -3044,7 +3044,7 @@ function drawBuilding(ctx, building, camera) {
   ctx.restore();
 }
 
-function drawPlayer(ctx, player, isFlying, camera, frame) {
+function drawPlayer(ctx, player, isFlying, camera, frame, playerColor = 'green') {
   const x = player.x - camera.x;
   const y = player.y - camera.y;
   
