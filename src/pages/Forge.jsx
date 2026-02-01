@@ -102,7 +102,7 @@ export default function ForgePage() {
         [weaponId]: {
           ...prev[weaponId],
           level: prev[weaponId].level + 1,
-          unlocked: weaponId === 'guigui' ? prev[weaponId].level + 1 >= 8 : true
+          unlocked: true
         }
       }));
     }
