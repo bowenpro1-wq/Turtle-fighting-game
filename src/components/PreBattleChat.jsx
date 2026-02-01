@@ -80,29 +80,29 @@ export default function PreBattleChat({ onClose, onStartBattle, language = 'zh' 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4"
     >
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl w-full max-w-lg border-2 border-cyan-500/30 shadow-2xl overflow-hidden"
+        className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl w-full max-w-lg border-2 border-cyan-500/30 shadow-2xl max-h-[85vh] flex flex-col"
       >
-        <div className="bg-gradient-to-r from-cyan-600 to-blue-600 p-3 flex justify-between items-center">
+        <div className="bg-gradient-to-r from-cyan-600 to-blue-600 p-3 md:p-4 flex justify-between items-center flex-shrink-0">
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-white" />
-            <h2 className="text-lg font-bold text-white">战前对话</h2>
+            <h2 className="text-base md:text-lg font-bold text-white">战前对话</h2>
           </div>
           <Button
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="text-white hover:bg-white/20"
+            className="text-white hover:bg-white/20 active:scale-90 transition-transform"
           >
             <X className="w-5 h-5" />
           </Button>
         </div>
 
-        <div className="h-80 overflow-y-auto p-4 space-y-3">
+        <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3">
           <AnimatePresence>
             {messages.map((msg, idx) => (
               <motion.div
@@ -141,31 +141,31 @@ export default function PreBattleChat({ onClose, onStartBattle, language = 'zh' 
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="p-4 border-t border-slate-700">
-          <div className="flex gap-2 mb-3">
+        <div className="p-3 md:p-4 border-t border-slate-700 flex-shrink-0">
+          <Button
+            onClick={onStartBattle}
+            className="w-full mb-3 py-5 md:py-6 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-lg md:text-xl font-bold active:scale-95 transition-transform"
+          >
+            ⚔️ 开始战斗！
+          </Button>
+          
+          <div className="flex gap-2">
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-              placeholder="输入消息..."
-              className="bg-slate-800 border-slate-700 text-sm"
+              onKeyPress={(e) => e.key === 'Enter' && !loading && sendMessage()}
+              placeholder="和AI聊聊战术..."
+              className="bg-slate-800 border-slate-700 text-sm md:text-base h-12"
               disabled={loading}
             />
             <Button
               onClick={sendMessage}
               disabled={loading || !input.trim()}
-              className="bg-cyan-600 hover:bg-cyan-500"
+              className="bg-cyan-600 hover:bg-cyan-500 h-12 px-4 active:scale-95 transition-transform"
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-4 h-4 md:w-5 md:h-5" />
             </Button>
           </div>
-          
-          <Button
-            onClick={onStartBattle}
-            className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500"
-          >
-            开始战斗！
-          </Button>
         </div>
       </motion.div>
     </motion.div>
