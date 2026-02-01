@@ -1,24 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Trophy, Target, Coins, Zap, Skull, Flame, Crown, Star } from 'lucide-react';
+import { ArrowLeft, Trophy, Coins, Gamepad2, Target, Clock, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import { base44 } from '@/api/base44Client';
 import BottomNav from '@/components/BottomNav';
-
-const ACHIEVEMENTS = {
-  first_win: { icon: '🎉', name: '首胜', desc: '赢得第一场胜利' },
-  boss_slayer: { icon: '⚔️', name: 'Boss杀手', desc: '击败10个Boss' },
-  boss_master: { icon: '👑', name: 'Boss大师', desc: '击败50个Boss' },
-  gold_collector: { icon: '💰', name: '富豪', desc: '累计获得10万金币' },
-  survivor: { icon: '🛡️', name: '生存者', desc: '玩20场游戏' },
-  veteran: { icon: '🎖️', name: '老兵', desc: '玩100场游戏' },
-  perfectionist: { icon: '✨', name: '完美主义者', desc: '连胜5场' },
-  legend: { icon: '🌟', name: '传奇', desc: '连胜10场' },
-  speed_runner: { icon: '⚡', name: '速通者', desc: '5分钟内通关' },
-  tower_climber: { icon: '🗿', name: '登塔者', desc: '爬到塔50层' }
-};
 
 export default function Profile() {
   const [profile, setProfile] = useState(null);
@@ -31,40 +18,61 @@ export default function Profile() {
   const loadProfile = async () => {
     try {
       const user = await base44.auth.me();
-      const profiles = await base44.entities.PlayerProfile.filter({ user_email: user.email });
-      
+      const profiles = await base44.entities.PlayerProfile.filter({
+        user_email: user.email
+      });
+
       if (profiles.length > 0) {
         setProfile(profiles[0]);
       } else {
+        // Create new profile
         const newProfile = await base44.entities.PlayerProfile.create({
-          user_email: user.email
+          user_email: user.email,
+          total_gold_earned: 0,
+          total_games_played: 0,
+          total_bosses_defeated: 0,
+          highest_score: 0,
+          total_playtime_minutes: 0,
+          achievements: [],
+          difficulty_preference: 'adaptive',
+          performance_stats: {
+            win_rate: 0,
+            avg_damage_taken: 0,
+            avg_completion_time: 0
+          }
         });
         setProfile(newProfile);
       }
     } catch (error) {
-      console.error('Failed to load profile:', error);
+      console.error('Error loading profile:', error);
     } finally {
       setLoading(false);
     }
   };
 
+  const achievements = [
+    { id: 'first_boss', name: '首次击败Boss', icon: '⚔️', unlocked: profile?.achievements?.includes('first_boss') },
+    { id: 'boss_master', name: 'Boss大师', desc: '击败20个Boss', icon: '🏆', unlocked: profile?.achievements?.includes('boss_master') },
+    { id: 'gold_collector', name: '金币收藏家', desc: '累计获得100,000金币', icon: '💰', unlocked: profile?.achievements?.includes('gold_collector') },
+    { id: 'speed_runner', name: '速通高手', desc: '5分钟内通关', icon: '⚡', unlocked: profile?.achievements?.includes('speed_runner') },
+    { id: 'survivor', name: '生存专家', desc: '生存模式坚持30分钟', icon: '🛡️', unlocked: profile?.achievements?.includes('survivor') },
+    { id: 'tower_climber', name: '爬塔勇士', desc: '通关中大林之塔', icon: '🗿', unlocked: profile?.achievements?.includes('tower_climber') },
+  ];
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-        <div className="text-white text-xl">加载中...</div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
+        <div className="text-white text-2xl">加载中...</div>
       </div>
     );
   }
 
-  const winRate = profile.games_played > 0 ? ((profile.wins / profile.games_played) * 100).toFixed(1) : 0;
-  const avgScore = profile.games_played > 0 ? Math.floor(profile.highest_score / profile.games_played) : 0;
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4 pb-20">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4 pb-20">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <Link to={createPageUrl('Game')}>
-            <Button variant="outline" size="sm" className="bg-white/10 border-white/20 text-white">
+            <Button variant="outline" size="sm" className="text-white border-white/30">
               <ArrowLeft className="w-4 h-4 mr-1" />
               返回
             </Button>
@@ -74,57 +82,123 @@ export default function Profile() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl p-8 mb-6 text-center"
+          className="text-center mb-8"
         >
-          <div className="inline-flex items-center justify-center w-24 h-24 bg-white/20 rounded-full mb-4">
-            <Crown className="w-12 h-12 text-white" />
-          </div>
-          <h1 className="text-4xl font-bold text-white mb-2">玩家档案</h1>
-          <p className="text-white/80">累计游玩时间: {Math.floor(profile.total_playtime_minutes)} 分钟</p>
+          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 mb-2">
+            玩家档案
+          </h1>
+          <p className="text-white/70">{profile?.user_email}</p>
         </motion.div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <StatCard icon={<Trophy className="w-6 h-6" />} label="胜利" value={profile.wins} color="from-yellow-500 to-orange-500" />
-          <StatCard icon={<Target className="w-6 h-6" />} label="游戏场次" value={profile.games_played} color="from-blue-500 to-cyan-500" />
-          <StatCard icon={<Coins className="w-6 h-6" />} label="金币" value={profile.total_gold_earned.toLocaleString()} color="from-yellow-600 to-yellow-400" />
-          <StatCard icon={<Zap className="w-6 h-6" />} label="最高分" value={profile.highest_score.toLocaleString()} color="from-purple-500 to-pink-500" />
-        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.1 }}
+            className="bg-gradient-to-br from-yellow-600 to-orange-600 p-4 rounded-xl"
+          >
+            <Coins className="w-8 h-8 text-white mb-2" />
+            <div className="text-2xl font-bold text-white">{profile?.total_gold_earned?.toLocaleString() || 0}</div>
+            <div className="text-white/80 text-sm">累计金币</div>
+          </motion.div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-          <SmallStatCard icon={<Flame className="w-5 h-5" />} label="击败Boss" value={profile.bosses_defeated} />
-          <SmallStatCard icon={<Target className="w-5 h-5" />} label="消灭敌人" value={profile.enemies_killed} />
-          <SmallStatCard icon={<Skull className="w-5 h-5" />} label="死亡次数" value={profile.deaths} />
-          <SmallStatCard icon={<Star className="w-5 h-5" />} label="胜率" value={`${winRate}%`} />
-          <SmallStatCard icon={<Flame className="w-5 h-5" />} label="连胜" value={profile.current_win_streak} />
-          <SmallStatCard icon={<Trophy className="w-5 h-5" />} label="最佳连胜" value={profile.best_win_streak} />
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2 }}
+            className="bg-gradient-to-br from-blue-600 to-purple-600 p-4 rounded-xl"
+          >
+            <Gamepad2 className="w-8 h-8 text-white mb-2" />
+            <div className="text-2xl font-bold text-white">{profile?.total_games_played || 0}</div>
+            <div className="text-white/80 text-sm">游戏局数</div>
+          </motion.div>
+
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.3 }}
+            className="bg-gradient-to-br from-red-600 to-pink-600 p-4 rounded-xl"
+          >
+            <Target className="w-8 h-8 text-white mb-2" />
+            <div className="text-2xl font-bold text-white">{profile?.total_bosses_defeated || 0}</div>
+            <div className="text-white/80 text-sm">击败Boss</div>
+          </motion.div>
+
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.4 }}
+            className="bg-gradient-to-br from-green-600 to-teal-600 p-4 rounded-xl"
+          >
+            <Trophy className="w-8 h-8 text-white mb-2" />
+            <div className="text-2xl font-bold text-white">{profile?.highest_score?.toLocaleString() || 0}</div>
+            <div className="text-white/80 text-sm">最高分数</div>
+          </motion.div>
+
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.5 }}
+            className="bg-gradient-to-br from-indigo-600 to-blue-600 p-4 rounded-xl"
+          >
+            <Clock className="w-8 h-8 text-white mb-2" />
+            <div className="text-2xl font-bold text-white">{Math.floor(profile?.total_playtime_minutes || 0)}</div>
+            <div className="text-white/80 text-sm">游戏时长(分)</div>
+          </motion.div>
+
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.6 }}
+            className="bg-gradient-to-br from-purple-600 to-pink-600 p-4 rounded-xl"
+          >
+            <Award className="w-8 h-8 text-white mb-2" />
+            <div className="text-2xl font-bold text-white">{profile?.achievements?.length || 0}/6</div>
+            <div className="text-white/80 text-sm">成就</div>
+          </motion.div>
         </div>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-slate-800/50 backdrop-blur rounded-2xl p-6 mb-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.7 }}
+          className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-white/10"
         >
           <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-            <Trophy className="w-6 h-6 text-yellow-400" />
+            <Award className="w-6 h-6 text-yellow-400" />
             成就系统
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {Object.entries(ACHIEVEMENTS).map(([key, achievement]) => (
-              <AchievementCard
-                key={key}
-                achievement={achievement}
-                unlocked={profile.achievements.includes(key)}
-              />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {achievements.map((achievement, index) => (
+              <motion.div
+                key={achievement.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.8 + index * 0.1 }}
+                className={`p-4 rounded-lg border-2 ${
+                  achievement.unlocked
+                    ? 'bg-gradient-to-r from-yellow-600/20 to-orange-600/20 border-yellow-500/50'
+                    : 'bg-slate-700/30 border-slate-600/30'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="text-3xl">{achievement.icon}</div>
+                  <div className="flex-1">
+                    <div className={`font-bold ${achievement.unlocked ? 'text-yellow-400' : 'text-white/50'}`}>
+                      {achievement.name}
+                    </div>
+                    {achievement.desc && (
+                      <div className="text-xs text-white/60">{achievement.desc}</div>
+                    )}
+                  </div>
+                  {achievement.unlocked && (
+                    <div className="text-green-400">✓</div>
+                  )}
+                </div>
+              </motion.div>
             ))}
           </div>
         </motion.div>
-
-        <Link to={createPageUrl('Settings')}>
-          <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-lg py-6">
-            ⚙️ 游戏设置
-          </Button>
-        </Link>
       </div>
 
       <BottomNav 
@@ -134,47 +208,5 @@ export default function Profile() {
         showShop={false}
       />
     </div>
-  );
-}
-
-function StatCard({ icon, label, value, color }) {
-  return (
-    <motion.div
-      whileHover={{ scale: 1.05 }}
-      className={`bg-gradient-to-br ${color} rounded-xl p-4 text-white`}
-    >
-      <div className="flex justify-center mb-2">{icon}</div>
-      <div className="text-2xl font-bold text-center">{value}</div>
-      <div className="text-xs text-center opacity-90">{label}</div>
-    </motion.div>
-  );
-}
-
-function SmallStatCard({ icon, label, value }) {
-  return (
-    <div className="bg-slate-800/50 backdrop-blur rounded-lg p-3 flex items-center gap-3">
-      <div className="text-cyan-400">{icon}</div>
-      <div>
-        <div className="text-white font-bold">{value}</div>
-        <div className="text-white/60 text-xs">{label}</div>
-      </div>
-    </div>
-  );
-}
-
-function AchievementCard({ achievement, unlocked }) {
-  return (
-    <motion.div
-      whileHover={{ scale: unlocked ? 1.05 : 1 }}
-      className={`rounded-lg p-3 ${
-        unlocked 
-          ? 'bg-gradient-to-br from-yellow-500/20 to-orange-500/20 border-2 border-yellow-500/50' 
-          : 'bg-slate-700/30 border border-slate-600/30 opacity-50'
-      }`}
-    >
-      <div className="text-3xl mb-1 text-center">{achievement.icon}</div>
-      <div className="text-white text-sm font-bold text-center">{achievement.name}</div>
-      <div className="text-white/60 text-xs text-center">{achievement.desc}</div>
-    </motion.div>
   );
 }
