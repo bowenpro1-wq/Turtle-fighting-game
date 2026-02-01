@@ -385,7 +385,8 @@ export default function GameCanvas({
 
       // K键 - 根据武器改变攻击方式
       if (e.key.toLowerCase() === 'k') {
-        if (shoot()) {
+        const canShoot = gameMode !== 'busbreak' || gameState !== 'boss' || currentBoss;
+        if (canShoot && shoot()) {
           const angle = game.player.angle;
           const px = game.player.x + game.player.width / 2;
           const py = game.player.y + game.player.height / 2;
@@ -671,6 +672,22 @@ export default function GameCanvas({
           const py = game.player.y + game.player.height / 2;
           game.screenShake = 15;
 
+          // 对Boss造成500伤害
+          if (currentBoss && gameState === 'boss') {
+            onBossDamage(500);
+            for (let i = 0; i < 50; i++) {
+              game.particles.push({
+                x: px,
+                y: py,
+                vx: (Math.random() - 0.5) * 20,
+                vy: (Math.random() - 0.5) * 20,
+                life: 60,
+                color: '#fbbf24',
+                size: 10
+              });
+            }
+          }
+
           if (selectedWeapon === 'chichao') {
             // 赤潮 - 超级火焰弹
             for (let i = 0; i < 50; i++) {
@@ -844,9 +861,9 @@ export default function GameCanvas({
           const py = game.player.y + game.player.height / 2;
           game.screenShake = 25;
 
-          // 秒杀Boss
+          // 对Boss造成500伤害
           if (currentBoss && gameState === 'boss') {
-            onBossDamage(999999);
+            onBossDamage(500);
             for (let i = 0; i < 150; i++) {
               game.particles.push({
                 x: px,
@@ -1087,14 +1104,14 @@ export default function GameCanvas({
           onTowerSpecialFloor(null);
         }
 
-        // Spawn LOTS of Zhongdalin continuously
-        if (Date.now() - game.lastEnemySpawn > 1500) {
-          const baseCount = Math.floor(currentFloor / 5) + 5;
-          let spawnCount = baseCount;
+        // Spawn fewer enemies at a time to prevent overwhelming player
+        if (Date.now() - game.lastEnemySpawn > 2000) {
+          const baseCount = Math.floor(currentFloor / 10) + 3;
+          let spawnCount = Math.min(baseCount, 8);
 
-          // Floor 60: Carnival - even more enemies but weaker
+          // Floor 60: Carnival - more enemies but weaker
           if (currentFloor === 60) {
-            spawnCount = baseCount * 4;
+            spawnCount = Math.min(baseCount * 2, 15);
           }
 
           for (let i = 0; i < spawnCount; i++) {
@@ -1114,17 +1131,18 @@ export default function GameCanvas({
           game.lastEnemySpawn = Date.now();
         }
 
-        // Trigger boss every 10 floors
-        if (currentFloor % 10 === 0 && game.enemies.length === 0 && !currentBoss) {
-          const bossNumber = Math.floor(currentFloor / 10);
-          setTimeout(() => {
-            // Trigger appropriate boss for tower
-            if (currentFloor === 100) {
-              // Final boss - handled separately with gem mechanic
-            } else {
-              onTriggerBoss(bossNumber - 1);
-            }
-          }, 1000);
+        // Trigger boss every 10 floors (including floor 10)
+        if (currentFloor % 10 === 0 && game.enemies.length === 0 && !currentBoss && gameState !== 'boss') {
+          const bossNumber = Math.floor(currentFloor / 10) - 1;
+          if (bossNumber >= 0) {
+            setTimeout(() => {
+              if (currentFloor === 100) {
+                // Final boss - handled separately with gem mechanic
+              } else {
+                onTriggerBoss(bossNumber);
+              }
+            }, 1000);
+          }
         }
       }
 

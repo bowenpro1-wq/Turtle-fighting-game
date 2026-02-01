@@ -247,8 +247,9 @@ export default function Game() {
   };
 
   const handleWeaponUpgrade = (weaponId) => {
-    if (upgradeTemplates > 0) {
-      setUpgradeTemplates(prev => prev - 1);
+    const UPGRADE_COST = 100;
+    if (coins >= UPGRADE_COST) {
+      setCoins(prev => prev - UPGRADE_COST);
       setWeapons(prev => ({
         ...prev,
         [weaponId]: {
@@ -678,6 +679,7 @@ export default function Game() {
                 <Forge
                   weapons={weapons}
                   templates={upgradeTemplates}
+                  coins={coins}
                   onUpgrade={handleWeaponUpgrade}
                   onClose={() => setShowForge(false)}
                 />
