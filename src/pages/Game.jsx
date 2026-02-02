@@ -417,10 +417,10 @@ export default function Game() {
       },
       xiaowang: {
         name: xiaowangIsClone ? '小黄龙分身' : '小黄龙',
-        health: xiaowangIsClone ? 1500 : 2500,
-        damage: xiaowangIsClone ? 25 : 35,
-        speed: xiaowangIsClone ? 2.5 : 3.0,
-        size: xiaowangIsClone ? 80 : 100,
+        health: xiaowangIsClone ? 1500 : 3500,
+        damage: xiaowangIsClone ? 25 : 50,
+        speed: xiaowangIsClone ? 2.5 : 3.5,
+        size: xiaowangIsClone ? 80 : 110,
         color: '#f59e0b',
         pattern: 'dash'
       },
@@ -444,10 +444,10 @@ export default function Game() {
       },
       guangzhi: {
         name: '广智',
-        health: 8000,
-        damage: 80,
-        speed: 2.8,
-        size: 180,
+        health: 5000,
+        damage: 60,
+        speed: 2.3,
+        size: 160,
         color: '#ff4500',
         pattern: 'flame'
       }
