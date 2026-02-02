@@ -9,9 +9,9 @@ const ZHONGDALIN = {
   name: 'zhongdalin',
   width: 50,
   height: 70,
-  speed: 1.0,
-  health: 20,
-  damage: 5,
+  speed: 0.5,
+  health: 15,
+  damage: 3,
   shootInterval: 0, // No ranged attack
   color: '#4ade80',
   behaviorType: 'melee',
@@ -512,7 +512,9 @@ export default function GameCanvas({
   onGemDefeated,
   maxLevelHelper,
   helperTimer,
-  isInShop = false
+  isInShop = false,
+  towerKillCount = 0,
+  towerRequiredKills = 10
 }) {
   const canvasRef = useRef(null);
   const WORLD_WIDTH = gameMode === 'tower' ? 1800 : 4000;
@@ -548,7 +550,9 @@ export default function GameCanvas({
     animationFrame: 0,
     worldGenerated: false,
     screenShake: 0,
-    totemShotCount: 0
+    totemShotCount: 0,
+    towerKillCount: 0,
+    towerRequiredKills: 10
   });
 
   const generateWorld = useCallback(() => {
@@ -1419,21 +1423,22 @@ export default function GameCanvas({
           onTowerSpecialFloor(null);
         }
 
-        // Spawn LOTS of Zhongdalin continuously
-        if (Date.now() - game.lastEnemySpawn > 1500) {
-          const baseCount = Math.floor(currentFloor / 5) + 5;
+        // Spawn fewer Zhongdalin
+        if (Date.now() - game.lastEnemySpawn > 2500 && game.enemies.length < game.towerRequiredKills) {
+          const baseCount = Math.min(Math.floor(currentFloor / 10) + 2, 5);
           let spawnCount = baseCount;
 
-          // Floor 60: Carnival - even more enemies but weaker
+          // Floor 60: Carnival - more enemies but weaker
           if (currentFloor === 60) {
-            spawnCount = baseCount * 4;
+            spawnCount = baseCount * 2;
           }
 
           for (let i = 0; i < spawnCount; i++) {
             const zhongdalin = spawnEnemy(null, ZHONGDALIN);
-            // Scale stats with floor
-            zhongdalin.health = ZHONGDALIN.health * (1 + currentFloor * 0.1);
-            zhongdalin.damage = ZHONGDALIN.damage * (1 + currentFloor * 0.05);
+            // Scale stats with floor (very slow growth)
+            zhongdalin.health = ZHONGDALIN.health * (1 + currentFloor * 0.03);
+            zhongdalin.damage = ZHONGDALIN.damage * (1 + currentFloor * 0.02);
+            zhongdalin.speed = ZHONGDALIN.speed * (1 + currentFloor * 0.01);
 
             // Floor 60: Weaken enemies
             if (currentFloor === 60) {
@@ -1446,17 +1451,24 @@ export default function GameCanvas({
           game.lastEnemySpawn = Date.now();
         }
 
-        // Trigger boss every 10 floors
-        if (currentFloor % 10 === 0 && game.enemies.length === 0 && !currentBoss) {
-          const bossNumber = Math.floor(currentFloor / 10);
-          setTimeout(() => {
-            // Trigger appropriate boss for tower
-            if (currentFloor === 100) {
-              // Final boss - handled separately with gem mechanic
-            } else {
-              onTriggerBoss(bossNumber - 1);
-            }
-          }, 1000);
+        // Check if enough kills to advance
+        if (game.towerKillCount >= game.towerRequiredKills && game.enemies.length === 0) {
+          // Advance floor
+          if (currentFloor % 10 === 0 && !currentBoss) {
+            const bossNumber = Math.floor(currentFloor / 10);
+            setTimeout(() => {
+              if (currentFloor === 100) {
+                // Final boss - handled separately with gem mechanic
+              } else {
+                onTriggerBoss(bossNumber - 1);
+              }
+            }, 1000);
+          } else if (currentFloor % 10 !== 0) {
+            // Normal floor complete
+            game.towerKillCount = 0;
+            game.towerRequiredKills = 10 + Math.floor(currentFloor / 10) * 2;
+            onEnemyKill('floor_complete');
+          }
         }
       }
 
@@ -2851,6 +2863,11 @@ export default function GameCanvas({
             }
 
             if (enemy.health <= 0) {
+              // Track tower mode kills
+              if (gameMode === 'tower' && enemy.name === 'zhongdalin') {
+                game.towerKillCount = (game.towerKillCount || 0) + 1;
+              }
+              
               onEnemyKill(enemy.name);
               game.screenShake = 3;
 

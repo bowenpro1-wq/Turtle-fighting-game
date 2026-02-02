@@ -96,6 +96,8 @@ export default function Game() {
   const [hasTheHand, setHasTheHand] = useState(false);
   const [towerSpecialFloor, setTowerSpecialFloor] = useState(null);
   const [gemDefeated, setGemDefeated] = useState(false);
+  const [towerKillCount, setTowerKillCount] = useState(0);
+  const [towerRequiredKills, setTowerRequiredKills] = useState(10);
 
   // Profile and difficulty
   const [playerProfile, setPlayerProfile] = useState(null);
@@ -356,6 +358,7 @@ export default function Game() {
     setShowBossIntro(false);
     setBossHealth(0);
     setBossMaxHealth(0);
+    setTowerKillCount(0);
     
     // Track game start
     if (playerProfile) {
@@ -373,6 +376,7 @@ export default function Game() {
       }
       setGemDefeated(false);
       setTowerSpecialFloor(null);
+      setTowerKillCount(0);
     } else if (mode === 'busbreak' && selectedBusBreakBoss) {
       // Trigger selected boss after 2 seconds
       setTimeout(() => {
@@ -647,6 +651,11 @@ export default function Game() {
   }, [isFlying, difficultyMultiplier, playerProfile, gameStartTime]);
 
   const handleEnemyKill = useCallback((enemyType) => {
+    // Track tower kills
+    if (gameMode === 'tower' && enemyType === 'zhongdalin') {
+      setTowerKillCount(prev => prev + 1);
+    }
+
     // Floor complete trigger for tower mode
     if (enemyType === 'floor_complete' && gameMode === 'tower') {
       const nextFloor = currentFloor + 1;
@@ -659,6 +668,9 @@ export default function Game() {
         if (nextFloor % 10 === 1 && nextFloor > 1) {
           setCheckpoint(nextFloor);
         }
+        // Reset kill counter and increase requirement
+        setTowerKillCount(0);
+        setTowerRequiredKills(10 + Math.floor(nextFloor / 10) * 2);
       }
       return;
     }
@@ -956,6 +968,8 @@ export default function Game() {
               maxLevelHelper={maxLevelHelper}
               helperTimer={helperTimer}
               isInShop={isInShop}
+              towerKillCount={towerKillCount}
+              towerRequiredKills={towerRequiredKills}
             />
             
             <GameUI
@@ -984,6 +998,8 @@ export default function Game() {
               onBoostBoss={handleBoostBoss}
               maxLevelHelper={maxLevelHelper}
               helperTimer={helperTimer}
+              towerKillCount={towerKillCount}
+              towerRequiredKills={towerRequiredKills}
             />
             
             <AnimatePresence>
