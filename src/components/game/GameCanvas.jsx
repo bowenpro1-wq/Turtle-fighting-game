@@ -889,7 +889,21 @@ export default function GameCanvas({
           const px = game.player.x + game.player.width / 2;
           const py = game.player.y + game.player.height / 2;
 
-          if (selectedWeapon === 'chichao') {
+          if (selectedWeapon === 'guigui') {
+            // 龟龟之手 - 超强治疗
+            for (let i = 0; i < 30; i++) {
+              game.particles.push({
+                x: px,
+                y: py,
+                vx: (Math.random() - 0.5) * 6,
+                vy: -Math.random() * 8,
+                life: 40,
+                color: '#22c55e',
+                size: 6,
+                type: 'heal'
+              });
+            }
+          } else if (selectedWeapon === 'chichao') {
             // 赤潮 - 火焰近战攻击
             const meleeRange = 120;
             const meleeDamage = (25 + weaponLevel * 3) * upgrades.damage;

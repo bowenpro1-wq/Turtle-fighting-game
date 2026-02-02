@@ -36,7 +36,7 @@ const BOSSES = [
   { id: 17, name: "幻影海豚", health: 650, damage: 60, speed: 3.5, size: 105, color: "#818cf8", pattern: "clone" },
   { id: 18, name: "末日海怪", health: 1200, damage: 70, speed: 1.8, size: 180, color: "#dc2626", pattern: "chaos" },
   { id: 19, name: "深渊领主", health: 1500, damage: 80, speed: 2, size: 190, color: "#1e1b4b", pattern: "void" },
-  { id: 20, name: "广智", health: 2500, damage: 120, speed: 2, size: 220, color: "#ff4500", pattern: "flame" }
+  { id: 20, name: "广智", health: 5000, damage: 150, speed: 2.5, size: 250, color: "#ff4500", pattern: "flame" }
 ];
 
 export default function Game() {
@@ -126,6 +126,18 @@ export default function Game() {
             user_email: user.email
           });
           setPlayerProfile(newProfile);
+        }
+        
+        // Admin unlock all weapons at max level
+        if (user.role === 'admin') {
+          const adminWeapons = {
+            chichao: { level: 5, unlocked: true },
+            guigui: { level: 8, unlocked: true },
+            dianchao: { level: 5, unlocked: true },
+            totem: { level: 5, unlocked: true }
+          };
+          setWeapons(adminWeapons);
+          localStorage.setItem('weapons', JSON.stringify(adminWeapons));
         }
       } catch (error) {
         console.error('Failed to load profile:', error);
