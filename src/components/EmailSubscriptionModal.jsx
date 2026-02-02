@@ -9,8 +9,22 @@ export default function EmailSubscriptionModal({ onClose, onSubscribe }) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [show, setShow] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
+    const checkAdmin = async () => {
+      try {
+        const user = await base44.auth.me();
+        if (user && user.role === 'admin') {
+          setIsAdmin(true);
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+      }
+    };
+
+    checkAdmin();
+
     // Check if user has already subscribed or dismissed
     const hasSubscribed = localStorage.getItem('turtleGameEmailSubscribed');
     if (!hasSubscribed) {
@@ -72,10 +86,10 @@ export default function EmailSubscriptionModal({ onClose, onSubscribe }) {
               <Mail className="w-8 h-8 text-cyan-400" />
             </div>
             <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 mb-2">
-              订阅游戏更新
+              {isAdmin ? '订阅游戏更新（管理员）' : '订阅游戏更新'}
             </h2>
             <p className="text-white/80 text-sm">
-              每周获取新小游戏、更新内容和独家奖励！
+              {isAdmin ? '作为管理员，您可以直接跳过或输入邮箱测试' : '每周获取新小游戏、更新内容和独家奖励！'}
             </p>
           </div>
 
@@ -104,7 +118,7 @@ export default function EmailSubscriptionModal({ onClose, onSubscribe }) {
               variant="ghost"
               className="w-full text-white/60 hover:text-white hover:bg-white/10"
             >
-              暂时跳过
+              {isAdmin ? '🔧 管理员跳过' : '暂时跳过'}
             </Button>
           </div>
 
