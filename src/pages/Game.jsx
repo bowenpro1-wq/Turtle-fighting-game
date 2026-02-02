@@ -256,6 +256,65 @@ export default function Game() {
     setDifficultyMultiplier(multipliers[difficulty] || 1.0);
   }, [difficulty]);
 
+  const saveGameProgress = async () => {
+    try {
+      const user = await base44.auth.me();
+      if (!user) return;
+
+      const progressData = {
+        user_email: user.email,
+        game_mode: gameMode,
+        current_floor: currentFloor,
+        checkpoint: checkpoint,
+        score: score,
+        coins: coins,
+        player_health: playerHealth,
+        defeated_bosses: defeatedBosses.map(b => b.id || b),
+        upgrades: upgrades,
+        selected_weapon: selectedWeapon,
+        has_cannon_upgrade: hasCannonUpgrade,
+        last_saved: new Date().toISOString()
+      };
+
+      // Check if progress exists
+      const existing = await base44.entities.GameProgress.filter({ user_email: user.email });
+      if (existing.length > 0) {
+        await base44.entities.GameProgress.update(existing[0].id, progressData);
+      } else {
+        await base44.entities.GameProgress.create(progressData);
+      }
+    } catch (error) {
+      console.error('Failed to save progress:', error);
+    }
+  };
+
+  const loadGameProgress = async () => {
+    try {
+      const user = await base44.auth.me();
+      if (!user) return false;
+
+      const progress = await base44.entities.GameProgress.filter({ user_email: user.email });
+      if (progress.length > 0) {
+        const data = progress[0];
+        setGameMode(data.game_mode);
+        setCurrentFloor(data.current_floor || 1);
+        setCheckpoint(data.checkpoint || 1);
+        setScore(data.score || 0);
+        setCoins(data.coins || 0);
+        setPlayerHealth(data.player_health || 100);
+        setDefeatedBosses(data.defeated_bosses || []);
+        setUpgrades(data.upgrades || {});
+        setSelectedWeapon(data.selected_weapon || 'none');
+        setHasCannonUpgrade(data.has_cannon_upgrade || false);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Failed to load progress:', error);
+      return false;
+    }
+  };
+
   const startGame = (mode = 'normal', fromCheckpoint = false) => {
     setGameStartTime(Date.now());
     // Reset all state first
@@ -801,11 +860,28 @@ export default function Game() {
       if (e.key.toLowerCase() === 'f' && (gameState === 'playing' || gameState === 'boss')) {
         setShowForge(prev => !prev);
       }
+      // Save progress on Ctrl+S
+      if (e.ctrlKey && e.key.toLowerCase() === 's' && (gameState === 'playing' || gameState === 'boss')) {
+        e.preventDefault();
+        saveGameProgress();
+        alert('进度已保存！');
+      }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [gameState]);
+  }, [gameState, gameMode, currentFloor, checkpoint, score, coins, playerHealth, defeatedBosses, upgrades, selectedWeapon, hasCannonUpgrade]);
+
+  // Auto-save every 30 seconds during gameplay
+  useEffect(() => {
+    if (gameState !== 'playing' && gameState !== 'boss') return;
+    
+    const autoSaveInterval = setInterval(() => {
+      saveGameProgress();
+    }, 30000);
+
+    return () => clearInterval(autoSaveInterval);
+  }, [gameState, gameMode, currentFloor, checkpoint, score, coins, playerHealth, defeatedBosses, upgrades, selectedWeapon, hasCannonUpgrade]);
 
   return (
     <div className="w-full h-screen bg-gradient-to-b from-[#87CEEB] via-[#5F9EA0] to-[#2F4F4F] overflow-hidden relative pb-12">

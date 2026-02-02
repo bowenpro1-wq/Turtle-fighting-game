@@ -530,6 +530,7 @@ export default function GameCanvas({
     bullets: [],
     enemyBullets: [],
     enemies: [],
+    allies: [],
     particles: [],
     obstacles: [],
     hazardZones: [],
@@ -543,7 +544,8 @@ export default function GameCanvas({
     lastBossEnemySpawn: 0,
     animationFrame: 0,
     worldGenerated: false,
-    screenShake: 0
+    screenShake: 0,
+    totemShotCount: 0
   });
 
   const generateWorld = useCallback(() => {
@@ -2096,6 +2098,329 @@ export default function GameCanvas({
         }
         
         ctx.restore();
+      }
+
+      // Update allies (summoned creatures)
+      game.allies = (game.allies || []).filter(ally => {
+        ally.lifetime--;
+        if (ally.lifetime <= 0) return false;
+
+        // Find nearest enemy
+        let closestEnemy = null;
+        let closestDist = Infinity;
+        
+        game.enemies.forEach(enemy => {
+          const dx = enemy.x + enemy.width / 2 - ally.x;
+          const dy = enemy.y + enemy.height / 2 - ally.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < closestDist) {
+            closestDist = dist;
+            closestEnemy = enemy;
+          }
+        });
+
+        // Move towards enemy
+        if (closestEnemy && closestDist < 600) {
+          const dx = closestEnemy.x - ally.x;
+          const dy = closestEnemy.y - ally.y;
+          const angle = Math.atan2(dy, dx);
+          ally.vx = Math.cos(angle) * 3;
+          ally.vy = Math.sin(angle) * 3;
+        } else {
+          // Follow player
+          const dx = game.player.x - ally.x;
+          const dy = game.player.y - ally.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist > 100) {
+            const angle = Math.atan2(dy, dx);
+            ally.vx = Math.cos(angle) * 2;
+            ally.vy = Math.sin(angle) * 2;
+          } else {
+            ally.vx *= 0.9;
+            ally.vy *= 0.9;
+          }
+        }
+
+        ally.x += ally.vx;
+        ally.y += ally.vy;
+
+        // Shoot at enemies
+        if (closestEnemy && closestDist < 400 && Date.now() - ally.lastShot > 1000) {
+          const dx = closestEnemy.x + closestEnemy.width / 2 - ally.x;
+          const dy = closestEnemy.y + closestEnemy.height / 2 - ally.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          
+          game.bullets.push({
+            x: ally.x,
+            y: ally.y,
+            vx: (dx / dist) * 10,
+            vy: (dy / dist) * 10,
+            damage: ally.damage,
+            size: 6,
+            color: ally.enhanced ? '#22c55e' : '#4ade80',
+            fromPlayer: true,
+            fromAlly: true
+          });
+          
+          ally.lastShot = Date.now();
+        }
+
+        // Draw ally
+        if (ally.x + ally.width > game.camera.x && ally.x < game.camera.x + CANVAS_WIDTH) {
+          const screenX = ally.x - game.camera.x;
+          const screenY = ally.y - game.camera.y;
+
+          ctx.save();
+          
+          // Zhongdalin ally appearance
+          ctx.fillStyle = ally.enhanced ? '#22c55e' : '#4ade80';
+          ctx.strokeStyle = '#166534';
+          ctx.lineWidth = 2;
+          
+          // Body
+          ctx.fillRect(screenX, screenY + ally.height * 0.3, ally.width, ally.height * 0.7);
+          ctx.strokeRect(screenX, screenY + ally.height * 0.3, ally.width, ally.height * 0.7);
+          
+          // Head
+          ctx.beginPath();
+          ctx.arc(screenX + ally.width / 2, screenY + ally.height * 0.2, ally.width * 0.4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          
+          // Eyes
+          ctx.fillStyle = '#166534';
+          ctx.beginPath();
+          ctx.arc(screenX + ally.width / 2 - 5, screenY + ally.height * 0.15, 2, 0, Math.PI * 2);
+          ctx.arc(screenX + ally.width / 2 + 5, screenY + ally.height * 0.15, 2, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Health bar
+          const healthPercent = ally.health / ally.maxHealth;
+          ctx.fillStyle = 'rgba(0,0,0,0.5)';
+          ctx.fillRect(screenX, screenY - 8, ally.width, 5);
+          ctx.fillStyle = healthPercent > 0.5 ? '#22c55e' : '#ef4444';
+          ctx.fillRect(screenX, screenY - 8, ally.width * healthPercent, 5);
+          
+          // Friendly marker
+          ctx.fillStyle = '#22c55e';
+          ctx.strokeStyle = '#166534';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(screenX + ally.width / 2, screenY - 15, 5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          
+          ctx.restore();
+        }
+
+        // Collision with enemies
+        game.enemies.forEach(enemy => {
+          const dx = Math.abs((ally.x + ally.width / 2) - (enemy.x + enemy.width / 2));
+          const dy = Math.abs((ally.y + ally.height / 2) - (enemy.y + enemy.height / 2));
+          
+          if (dx < (ally.width + enemy.width) / 2 && dy < (ally.height + enemy.height) / 2) {
+            if (game.animationFrame % 30 === 0) {
+              enemy.health -= ally.damage * 0.5;
+              ally.health -= enemy.damage * 0.3;
+            }
+          }
+        });
+
+        return ally.health > 0;
+      });
+
+      // MAX level helper allies
+      if (maxLevelHelper && helperTimer > 0) {
+        // Spawn helper if not exists
+        if (!game.maxLevelHelperUnit) {
+          const helperStats = {
+            guangzhi: { width: 80, height: 100, health: 500, damage: 40, color: '#ff4500' },
+            xiaowang: { width: 60, height: 80, health: 400, damage: 35, color: '#fbbf24' },
+            longhaixing: { width: 70, height: 90, health: 450, damage: 38, color: '#22d3ee' },
+            zhongdalin: { width: 50, height: 70, health: 400, damage: 30, color: '#4ade80' }
+          };
+          
+          const stats = helperStats[maxLevelHelper];
+          if (stats) {
+            game.maxLevelHelperUnit = {
+              type: maxLevelHelper,
+              x: game.player.x + 100,
+              y: game.player.y,
+              vx: 0,
+              vy: 0,
+              width: stats.width,
+              height: stats.height,
+              health: stats.health,
+              maxHealth: stats.health,
+              damage: stats.damage,
+              color: stats.color,
+              lastShot: Date.now()
+            };
+          }
+        }
+
+        // Update helper
+        if (game.maxLevelHelperUnit) {
+          const helper = game.maxLevelHelperUnit;
+          
+          // Find nearest enemy
+          let closestEnemy = null;
+          let closestDist = Infinity;
+          
+          game.enemies.forEach(enemy => {
+            const dx = enemy.x + enemy.width / 2 - helper.x;
+            const dy = enemy.y + enemy.height / 2 - helper.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < closestDist) {
+              closestDist = dist;
+              closestEnemy = enemy;
+            }
+          });
+
+          // AI behavior
+          if (closestEnemy && closestDist < 500) {
+            const dx = closestEnemy.x - helper.x;
+            const dy = closestEnemy.y - helper.y;
+            const angle = Math.atan2(dy, dx);
+            helper.vx = Math.cos(angle) * 4;
+            helper.vy = Math.sin(angle) * 4;
+          } else {
+            // Follow player
+            const dx = game.player.x - helper.x;
+            const dy = game.player.y - helper.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist > 150) {
+              const angle = Math.atan2(dy, dx);
+              helper.vx = Math.cos(angle) * 3;
+              helper.vy = Math.sin(angle) * 3;
+            } else {
+              helper.vx *= 0.9;
+              helper.vy *= 0.9;
+            }
+          }
+
+          helper.x += helper.vx;
+          helper.y += helper.vy;
+
+          // Shoot at enemies
+          if (closestEnemy && closestDist < 450 && Date.now() - helper.lastShot > 800) {
+            const dx = closestEnemy.x + closestEnemy.width / 2 - helper.x;
+            const dy = closestEnemy.y + closestEnemy.height / 2 - helper.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            for (let i = 0; i < 3; i++) {
+              const spreadAngle = Math.atan2(dy, dx) + (i - 1) * 0.15;
+              game.bullets.push({
+                x: helper.x,
+                y: helper.y,
+                vx: Math.cos(spreadAngle) * 12,
+                vy: Math.sin(spreadAngle) * 12,
+                damage: helper.damage,
+                size: 10,
+                color: helper.color,
+                fromPlayer: true,
+                fromHelper: true
+              });
+            }
+            
+            helper.lastShot = Date.now();
+          }
+
+          // Draw helper
+          const screenX = helper.x - game.camera.x;
+          const screenY = helper.y - game.camera.y;
+
+          ctx.save();
+          
+          // Draw based on type
+          if (helper.type === 'guangzhi') {
+            // Simplified Guangzhi
+            ctx.fillStyle = '#ff4500';
+            ctx.strokeStyle = '#7f1d1d';
+            ctx.lineWidth = 4;
+            
+            ctx.beginPath();
+            ctx.ellipse(screenX, screenY, helper.width / 2, helper.height / 2, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Flame aura
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 3;
+            ctx.globalAlpha = 0.6;
+            ctx.beginPath();
+            ctx.arc(screenX, screenY, helper.width / 2 + 10, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+          } else if (helper.type === 'xiaowang') {
+            // Dragon
+            ctx.fillStyle = '#fbbf24';
+            ctx.strokeStyle = '#92400e';
+            ctx.lineWidth = 3;
+            
+            for (let i = 0; i < 4; i++) {
+              const y = screenY - helper.height / 2 + i * 20;
+              ctx.beginPath();
+              ctx.ellipse(screenX, y, 20 - i * 2, 15, 0, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.stroke();
+            }
+          } else if (helper.type === 'longhaixing') {
+            // Star
+            ctx.fillStyle = '#22d3ee';
+            ctx.strokeStyle = '#0e7490';
+            ctx.lineWidth = 3;
+            
+            ctx.beginPath();
+            for (let i = 0; i < 5; i++) {
+              const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
+              const x = screenX + Math.cos(angle) * helper.width / 2;
+              const y = screenY + Math.sin(angle) * helper.height / 2;
+              if (i === 0) ctx.moveTo(x, y);
+              else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+          } else if (helper.type === 'zhongdalin') {
+            // Stone person
+            ctx.fillStyle = '#4ade80';
+            ctx.strokeStyle = '#166534';
+            ctx.lineWidth = 3;
+            
+            ctx.fillRect(screenX - helper.width / 2, screenY, helper.width, helper.height / 2);
+            ctx.strokeRect(screenX - helper.width / 2, screenY, helper.width, helper.height / 2);
+            
+            ctx.beginPath();
+            ctx.arc(screenX, screenY - 10, helper.width / 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+          }
+
+          // Health bar
+          const healthPercent = helper.health / helper.maxHealth;
+          ctx.fillStyle = 'rgba(0,0,0,0.7)';
+          ctx.fillRect(screenX - helper.width / 2, screenY - helper.height / 2 - 15, helper.width, 8);
+          ctx.fillStyle = healthPercent > 0.5 ? '#22c55e' : '#ef4444';
+          ctx.fillRect(screenX - helper.width / 2, screenY - helper.height / 2 - 15, helper.width * healthPercent, 8);
+          
+          ctx.restore();
+
+          // Collision with enemies
+          game.enemies.forEach(enemy => {
+            const dx = Math.abs(helper.x - (enemy.x + enemy.width / 2));
+            const dy = Math.abs(helper.y - (enemy.y + enemy.height / 2));
+            
+            if (dx < (helper.width + enemy.width) / 2 && dy < (helper.height + enemy.height) / 2) {
+              if (game.animationFrame % 30 === 0) {
+                enemy.health -= helper.damage;
+                helper.health -= enemy.damage * 0.5;
+              }
+            }
+          });
+        }
+      } else {
+        game.maxLevelHelperUnit = null;
       }
 
       // Update enemies

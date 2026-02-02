@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Hammer, User, Settings, Gift, Users } from 'lucide-react';
+import { Play, Hammer, User, Settings, Gift, Users, Save, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import { base44 } from '@/api/base44Client';
 import PreBattleChat from '../PreBattleChat';
 import LanguageSwitcher from '../LanguageSwitcher';
 import BottomNav from '../BottomNav';
@@ -14,6 +15,46 @@ export default function StartScreen({ onStart, defeatedBosses = [] }) {
   const [showPreBattleChat, setShowPreBattleChat] = useState(false);
   const [language, setLanguage] = useState('zh');
   const [showPromoCode, setShowPromoCode] = useState(false);
+  const [hasProgress, setHasProgress] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const loggedIn = await base44.auth.isAuthenticated();
+        setIsLoggedIn(loggedIn);
+        
+        if (loggedIn) {
+          const user = await base44.auth.me();
+          const progress = await base44.entities.GameProgress.filter({ user_email: user.email });
+          setHasProgress(progress.length > 0);
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+      }
+    };
+    
+    checkAuth();
+  }, []);
+
+  const handleLogin = () => {
+    base44.auth.redirectToLogin(window.location.href);
+  };
+
+  const handleLoadProgress = async () => {
+    try {
+      const user = await base44.auth.me();
+      const progress = await base44.entities.GameProgress.filter({ user_email: user.email });
+      
+      if (progress.length > 0) {
+        // Let parent component handle loading
+        onStart(progress[0].game_mode, true);
+      }
+    } catch (error) {
+      console.error('Load progress error:', error);
+      alert('加载进度失败');
+    }
+  };
 
   const handleModeSelect = (mode) => {
     setSelectedMode(mode);
@@ -120,6 +161,25 @@ export default function StartScreen({ onStart, defeatedBosses = [] }) {
         transition={{ type: "spring", delay: 0.7 }}
         className="space-y-2 md:space-y-3 px-4 w-full max-w-md"
       >
+        {/* Login / Load Progress */}
+        {!isLoggedIn ? (
+          <Button
+            onClick={handleLogin}
+            className="w-full px-6 py-6 md:py-7 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 rounded-xl text-white text-lg md:text-xl font-bold border-2 border-blue-400/50 active:scale-95 transition-transform"
+          >
+            <LogIn className="w-6 h-6 mr-2" />
+            🔐 登录保存进度
+          </Button>
+        ) : hasProgress && (
+          <Button
+            onClick={handleLoadProgress}
+            className="w-full px-6 py-6 md:py-7 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 rounded-xl text-white text-lg md:text-xl font-bold border-2 border-green-400/50 active:scale-95 transition-transform animate-pulse"
+          >
+            <Save className="w-6 h-6 mr-2" />
+            📂 继续上次游戏
+          </Button>
+        )}
+
         <div className="grid grid-cols-2 gap-2 md:gap-3">
           <Button
             onClick={() => handleModeSelect('normal')}
