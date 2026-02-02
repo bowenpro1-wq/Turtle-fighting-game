@@ -552,7 +552,9 @@ export default function GameCanvas({
     screenShake: 0,
     totemShotCount: 0,
     towerKillCount: 0,
-    towerRequiredKills: 10
+    towerRequiredKills: 10,
+    isHoldingK: false,
+    lastBeamTick: 0
   });
 
   const generateWorld = useCallback(() => {
@@ -813,35 +815,8 @@ export default function GameCanvas({
               });
             }
           } else if (selectedWeapon === 'guigui') {
-            // 龟龟之手 - 强化光喷射
-            for (let i = 0; i < 5; i++) {
-              const spreadAngle = angle + (i - 2) * 0.1;
-              game.bullets.push({
-                x: px,
-                y: py,
-                vx: Math.cos(spreadAngle) * 16,
-                vy: Math.sin(spreadAngle) * 16,
-                damage: (20 + weaponLevel * 3) * upgrades.damage,
-                size: 12,
-                color: '#22c55e',
-                fromPlayer: true,
-                weaponType: 'light',
-                distanceTraveled: 0,
-                maxDistance: 600
-              });
-            }
-            // 光粒子
-            for (let i = 0; i < 20; i++) {
-              game.particles.push({
-                x: px,
-                y: py,
-                vx: Math.cos(angle) * (Math.random() * 8 + 5),
-                vy: Math.sin(angle) * (Math.random() * 8 + 5),
-                life: 25,
-                color: '#22c55e',
-                size: 6
-              });
-            }
+            // 龟龟之手 - 开始蓄力光束
+            game.isHoldingK = true;
           } else {
             // 默认射击
             const baseSpeed = hasHomingBullets ? 10 : 15;
@@ -883,6 +858,44 @@ export default function GameCanvas({
         }
       }
       
+      // U键 - 龟龟之手召唤技能
+      if (e.key.toLowerCase() === 'u' && selectedWeapon === 'guigui') {
+        const px = game.player.x + game.player.width / 2;
+        const py = game.player.y + game.player.height / 2;
+        
+        game.allies = game.allies || [];
+        if (game.allies.length < 5) {
+          for (let i = 0; i < 2; i++) {
+            const spawnAngle = Math.random() * Math.PI * 2;
+            const spawnDist = 100;
+            game.allies.push({
+              x: px + Math.cos(spawnAngle) * spawnDist,
+              y: py + Math.sin(spawnAngle) * spawnDist,
+              width: 45,
+              height: 55,
+              health: 80 + weaponLevel * 15,
+              maxHealth: 80 + weaponLevel * 15,
+              damage: 12 + weaponLevel * 2,
+              lifetime: 400 + weaponLevel * 60,
+              lastShot: Date.now()
+            });
+          }
+          
+          // 召唤特效
+          for (let i = 0; i < 30; i++) {
+            game.particles.push({
+              x: px,
+              y: py,
+              vx: (Math.random() - 0.5) * 10,
+              vy: (Math.random() - 0.5) * 10,
+              life: 35,
+              color: '#22c55e',
+              size: 8
+            });
+          }
+        }
+      }
+
       // H键 - 根据武器改变技能
       if (e.key.toLowerCase() === 'h') {
         if (heal()) {
@@ -1297,6 +1310,11 @@ export default function GameCanvas({
 
     const handleKeyUp = (e) => {
       game.keys[e.key.toLowerCase()] = false;
+      
+      // 释放K键 - 停止光束
+      if (e.key.toLowerCase() === 'k' && selectedWeapon === 'guigui') {
+        game.isHoldingK = false;
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -1422,6 +1440,49 @@ export default function GameCanvas({
         }
       } else if (gameMode !== 'tower' && gameMode !== 'busbreak') {
         game.lastBossEnemySpawn = 0;
+      }
+
+      // 龟龟之手持续光束攻击
+      if (selectedWeapon === 'guigui' && game.isHoldingK && Date.now() - game.lastBeamTick > 50) {
+        const px = game.player.x + game.player.width / 2;
+        const py = game.player.y + game.player.height / 2;
+        const angle = game.player.angle;
+        
+        // 发射散射光束
+        for (let i = 0; i < 3; i++) {
+          const spreadAngle = angle + (i - 1) * 0.08;
+          const beamLength = 400;
+          
+          // 创建光束伤害检测点
+          for (let dist = 50; dist < beamLength; dist += 30) {
+            const beamX = px + Math.cos(spreadAngle) * dist;
+            const beamY = py + Math.sin(spreadAngle) * dist;
+            
+            // 检测敌人碰撞
+            game.enemies.forEach(enemy => {
+              const dx = enemy.x + enemy.width / 2 - beamX;
+              const dy = enemy.y + enemy.height / 2 - beamY;
+              const distToEnemy = Math.sqrt(dx * dx + dy * dy);
+              
+              if (distToEnemy < 25) {
+                enemy.health -= (3 + weaponLevel * 0.5) * upgrades.damage;
+              }
+            });
+            
+            // 光束粒子
+            game.particles.push({
+              x: beamX,
+              y: beamY,
+              vx: Math.cos(spreadAngle) * 2,
+              vy: Math.sin(spreadAngle) * 2,
+              life: 8,
+              color: '#22c55e',
+              size: 8
+            });
+          }
+        }
+        
+        game.lastBeamTick = Date.now();
       }
 
       // Tower mode spawning
@@ -3162,6 +3223,36 @@ export default function GameCanvas({
         ctx.fill();
         ctx.globalAlpha = 1;
         ctx.setLineDash([]);
+        ctx.restore();
+      }
+
+      // Draw guigui beam
+      if (selectedWeapon === 'guigui' && game.isHoldingK) {
+        const px = game.player.x - game.camera.x + game.player.width / 2;
+        const py = game.player.y - game.camera.y + game.player.height / 2;
+        const angle = game.player.angle;
+        const beamLength = 400;
+        
+        ctx.save();
+        for (let i = 0; i < 3; i++) {
+          const spreadAngle = angle + (i - 1) * 0.08;
+          const endX = px + Math.cos(spreadAngle) * beamLength;
+          const endY = py + Math.sin(spreadAngle) * beamLength;
+          
+          const gradient = ctx.createLinearGradient(px, py, endX, endY);
+          gradient.addColorStop(0, 'rgba(34, 197, 94, 0.8)');
+          gradient.addColorStop(0.5, 'rgba(34, 197, 94, 0.5)');
+          gradient.addColorStop(1, 'rgba(34, 197, 94, 0)');
+          
+          ctx.strokeStyle = gradient;
+          ctx.lineWidth = 15 + Math.sin(game.animationFrame * 0.3) * 3;
+          ctx.shadowBlur = 20;
+          ctx.shadowColor = '#22c55e';
+          ctx.beginPath();
+          ctx.moveTo(px, py);
+          ctx.lineTo(endX, endY);
+          ctx.stroke();
+        }
         ctx.restore();
       }
 
