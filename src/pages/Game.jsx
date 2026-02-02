@@ -444,7 +444,7 @@ export default function Game() {
       },
       guangzhi: {
         name: '广智',
-        health: 5000,
+        health: 3000,
         damage: 60,
         speed: 2.3,
         size: 160,

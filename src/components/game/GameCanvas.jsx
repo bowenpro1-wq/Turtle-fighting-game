@@ -75,7 +75,7 @@ const BUSBREAK_BOSSES = {
     width: 160,
     height: 200,
     speed: 2.3,
-    health: 5000,
+    health: 3000,
     damage: 60,
     color: '#ff4500',
     pattern: 'flame',
@@ -1429,7 +1429,7 @@ export default function GameCanvas({
         const py = game.player.y + game.player.height / 2;
         const angle = game.player.angle;
         
-        const flameLength = 350;
+        const flameLength = 600;
         
         // 创建火线伤害检测点
         for (let dist = 40; dist < flameLength; dist += 25) {
@@ -3263,7 +3263,7 @@ export default function GameCanvas({
         const px = game.player.x - game.camera.x + game.player.width / 2;
         const py = game.player.y - game.camera.y + game.player.height / 2;
         const angle = game.player.angle;
-        const flameLength = 350;
+        const flameLength = 600;
         
         ctx.save();
         const endX = px + Math.cos(angle) * flameLength;
