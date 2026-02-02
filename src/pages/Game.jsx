@@ -599,6 +599,9 @@ export default function Game() {
           if (nextFloor % 10 === 1 && nextFloor > 1) {
             setCheckpoint(nextFloor);
           }
+          // Reset kill counter for next floor
+          setTowerKillCount(0);
+          setTowerRequiredKills(10 + Math.floor(nextFloor / 10) * 2);
           setGameState('playing');
         }
       } else {
@@ -625,7 +628,7 @@ export default function Game() {
         }
       }
     }
-  }, [currentBoss, defeatedBosses.length, maxHealth, hasCannonUpgrade, gameMode, currentFloor, handleBusBreakBossDefeat, difficultyMultiplier, playerProfile]);
+  }, [currentBoss, defeatedBosses.length, maxHealth, hasCannonUpgrade, gameMode, currentFloor, handleBusBreakBossDefeat, difficultyMultiplier, playerProfile, gameStartTime, score]);
 
   const handlePlayerDamage = useCallback((damage) => {
     if (isFlying) return;
@@ -1027,19 +1030,19 @@ export default function Game() {
                 />
               )}
 
-              {showForge && (
-                <Forge
-                  weapons={weapons}
-                  templates={upgradeTemplates}
-                  onUpgrade={handleWeaponUpgrade}
-                  onClose={() => setShowForge(false)}
-                />
-              )}
-            </AnimatePresence>
-          </>
-        )}
+            {showForge && (
+              <Forge
+                weapons={weapons}
+                templates={upgradeTemplates}
+                onUpgrade={handleWeaponUpgrade}
+                onClose={() => setShowForge(false)}
+              />
+            )}
+          </AnimatePresence>
+        </>
+      )}
 
-        {showWeaponSelect && (
+      {showWeaponSelect && (
           <WeaponSelect
             availableWeapons={weapons}
             onSelect={handleWeaponSelect}
