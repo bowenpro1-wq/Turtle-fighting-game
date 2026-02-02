@@ -12,6 +12,7 @@ import VirtualKeyboard from '@/components/game/VirtualKeyboard';
 import WeaponSelect from '@/components/game/WeaponSelect';
 import Forge from '@/components/game/Forge';
 import BusBreakSelect from '@/components/game/BusBreakSelect';
+import XiaowangConfirm from '@/components/game/XiaowangConfirm';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import BottomNav from '@/components/BottomNav';
 import EmailSubscriptionModal from '@/components/EmailSubscriptionModal';
@@ -89,6 +90,8 @@ export default function Game() {
     qigong: false
   });
   const [selectedBusBreakBoss, setSelectedBusBreakBoss] = useState(null);
+  const [showXiaowangConfirm, setShowXiaowangConfirm] = useState(false);
+  const [xiaowangIsClone, setXiaowangIsClone] = useState(false);
   
   // Tower mode state
   const [currentFloor, setCurrentFloor] = useState(1);
@@ -413,11 +416,11 @@ export default function Game() {
         pattern: 'chase'
       },
       xiaowang: {
-        name: '小黄龙',
-        health: 2500,
-        damage: 35,
-        speed: 3.0,
-        size: 100,
+        name: xiaowangIsClone ? '小黄龙分身' : '小黄龙',
+        health: xiaowangIsClone ? 1500 : 2500,
+        damage: xiaowangIsClone ? 25 : 35,
+        speed: xiaowangIsClone ? 2.5 : 3.0,
+        size: xiaowangIsClone ? 80 : 100,
         color: '#f59e0b',
         pattern: 'dash'
       },
@@ -486,7 +489,28 @@ export default function Game() {
   };
 
   const handleBossSelect = (bossId) => {
-    setSelectedBusBreakBoss(bossId);
+    if (bossId === 'xiaowang') {
+      setShowXiaowangConfirm(true);
+    } else {
+      setSelectedBusBreakBoss(bossId);
+      setXiaowangIsClone(false);
+      setGameState('start');
+      setShowWeaponSelect(true);
+    }
+  };
+
+  const handleXiaowangTrue = () => {
+    setSelectedBusBreakBoss('xiaowang');
+    setXiaowangIsClone(false);
+    setShowXiaowangConfirm(false);
+    setGameState('start');
+    setShowWeaponSelect(true);
+  };
+
+  const handleXiaowangClone = () => {
+    setSelectedBusBreakBoss('xiaowang');
+    setXiaowangIsClone(true);
+    setShowXiaowangConfirm(false);
     setGameState('start');
     setShowWeaponSelect(true);
   };
@@ -520,14 +544,14 @@ export default function Game() {
       // Unlock specific weapon for each boss
       const bossWeaponMap = {
         zhongdalin: 'totem',
-        xiaowang: 'dianchao',
+        xiaowang: xiaowangIsClone ? null : 'dianchao',
         longhaixing: null,
         qigong: null,
         guangzhi: 'chichao'
       };
       
       const weaponToUnlock = bossWeaponMap[bossName];
-      if (weaponToUnlock) {
+      if (weaponToUnlock && !xiaowangIsClone) {
         setWeapons(prev => {
           const newWeapons = {
             ...prev,
@@ -933,11 +957,22 @@ export default function Game() {
           <StartScreen onStart={startGame} defeatedBosses={defeatedBosses} />
         )}
 
-        {gameState === 'busbreak_select' && (
+        {gameState === 'busbreak_select' && !showXiaowangConfirm && (
           <BusBreakSelect
             onSelectBoss={handleBossSelect}
             onCancel={() => setGameState('start')}
             defeatedBosses={dailyBossesDefeated}
+          />
+        )}
+
+        {showXiaowangConfirm && (
+          <XiaowangConfirm
+            onSelectTrue={handleXiaowangTrue}
+            onSelectClone={handleXiaowangClone}
+            onCancel={() => {
+              setShowXiaowangConfirm(false);
+              setGameState('busbreak_select');
+            }}
           />
         )}
         
@@ -1015,6 +1050,7 @@ export default function Game() {
               helperTimer={helperTimer}
               towerKillCount={towerKillCount}
               towerRequiredKills={towerRequiredKills}
+              weaponLevel={weapons[selectedWeapon]?.level || 0}
             />
             
             <AnimatePresence>
@@ -1054,16 +1090,27 @@ export default function Game() {
         </>
       )}
 
+      {showXiaowangConfirm && (
+        <XiaowangConfirm
+          onSelectTrue={handleXiaowangTrue}
+          onSelectClone={handleXiaowangClone}
+          onCancel={() => {
+            setShowXiaowangConfirm(false);
+            setGameState('busbreak_select');
+          }}
+        />
+      )}
+
       {showWeaponSelect && (
-          <WeaponSelect
-            availableWeapons={weapons}
-            onSelect={handleWeaponSelect}
-            onClose={() => {
-              setShowWeaponSelect(false);
-              setGameState('start');
-            }}
-          />
-        )}
+        <WeaponSelect
+          availableWeapons={weapons}
+          onSelect={handleWeaponSelect}
+          onClose={() => {
+            setShowWeaponSelect(false);
+            setGameState('start');
+          }}
+        />
+      )}
         
         {(gameState === 'gameover' || gameState === 'victory') && (
           <GameOver

@@ -554,7 +554,9 @@ export default function GameCanvas({
     towerKillCount: 0,
     towerRequiredKills: 10,
     isHoldingK: false,
-    lastBeamTick: 0
+    lastBeamTick: 0,
+    flameLineActive: false,
+    lastFlameLineTick: 0
   });
 
   const generateWorld = useCallback(() => {
@@ -692,35 +694,8 @@ export default function GameCanvas({
           const py = game.player.y + game.player.height / 2;
 
           if (selectedWeapon === 'chichao') {
-            // 赤潮 - 火焰喷射
-            for (let i = 0; i < 5; i++) {
-              const spreadAngle = angle + (Math.random() - 0.5) * 0.3;
-              game.bullets.push({
-                x: px,
-                y: py,
-                vx: Math.cos(spreadAngle) * (12 + Math.random() * 3),
-                vy: Math.sin(spreadAngle) * (12 + Math.random() * 3),
-                damage: (15 + weaponLevel * 2) * upgrades.damage,
-                size: 10,
-                color: '#ff4500',
-                fromPlayer: true,
-                weaponType: 'flame',
-                distanceTraveled: 0,
-                maxDistance: 400
-              });
-            }
-            // 火焰粒子效果
-            for (let i = 0; i < 15; i++) {
-              game.particles.push({
-                x: px,
-                y: py,
-                vx: Math.cos(angle) * (Math.random() * 8 + 5),
-                vy: Math.sin(angle) * (Math.random() * 8 + 5),
-                life: 20,
-                color: Math.random() > 0.5 ? '#ff4500' : '#ffa500',
-                size: 6
-              });
-            }
+            // 赤潮 - 开始蓄力火线
+            game.flameLineActive = true;
           } else if (selectedWeapon === 'dianchao') {
             // 电巢 - 四周喷射电流
             for (let i = 0; i < 8; i++) {
@@ -1311,9 +1286,13 @@ export default function GameCanvas({
     const handleKeyUp = (e) => {
       game.keys[e.key.toLowerCase()] = false;
       
-      // 释放K键 - 停止光束
-      if (e.key.toLowerCase() === 'k' && selectedWeapon === 'guigui') {
-        game.isHoldingK = false;
+      // 释放K键 - 停止光束/火线
+      if (e.key.toLowerCase() === 'k') {
+        if (selectedWeapon === 'guigui') {
+          game.isHoldingK = false;
+        } else if (selectedWeapon === 'chichao') {
+          game.flameLineActive = false;
+        }
       }
     };
 
@@ -1440,6 +1419,57 @@ export default function GameCanvas({
         }
       } else if (gameMode !== 'tower' && gameMode !== 'busbreak') {
         game.lastBossEnemySpawn = 0;
+      }
+
+      // 赤潮持续火线攻击
+      if (selectedWeapon === 'chichao' && game.flameLineActive && Date.now() - game.lastFlameLineTick > 50) {
+        const px = game.player.x + game.player.width / 2;
+        const py = game.player.y + game.player.height / 2;
+        const angle = game.player.angle;
+        
+        const flameLength = 350;
+        
+        // 创建火线伤害检测点
+        for (let dist = 40; dist < flameLength; dist += 25) {
+          const flameX = px + Math.cos(angle) * dist;
+          const flameY = py + Math.sin(angle) * dist;
+          
+          // Boss伤害检测
+          if (gameMode === 'busbreak' && game.busBreakBoss && currentBoss) {
+            const boss = game.busBreakBoss;
+            const dx = boss.x - flameX;
+            const dy = boss.y - flameY;
+            const distToBoss = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distToBoss < currentBoss.size / 2 + 20) {
+              onBossDamage((4 + weaponLevel * 0.8) * upgrades.damage);
+            }
+          }
+          
+          // 敌人伤害检测
+          game.enemies.forEach(enemy => {
+            const dx = enemy.x + enemy.width / 2 - flameX;
+            const dy = enemy.y + enemy.height / 2 - flameY;
+            const distToEnemy = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distToEnemy < 30) {
+              enemy.health -= (4 + weaponLevel * 0.8) * upgrades.damage;
+            }
+          });
+          
+          // 火焰粒子
+          game.particles.push({
+            x: flameX,
+            y: flameY,
+            vx: Math.cos(angle) * 3 + (Math.random() - 0.5) * 2,
+            vy: Math.sin(angle) * 3 + (Math.random() - 0.5) * 2,
+            life: 12,
+            color: Math.random() > 0.5 ? '#ff4500' : '#ffa500',
+            size: 9
+          });
+        }
+        
+        game.lastFlameLineTick = Date.now();
       }
 
       // 龟龟之手持续光束攻击
@@ -3223,6 +3253,33 @@ export default function GameCanvas({
         ctx.fill();
         ctx.globalAlpha = 1;
         ctx.setLineDash([]);
+        ctx.restore();
+      }
+
+      // Draw chichao flame line
+      if (selectedWeapon === 'chichao' && game.flameLineActive) {
+        const px = game.player.x - game.camera.x + game.player.width / 2;
+        const py = game.player.y - game.camera.y + game.player.height / 2;
+        const angle = game.player.angle;
+        const flameLength = 350;
+        
+        ctx.save();
+        const endX = px + Math.cos(angle) * flameLength;
+        const endY = py + Math.sin(angle) * flameLength;
+        
+        const gradient = ctx.createLinearGradient(px, py, endX, endY);
+        gradient.addColorStop(0, 'rgba(255, 69, 0, 0.9)');
+        gradient.addColorStop(0.5, 'rgba(255, 140, 0, 0.6)');
+        gradient.addColorStop(1, 'rgba(255, 69, 0, 0)');
+        
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 20 + Math.sin(game.animationFrame * 0.3) * 4;
+        ctx.shadowBlur = 25;
+        ctx.shadowColor = '#ff4500';
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(endX, endY);
+        ctx.stroke();
         ctx.restore();
       }
 

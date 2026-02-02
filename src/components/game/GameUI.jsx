@@ -30,7 +30,8 @@ export default function GameUI({
   maxLevelHelper,
   helperTimer,
   towerKillCount = 0,
-  towerRequiredKills = 10
+  towerRequiredKills = 10,
+  weaponLevel = 0
 }) {
   const [prevBossHealth, setPrevBossHealth] = useState(bossHealth);
   const [healthShake, setHealthShake] = useState(false);
