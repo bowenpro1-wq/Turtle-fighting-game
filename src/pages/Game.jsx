@@ -441,10 +441,10 @@ export default function Game() {
       },
       guangzhi: {
         name: '广智',
-        health: 5000,
-        damage: 60,
-        speed: 2.2,
-        size: 150,
+        health: 8000,
+        damage: 80,
+        speed: 2.8,
+        size: 180,
         color: '#ff4500',
         pattern: 'flame'
       }

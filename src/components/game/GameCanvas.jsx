@@ -72,14 +72,14 @@ const BUSBREAK_BOSSES = {
   },
   guangzhi: {
     name: '广智',
-    width: 150,
-    height: 180,
-    speed: 2.2,
-    health: 5000,
-    damage: 60,
+    width: 180,
+    height: 220,
+    speed: 2.8,
+    health: 8000,
+    damage: 80,
     color: '#ff4500',
     pattern: 'flame',
-    shootInterval: 2000,
+    shootInterval: 1500,
     isSpecialBoss: true
   }
 };
@@ -813,33 +813,33 @@ export default function GameCanvas({
               });
             }
           } else if (selectedWeapon === 'guigui') {
-            // 龟龟之手 - 光喷射
-            for (let i = 0; i < 3; i++) {
-              const spreadAngle = angle + (i - 1) * 0.15;
+            // 龟龟之手 - 强化光喷射
+            for (let i = 0; i < 5; i++) {
+              const spreadAngle = angle + (i - 2) * 0.1;
               game.bullets.push({
                 x: px,
                 y: py,
-                vx: Math.cos(spreadAngle) * 14,
-                vy: Math.sin(spreadAngle) * 14,
-                damage: (12 + weaponLevel * 2) * upgrades.damage,
-                size: 10,
+                vx: Math.cos(spreadAngle) * 16,
+                vy: Math.sin(spreadAngle) * 16,
+                damage: (20 + weaponLevel * 3) * upgrades.damage,
+                size: 12,
                 color: '#22c55e',
                 fromPlayer: true,
                 weaponType: 'light',
                 distanceTraveled: 0,
-                maxDistance: 450
+                maxDistance: 600
               });
             }
             // 光粒子
-            for (let i = 0; i < 12; i++) {
+            for (let i = 0; i < 20; i++) {
               game.particles.push({
                 x: px,
                 y: py,
-                vx: Math.cos(angle) * (Math.random() * 6 + 4),
-                vy: Math.sin(angle) * (Math.random() * 6 + 4),
-                life: 18,
+                vx: Math.cos(angle) * (Math.random() * 8 + 5),
+                vy: Math.sin(angle) * (Math.random() * 8 + 5),
+                life: 25,
                 color: '#22c55e',
-                size: 5
+                size: 6
               });
             }
           } else {
@@ -1067,25 +1067,25 @@ export default function GameCanvas({
               });
             }
           } else if (selectedWeapon === 'guigui') {
-            // 龟龟之手 - 龟圈 (持续伤害区域)
+            // 龟龟之手 - 超大龟圈 (持续伤害区域)
             game.turtleRing = {
               x: px,
               y: py,
-              radius: 200,
-              damage: (5 + weaponLevel) * upgrades.damage,
-              life: 200,
-              maxLife: 200
+              radius: 350,
+              damage: (15 + weaponLevel * 2) * upgrades.damage,
+              life: 300,
+              maxLife: 300
             };
-            for (let i = 0; i < 80; i++) {
-              const angle = (Math.PI * 2 / 80) * i;
+            for (let i = 0; i < 120; i++) {
+              const angle = (Math.PI * 2 / 120) * i;
               game.particles.push({
-                x: px + Math.cos(angle) * 200,
-                y: py + Math.sin(angle) * 200,
-                vx: Math.cos(angle) * 3,
-                vy: Math.sin(angle) * 3,
-                life: 50,
+                x: px + Math.cos(angle) * 350,
+                y: py + Math.sin(angle) * 350,
+                vx: Math.cos(angle) * 4,
+                vy: Math.sin(angle) * 4,
+                life: 60,
                 color: '#22c55e',
-                size: 8
+                size: 10
               });
             }
           } else if (selectedWeapon === 'totem') {
@@ -1204,40 +1204,40 @@ export default function GameCanvas({
               });
             }
           } else if (selectedWeapon === 'guigui') {
-            // 龟龟之手 - 龟文诅咒
-            for (let i = 0; i < 200; i++) {
+            // 龟龟之手 - 超强龟文诅咒
+            for (let i = 0; i < 300; i++) {
               const angle = Math.random() * Math.PI * 2;
-              const dist = Math.random() * 400;
+              const dist = Math.random() * 600;
               game.particles.push({
                 x: px + Math.cos(angle) * dist,
                 y: py + Math.sin(angle) * dist,
                 vx: 0,
                 vy: 0,
-                life: 100,
+                life: 120,
                 color: '#22c55e',
-                size: 8,
+                size: 12,
                 type: 'curse'
               });
             }
             
-            // 对Boss造成大量伤害，但不秒杀
+            // 对Boss造成超大伤害
             if (currentBoss && gameState === 'boss') {
-              const bossDamage = 600 + weaponLevel * 60;
+              const bossDamage = 1500 + weaponLevel * 150;
               onBossDamage(bossDamage);
             }
             
-            // 诅咒所有普通敌人
+            // 秒杀所有普通敌人
             game.enemies.forEach(enemy => {
-              enemy.health -= (100 + weaponLevel * 15) * upgrades.damage;
-              for (let i = 0; i < 30; i++) {
+              enemy.health = 0;
+              for (let i = 0; i < 50; i++) {
                 game.particles.push({
                   x: enemy.x + enemy.width / 2,
                   y: enemy.y + enemy.height / 2,
-                  vx: (Math.random() - 0.5) * 12,
-                  vy: (Math.random() - 0.5) * 12,
-                  life: 60,
+                  vx: (Math.random() - 0.5) * 15,
+                  vy: (Math.random() - 0.5) * 15,
+                  life: 80,
                   color: '#22c55e',
-                  size: 6
+                  size: 8
                 });
               }
             });
