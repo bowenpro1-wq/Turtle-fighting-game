@@ -57,12 +57,13 @@ export default function ForgePage() {
       color: 'from-green-500 to-emerald-500',
       maxLevel: 8,
       special: true,
-      description: '传说级武器，需要8个模板完全解锁',
+      description: '最强传说级武器',
       skills: [
-        { name: '光喷射', desc: '向前喷射龟光', level: 2 },
-        { name: '龟圈', desc: '散发致命光圈(10秒)', level: 4 },
-        { name: '外龟法', desc: '召唤龟龟军团', level: 6 },
-        { name: '龟文诅咒', desc: '散发诅咒文字', level: 8 }
+        { name: '散射光束', desc: '长按K键发射散射光束', level: 1 },
+        { name: '召唤龟龟', desc: 'U键召唤龟龟助战', level: 2 },
+        { name: '超强治疗', desc: 'H键恢复大量生命', level: 4 },
+        { name: '超大龟圈', desc: 'L键超大范围伤害', level: 6 },
+        { name: '龟文诅咒', desc: 'P键秒杀诅咒', level: 8 }
       ]
     },
     dianchao: {
