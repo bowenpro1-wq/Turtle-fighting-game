@@ -21,6 +21,22 @@ export default function Multiplayer() {
     loadData();
   }, []);
 
+  // Subscribe to match updates when in a room
+  useEffect(() => {
+    if (!mode?.match?.id) return;
+
+    const unsubscribe = base44.entities.MultiplayerMatch.subscribe((event) => {
+      if (event.id === mode.match.id && event.type === 'update') {
+        setMode(prev => ({
+          ...prev,
+          match: event.data
+        }));
+      }
+    });
+
+    return () => unsubscribe();
+  }, [mode?.match?.id]);
+
   const loadData = async () => {
     try {
       const user = await base44.auth.me();
