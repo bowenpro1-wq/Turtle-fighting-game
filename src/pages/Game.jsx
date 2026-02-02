@@ -63,6 +63,7 @@ export default function Game() {
   const [showWeaponSelect, setShowWeaponSelect] = useState(false);
   const [showForge, setShowForge] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(true);
+  const [isInShop, setIsInShop] = useState(false);
   const [waveNumber, setWaveNumber] = useState(1);
   const [survivalTime, setSurvivalTime] = useState(0);
   
@@ -855,7 +856,9 @@ export default function Game() {
   useEffect(() => {
     const handleKeyPress = (e) => {
       if (e.key.toLowerCase() === 'b' && (gameState === 'playing' || gameState === 'boss')) {
-        setShowShop(prev => !prev);
+        const newShopState = !showShop;
+        setShowShop(newShopState);
+        setIsInShop(newShopState);
       }
       if (e.key.toLowerCase() === 'f' && (gameState === 'playing' || gameState === 'boss')) {
         setShowForge(prev => !prev);
@@ -870,7 +873,7 @@ export default function Game() {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [gameState, gameMode, currentFloor, checkpoint, score, coins, playerHealth, defeatedBosses, upgrades, selectedWeapon, hasCannonUpgrade]);
+  }, [gameState, gameMode, currentFloor, checkpoint, score, coins, playerHealth, defeatedBosses, upgrades, selectedWeapon, hasCannonUpgrade, showShop]);
 
   // Auto-save every 30 seconds during gameplay
   useEffect(() => {
@@ -952,6 +955,7 @@ export default function Game() {
               onGemDefeated={setGemDefeated}
               maxLevelHelper={maxLevelHelper}
               helperTimer={helperTimer}
+              isInShop={isInShop}
             />
             
             <GameUI
@@ -1000,7 +1004,10 @@ export default function Game() {
                   playerColor={playerColor}
                   bulletColor={bulletColor}
                   onPurchase={handlePurchase}
-                  onClose={() => setShowShop(false)}
+                  onClose={() => {
+                    setShowShop(false);
+                    setIsInShop(false);
+                  }}
                 />
               )}
 

@@ -509,7 +509,10 @@ export default function GameCanvas({
   towerSpecialFloor,
   onTowerSpecialFloor,
   gemDefeated,
-  onGemDefeated
+  onGemDefeated,
+  maxLevelHelper,
+  helperTimer,
+  isInShop = false
 }) {
   const canvasRef = useRef(null);
   const WORLD_WIDTH = gameMode === 'tower' ? 1800 : 4000;
@@ -1754,7 +1757,7 @@ export default function GameCanvas({
         }
 
         // Boss collision damage
-        if (distToPlayer < currentBoss.size + 25 && !isFlying) {
+        if (distToPlayer < currentBoss.size + 25 && !isFlying && !isInShop) {
           if (game.animationFrame % 30 === 0) {
             onPlayerDamage(currentBoss.damage * 0.5);
           }
@@ -2439,7 +2442,7 @@ export default function GameCanvas({
           enemy.y += enemy.vy;
 
           // Collision damage (ram attack)
-          if (distToPlayer < 60 && !isFlying) {
+          if (distToPlayer < 60 && !isFlying && !isInShop) {
             if (game.animationFrame % 30 === 0) {
               onPlayerDamage(enemy.damage * 0.5);
             }
@@ -2643,7 +2646,7 @@ export default function GameCanvas({
           }
 
           // Damage player
-          if (!isFlying) {
+          if (!isFlying && !isInShop) {
             const dx = game.player.x + game.player.width / 2 - flame.x;
             const dy = game.player.y + game.player.height / 2 - flame.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
@@ -2959,7 +2962,7 @@ export default function GameCanvas({
         bullet.y += bullet.vy;
 
         // Check player collision
-        if (!isFlying &&
+        if (!isFlying && !isInShop &&
             bullet.x > game.player.x && bullet.x < game.player.x + game.player.width &&
             bullet.y > game.player.y && bullet.y < game.player.y + game.player.height) {
           onPlayerDamage(bullet.damage);
@@ -3047,7 +3050,7 @@ export default function GameCanvas({
           // Damage player
           const dx = game.player.x - zone.x;
           const dy = game.player.y - zone.y;
-          if (Math.sqrt(dx * dx + dy * dy) < zone.radius && !isFlying) {
+          if (Math.sqrt(dx * dx + dy * dy) < zone.radius && !isFlying && !isInShop) {
             if (game.animationFrame % 30 === 0) {
               onPlayerDamage(zone.damage / 5);
             }
@@ -3132,7 +3135,23 @@ export default function GameCanvas({
       }
 
       // Draw player
-      drawPlayer(ctx, game.player, isFlying, game.camera, game.animationFrame, playerColor);
+      drawPlayer(ctx, game.player, isFlying || isInShop, game.camera, game.animationFrame, playerColor);
+      
+      // Draw shop invincibility indicator
+      if (isInShop) {
+        const screenX = game.player.x - game.camera.x + game.player.width / 2;
+        const screenY = game.player.y - game.camera.y + game.player.height / 2;
+        
+        ctx.save();
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 4;
+        ctx.globalAlpha = 0.6 + Math.sin(game.animationFrame * 0.15) * 0.3;
+        ctx.beginPath();
+        ctx.arc(screenX, screenY, 40 + Math.sin(game.animationFrame * 0.1) * 5, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        ctx.restore();
+      }
 
       // Draw melee attack circle - 360 degrees
       if (isMeleeAttacking) {
