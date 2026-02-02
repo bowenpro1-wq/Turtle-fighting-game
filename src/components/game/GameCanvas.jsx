@@ -36,11 +36,11 @@ const BUSBREAK_BOSSES = {
   },
   xiaowang: {
     name: '小黄龙',
-    width: 100,
-    height: 120,
-    speed: 3.0,
-    health: 2500,
-    damage: 35,
+    width: 110,
+    height: 130,
+    speed: 3.5,
+    health: 3500,
+    damage: 50,
     color: '#f59e0b',
     pattern: 'dash',
     shootInterval: 1500,
@@ -72,11 +72,11 @@ const BUSBREAK_BOSSES = {
   },
   guangzhi: {
     name: '广智',
-    width: 180,
-    height: 220,
-    speed: 2.8,
-    health: 8000,
-    damage: 80,
+    width: 160,
+    height: 200,
+    speed: 2.3,
+    health: 5000,
+    damage: 60,
     color: '#ff4500',
     pattern: 'flame',
     shootInterval: 1500,
@@ -697,33 +697,34 @@ export default function GameCanvas({
             // 赤潮 - 开始蓄力火线
             game.flameLineActive = true;
           } else if (selectedWeapon === 'dianchao') {
-            // 电巢 - 四周喷射电流
-            for (let i = 0; i < 8; i++) {
-              const spreadAngle = (Math.PI * 2 / 8) * i;
+            // 电巢 - 四周喷射强力电流（增强版）
+            for (let i = 0; i < 12; i++) {
+              const spreadAngle = (Math.PI * 2 / 12) * i;
               game.bullets.push({
                 x: px,
                 y: py,
-                vx: Math.cos(spreadAngle) * 10,
-                vy: Math.sin(spreadAngle) * 10,
-                damage: (12 + weaponLevel * 2) * upgrades.damage,
-                size: 8,
+                vx: Math.cos(spreadAngle) * 14,
+                vy: Math.sin(spreadAngle) * 14,
+                damage: (20 + weaponLevel * 3) * upgrades.damage,
+                size: 10,
                 color: '#fbbf24',
                 fromPlayer: true,
                 weaponType: 'electric',
                 distanceTraveled: 0,
-                maxDistance: 350
+                maxDistance: 450,
+                pierce: true
               });
             }
             // 电流粒子
-            for (let i = 0; i < 20; i++) {
+            for (let i = 0; i < 35; i++) {
               game.particles.push({
                 x: px,
                 y: py,
-                vx: (Math.random() - 0.5) * 12,
-                vy: (Math.random() - 0.5) * 12,
-                life: 15,
+                vx: (Math.random() - 0.5) * 15,
+                vy: (Math.random() - 0.5) * 15,
+                life: 25,
                 color: '#fbbf24',
-                size: 4
+                size: 6
               });
             }
           } else if (selectedWeapon === 'totem') {
@@ -1026,32 +1027,33 @@ export default function GameCanvas({
               });
             }
           } else if (selectedWeapon === 'dianchao') {
-            // 电巢 - 电气攻击
-            for (let i = 0; i < 80; i++) {
+            // 电巢 - 雷电风暴（增强版）
+            for (let i = 0; i < 120; i++) {
               const angle = Math.random() * Math.PI * 2;
               game.bullets.push({
                 x: px,
                 y: py,
-                vx: Math.cos(angle) * (8 + Math.random() * 6),
-                vy: Math.sin(angle) * (8 + Math.random() * 6),
-                damage: (35 + weaponLevel * 4) * upgrades.damage,
-                size: 12,
+                vx: Math.cos(angle) * (10 + Math.random() * 8),
+                vy: Math.sin(angle) * (10 + Math.random() * 8),
+                damage: (50 + weaponLevel * 6) * upgrades.damage,
+                size: 14,
                 color: '#fbbf24',
                 fromPlayer: true,
                 weaponType: 'thunder',
                 distanceTraveled: 0,
-                maxDistance: 500
+                maxDistance: 600,
+                pierce: true
               });
             }
-            for (let i = 0; i < 70; i++) {
+            for (let i = 0; i < 100; i++) {
               game.particles.push({
                 x: px,
                 y: py,
-                vx: (Math.random() - 0.5) * 20,
-                vy: (Math.random() - 0.5) * 20,
-                life: 50,
+                vx: (Math.random() - 0.5) * 25,
+                vy: (Math.random() - 0.5) * 25,
+                life: 60,
                 color: '#fbbf24',
-                size: 8
+                size: 10
               });
             }
           } else if (selectedWeapon === 'guigui') {
