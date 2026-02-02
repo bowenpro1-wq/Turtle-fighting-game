@@ -480,6 +480,7 @@ export default function GameCanvas({
   gameMode,
   selectedWeapon,
   weaponLevel,
+  weaponStats = { damage: 0, fireRate: 0, range: 0, special: 0 },
   onPlayerDamage,
   onEnemyKill,
   onBossDamage,
@@ -698,6 +699,8 @@ export default function GameCanvas({
             game.flameLineActive = true;
           } else if (selectedWeapon === 'dianchao') {
             // 电巢 - 四周喷射强力电流（增强版）
+            const damageBonus = 1 + (weaponStats.damage * 0.15);
+            const rangeBonus = 1 + (weaponStats.range * 0.10);
             for (let i = 0; i < 12; i++) {
               const spreadAngle = (Math.PI * 2 / 12) * i;
               game.bullets.push({
@@ -705,13 +708,13 @@ export default function GameCanvas({
                 y: py,
                 vx: Math.cos(spreadAngle) * 14,
                 vy: Math.sin(spreadAngle) * 14,
-                damage: (20 + weaponLevel * 3) * upgrades.damage,
+                damage: (20 + weaponLevel * 3) * upgrades.damage * damageBonus,
                 size: 10,
                 color: '#fbbf24',
                 fromPlayer: true,
                 weaponType: 'electric',
                 distanceTraveled: 0,
-                maxDistance: 450,
+                maxDistance: 450 * rangeBonus,
                 pierce: true
               });
             }
@@ -1429,7 +1432,9 @@ export default function GameCanvas({
         const py = game.player.y + game.player.height / 2;
         const angle = game.player.angle;
         
-        const flameLength = 600;
+        const damageBonus = 1 + (weaponStats.damage * 0.15);
+        const rangeBonus = 1 + (weaponStats.range * 0.10);
+        const flameLength = 600 * rangeBonus;
         
         // 创建火线伤害检测点
         for (let dist = 40; dist < flameLength; dist += 25) {
@@ -1444,7 +1449,7 @@ export default function GameCanvas({
             const distToBoss = Math.sqrt(dx * dx + dy * dy);
             
             if (distToBoss < currentBoss.size / 2 + 20) {
-              onBossDamage((4 + weaponLevel * 0.8) * upgrades.damage);
+              onBossDamage((4 + weaponLevel * 0.8) * upgrades.damage * damageBonus);
             }
           }
           
@@ -1455,7 +1460,7 @@ export default function GameCanvas({
             const distToEnemy = Math.sqrt(dx * dx + dy * dy);
             
             if (distToEnemy < 30) {
-              enemy.health -= (4 + weaponLevel * 0.8) * upgrades.damage;
+              enemy.health -= (4 + weaponLevel * 0.8) * upgrades.damage * damageBonus;
             }
           });
           

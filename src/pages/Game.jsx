@@ -16,6 +16,7 @@ import XiaowangConfirm from '@/components/game/XiaowangConfirm';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import BottomNav from '@/components/BottomNav';
 import EmailSubscriptionModal from '@/components/EmailSubscriptionModal';
+import WeaponUpgradeShop from '@/components/game/WeaponUpgradeShop';
 
 const BOSSES = [
   { id: 1, name: "海星守卫", health: 100, damage: 15, speed: 1.5, size: 60, color: "#ff6b6b", pattern: "circle" },
@@ -65,6 +66,16 @@ export default function Game() {
   const [showForge, setShowForge] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(true);
   const [isInShop, setIsInShop] = useState(false);
+  const [showWeaponUpgrade, setShowWeaponUpgrade] = useState(false);
+  const [weaponStats, setWeaponStats] = useState(() => {
+    const saved = localStorage.getItem('weaponStats');
+    return saved ? JSON.parse(saved) : {
+      chichao: { damage: 0, fireRate: 0, range: 0, special: 0 },
+      guigui: { damage: 0, fireRate: 0, range: 0, special: 0 },
+      dianchao: { damage: 0, fireRate: 0, range: 0, special: 0 },
+      totem: { damage: 0, fireRate: 0, range: 0, special: 0 }
+    };
+  });
   const [waveNumber, setWaveNumber] = useState(1);
   const [survivalTime, setSurvivalTime] = useState(0);
   
@@ -357,52 +368,51 @@ export default function Game() {
   };
 
   const continueGameAfterWeaponSelect = async (mode, fromCheckpoint = false) => {
-    setGameMode(mode);
-    setPlayerHealth(100 * upgrades.maxHealth);
-    setMaxHealth(100 * upgrades.maxHealth);
-    setScore(0);
-    setDefeatedBosses([]);
-    setCurrentBoss(null);
-    setShootCooldown(0);
-    setHealCooldown(0);
-    setFlyCooldown(0);
-    setLargeAttackCooldown(0);
-    setAllOutAttackCooldown(0);
-    setWaveNumber(1);
-    setSurvivalTime(0);
-    setShowBossIntro(false);
-    setBossHealth(0);
-    setBossMaxHealth(0);
-    setTowerKillCount(0);
-    
-    // Track game start
-    if (playerProfile) {
-      await updateProfileStats({
-        games_played: (playerProfile.games_played || 0) + 1
-      });
-    }
-    
-    if (mode === 'tower') {
-      if (fromCheckpoint) {
-        setCurrentFloor(checkpoint);
-      } else {
-        setCurrentFloor(1);
-        setCheckpoint(1);
-      }
-      setGemDefeated(false);
-      setTowerSpecialFloor(null);
+      setGameMode(mode);
+      setPlayerHealth(100 * upgrades.maxHealth);
+      setMaxHealth(100 * upgrades.maxHealth);
+      setScore(0);
+      setDefeatedBosses([]);
+      setCurrentBoss(null);
+      setShootCooldown(0);
+      setHealCooldown(0);
+      setFlyCooldown(0);
+      setLargeAttackCooldown(0);
+      setAllOutAttackCooldown(0);
+      setWaveNumber(1);
+      setSurvivalTime(0);
+      setShowBossIntro(false);
+      setBossHealth(0);
+      setBossMaxHealth(0);
       setTowerKillCount(0);
-    } else if (mode === 'busbreak' && selectedBusBreakBoss) {
-      // Trigger selected boss after 2 seconds
-      setTimeout(() => {
-        triggerBusBreakBoss(selectedBusBreakBoss);
-      }, 2000);
-    }
-    
-    setTimeout(() => {
+
+      // Track game start
+      if (playerProfile) {
+        await updateProfileStats({
+          games_played: (playerProfile.games_played || 0) + 1
+        });
+      }
+
+      if (mode === 'tower') {
+        if (fromCheckpoint) {
+          setCurrentFloor(checkpoint);
+        } else {
+          setCurrentFloor(1);
+          setCheckpoint(1);
+        }
+        setGemDefeated(false);
+        setTowerSpecialFloor(null);
+        setTowerKillCount(0);
+      } else if (mode === 'busbreak' && selectedBusBreakBoss) {
+        // Trigger selected boss after 2 seconds
+        setTimeout(() => {
+          triggerBusBreakBoss(selectedBusBreakBoss);
+        }, 2000);
+      }
+
+      // Immediate state change
       setGameState('playing');
-    }, 0);
-  };
+    };
 
   const triggerBusBreakBoss = useCallback((bossId) => {
     const BUSBREAK_BOSSES = {
@@ -914,6 +924,9 @@ export default function Game() {
       if (e.key.toLowerCase() === 'f' && (gameState === 'playing' || gameState === 'boss')) {
         setShowForge(prev => !prev);
       }
+      if (e.key.toLowerCase() === 'g' && (gameState === 'playing' || gameState === 'boss')) {
+        setShowWeaponUpgrade(prev => !prev);
+      }
       // Save progress on Ctrl+S
       if (e.ctrlKey && e.key.toLowerCase() === 's' && (gameState === 'playing' || gameState === 'boss')) {
         e.preventDefault();
@@ -985,6 +998,7 @@ export default function Game() {
               gameMode={gameMode}
               selectedWeapon={selectedWeapon}
               weaponLevel={weapons[selectedWeapon]?.level || 0}
+              weaponStats={weaponStats[selectedWeapon] || { damage: 0, fireRate: 0, range: 0, special: 0 }}
               onPlayerDamage={handlePlayerDamage}
               onEnemyKill={handleEnemyKill}
               onBossDamage={handleBossDamage}
@@ -1086,7 +1100,26 @@ export default function Game() {
                 onClose={() => setShowForge(false)}
               />
             )}
-          </AnimatePresence>
+
+            {showWeaponUpgrade && (
+              <WeaponUpgradeShop
+                weapon={selectedWeapon}
+                coins={coins}
+                onUpgrade={(cost) => {
+                  if (coins >= cost) {
+                    setCoins(prev => {
+                      const newCoins = prev - cost;
+                      localStorage.setItem('gameCoins', newCoins.toString());
+                      return newCoins;
+                    });
+                    return true;
+                  }
+                  return false;
+                }}
+                onClose={() => setShowWeaponUpgrade(false)}
+              />
+            )}
+            </AnimatePresence>
         </>
       )}
 
