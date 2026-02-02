@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Hammer, User, Settings, Gift, Users, Save, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
