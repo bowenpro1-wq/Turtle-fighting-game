@@ -1164,34 +1164,104 @@ export default function GameCanvas({
         }
       }
 
-      // P键 - 武器终极技能
+      // P键 - 主动召唤战友技能
       if (e.key.toLowerCase() === 'p') {
         if (allOutAttack()) {
           const px = game.player.x + game.player.width / 2;
           const py = game.player.y + game.player.height / 2;
           game.screenShake = 25;
+          
+          game.allies = game.allies || [];
 
           if (selectedWeapon === 'chichao') {
-            // 赤潮 - 广志真身
-            game.guangzhiSpirit = {
-              x: px,
-              y: py - 200,
-              width: 150,
-              height: 180,
-              damage: (80 + weaponLevel * 10) * upgrades.damage,
-              lifetime: 150 + weaponLevel * 20,
-              lastAttack: Date.now()
-            };
-            for (let i = 0; i < 100; i++) {
-              game.particles.push({
-                x: px,
-                y: py,
-                vx: (Math.random() - 0.5) * 25,
-                vy: (Math.random() - 0.5) * 25,
-                life: 80,
-                color: '#ff4500',
-                size: 12
+            // 赤潮 - 召唤广智战友
+            if (game.allies.length < 8) {
+              game.allies.push({
+                type: 'guangzhi',
+                x: px + 100,
+                y: py - 50,
+                vx: 0,
+                vy: 0,
+                width: 80,
+                height: 100,
+                health: 500 + weaponLevel * 100,
+                maxHealth: 500 + weaponLevel * 100,
+                damage: 40 + weaponLevel * 10,
+                lifetime: 600 + weaponLevel * 100,
+                lastShot: Date.now()
               });
+              for (let i = 0; i < 100; i++) {
+                game.particles.push({
+                  x: px,
+                  y: py,
+                  vx: (Math.random() - 0.5) * 25,
+                  vy: (Math.random() - 0.5) * 25,
+                  life: 80,
+                  color: '#ff4500',
+                  size: 12
+                });
+              }
+            }
+          } else if (selectedWeapon === 'dianchao') {
+            // 电巢 - 召唤小黄龙战友
+            if (game.allies.length < 8) {
+              game.allies.push({
+                type: 'xiaowang',
+                x: px + 100,
+                y: py,
+                vx: 0,
+                vy: 0,
+                width: 60,
+                height: 80,
+                health: 400 + weaponLevel * 80,
+                maxHealth: 400 + weaponLevel * 80,
+                damage: 35 + weaponLevel * 8,
+                lifetime: 600 + weaponLevel * 100,
+                lastShot: Date.now()
+              });
+              for (let i = 0; i < 80; i++) {
+                game.particles.push({
+                  x: px,
+                  y: py,
+                  vx: (Math.random() - 0.5) * 20,
+                  vy: (Math.random() - 0.5) * 20,
+                  life: 70,
+                  color: '#fbbf24',
+                  size: 10
+                });
+              }
+            }
+          } else if (selectedWeapon === 'totem') {
+            // 图腾 - 召唤中大林战友
+            if (game.allies.length < 8) {
+              for (let i = 0; i < 3; i++) {
+                const angle = (Math.PI * 2 / 3) * i;
+                game.allies.push({
+                  type: 'zhongdalin',
+                  x: px + Math.cos(angle) * 120,
+                  y: py + Math.sin(angle) * 120,
+                  vx: 0,
+                  vy: 0,
+                  width: 50,
+                  height: 70,
+                  health: 400 + weaponLevel * 80,
+                  maxHealth: 400 + weaponLevel * 80,
+                  damage: 30 + weaponLevel * 8,
+                  lifetime: 600 + weaponLevel * 100,
+                  lastShot: Date.now()
+                });
+              }
+              for (let i = 0; i < 90; i++) {
+                game.particles.push({
+                  x: px,
+                  y: py,
+                  vx: (Math.random() - 0.5) * 22,
+                  vy: (Math.random() - 0.5) * 22,
+                  life: 75,
+                  color: '#4ade80',
+                  size: 11
+                });
+              }
             }
           } else if (selectedWeapon === 'guigui') {
             // 龟龟之手 - 超强龟文诅咒
@@ -2293,45 +2363,110 @@ export default function GameCanvas({
           const screenY = ally.y - game.camera.y;
 
           ctx.save();
-          
-          // Zhongdalin ally appearance
-          ctx.fillStyle = ally.enhanced ? '#22c55e' : '#4ade80';
-          ctx.strokeStyle = '#166534';
-          ctx.lineWidth = 2;
-          
-          // Body
-          ctx.fillRect(screenX, screenY + ally.height * 0.3, ally.width, ally.height * 0.7);
-          ctx.strokeRect(screenX, screenY + ally.height * 0.3, ally.width, ally.height * 0.7);
-          
-          // Head
-          ctx.beginPath();
-          ctx.arc(screenX + ally.width / 2, screenY + ally.height * 0.2, ally.width * 0.4, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.stroke();
-          
-          // Eyes
-          ctx.fillStyle = '#166534';
-          ctx.beginPath();
-          ctx.arc(screenX + ally.width / 2 - 5, screenY + ally.height * 0.15, 2, 0, Math.PI * 2);
-          ctx.arc(screenX + ally.width / 2 + 5, screenY + ally.height * 0.15, 2, 0, Math.PI * 2);
-          ctx.fill();
+
+          // Draw based on ally type
+          if (ally.type === 'guangzhi') {
+            // 广智战友 - 简化版火焰战神
+            ctx.fillStyle = '#ff4500';
+            ctx.strokeStyle = '#7f1d1d';
+            ctx.lineWidth = 4;
+
+            ctx.beginPath();
+            ctx.ellipse(screenX, screenY, ally.width / 2, ally.height / 2, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // 火焰光环
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 3;
+            ctx.globalAlpha = 0.6 + Math.sin(game.animationFrame * 0.1) * 0.3;
+            ctx.beginPath();
+            ctx.arc(screenX, screenY, ally.width / 2 + 10, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+          } else if (ally.type === 'xiaowang') {
+            // 小黄龙战友
+            ctx.fillStyle = '#fbbf24';
+            ctx.strokeStyle = '#92400e';
+            ctx.lineWidth = 3;
+
+            for (let i = 0; i < 4; i++) {
+              const y = screenY - ally.height / 2 + i * 20;
+              ctx.beginPath();
+              ctx.ellipse(screenX, y, 20 - i * 2, 15, 0, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.stroke();
+            }
+          } else if (ally.type === 'longhaixing') {
+            // 海星战友
+            ctx.fillStyle = '#22d3ee';
+            ctx.strokeStyle = '#0e7490';
+            ctx.lineWidth = 3;
+
+            ctx.beginPath();
+            for (let i = 0; i < 5; i++) {
+              const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
+              const x = screenX + Math.cos(angle) * ally.width / 2;
+              const y = screenY + Math.sin(angle) * ally.height / 2;
+              if (i === 0) ctx.moveTo(x, y);
+              else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+          } else if (ally.type === 'zhongdalin') {
+            // 中大林战友
+            ctx.fillStyle = '#4ade80';
+            ctx.strokeStyle = '#166534';
+            ctx.lineWidth = 3;
+
+            ctx.fillRect(screenX - ally.width / 2, screenY, ally.width, ally.height / 2);
+            ctx.strokeRect(screenX - ally.width / 2, screenY, ally.width, ally.height / 2);
+
+            ctx.beginPath();
+            ctx.arc(screenX, screenY - 10, ally.width / 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+          } else {
+            // 默认外观（普通中大林）
+            ctx.fillStyle = ally.enhanced ? '#22c55e' : '#4ade80';
+            ctx.strokeStyle = '#166534';
+            ctx.lineWidth = 2;
+
+            // Body
+            ctx.fillRect(screenX, screenY + ally.height * 0.3, ally.width, ally.height * 0.7);
+            ctx.strokeRect(screenX, screenY + ally.height * 0.3, ally.width, ally.height * 0.7);
+
+            // Head
+            ctx.beginPath();
+            ctx.arc(screenX + ally.width / 2, screenY + ally.height * 0.2, ally.width * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Eyes
+            ctx.fillStyle = '#166534';
+            ctx.beginPath();
+            ctx.arc(screenX + ally.width / 2 - 5, screenY + ally.height * 0.15, 2, 0, Math.PI * 2);
+            ctx.arc(screenX + ally.width / 2 + 5, screenY + ally.height * 0.15, 2, 0, Math.PI * 2);
+            ctx.fill();
+          }
 
           // Health bar
           const healthPercent = ally.health / ally.maxHealth;
-          ctx.fillStyle = 'rgba(0,0,0,0.5)';
-          ctx.fillRect(screenX, screenY - 8, ally.width, 5);
+          ctx.fillStyle = 'rgba(0,0,0,0.7)';
+          ctx.fillRect(screenX - ally.width / 2, screenY - ally.height / 2 - 15, ally.width, 8);
           ctx.fillStyle = healthPercent > 0.5 ? '#22c55e' : '#ef4444';
-          ctx.fillRect(screenX, screenY - 8, ally.width * healthPercent, 5);
-          
+          ctx.fillRect(screenX - ally.width / 2, screenY - ally.height / 2 - 15, ally.width * healthPercent, 8);
+
           // Friendly marker
           ctx.fillStyle = '#22c55e';
           ctx.strokeStyle = '#166534';
           ctx.lineWidth = 2;
           ctx.beginPath();
-          ctx.arc(screenX + ally.width / 2, screenY - 15, 5, 0, Math.PI * 2);
+          ctx.arc(screenX, screenY - ally.height / 2 - 25, 5, 0, Math.PI * 2);
           ctx.fill();
           ctx.stroke();
-          
+
           ctx.restore();
         }
 
@@ -2351,199 +2486,7 @@ export default function GameCanvas({
         return ally.health > 0;
       });
 
-      // MAX level helper allies
-      if (maxLevelHelper && helperTimer > 0) {
-        // Spawn helper if not exists
-        if (!game.maxLevelHelperUnit) {
-          const helperStats = {
-            guangzhi: { width: 80, height: 100, health: 500, damage: 40, color: '#ff4500' },
-            xiaowang: { width: 60, height: 80, health: 400, damage: 35, color: '#fbbf24' },
-            longhaixing: { width: 70, height: 90, health: 450, damage: 38, color: '#22d3ee' },
-            zhongdalin: { width: 50, height: 70, health: 400, damage: 30, color: '#4ade80' }
-          };
-          
-          const stats = helperStats[maxLevelHelper];
-          if (stats) {
-            game.maxLevelHelperUnit = {
-              type: maxLevelHelper,
-              x: game.player.x + 100,
-              y: game.player.y,
-              vx: 0,
-              vy: 0,
-              width: stats.width,
-              height: stats.height,
-              health: stats.health,
-              maxHealth: stats.health,
-              damage: stats.damage,
-              color: stats.color,
-              lastShot: Date.now()
-            };
-          }
-        }
 
-        // Update helper
-        if (game.maxLevelHelperUnit) {
-          const helper = game.maxLevelHelperUnit;
-          
-          // Find nearest enemy
-          let closestEnemy = null;
-          let closestDist = Infinity;
-          
-          game.enemies.forEach(enemy => {
-            const dx = enemy.x + enemy.width / 2 - helper.x;
-            const dy = enemy.y + enemy.height / 2 - helper.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < closestDist) {
-              closestDist = dist;
-              closestEnemy = enemy;
-            }
-          });
-
-          // AI behavior
-          if (closestEnemy && closestDist < 500) {
-            const dx = closestEnemy.x - helper.x;
-            const dy = closestEnemy.y - helper.y;
-            const angle = Math.atan2(dy, dx);
-            helper.vx = Math.cos(angle) * 4;
-            helper.vy = Math.sin(angle) * 4;
-          } else {
-            // Follow player
-            const dx = game.player.x - helper.x;
-            const dy = game.player.y - helper.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist > 150) {
-              const angle = Math.atan2(dy, dx);
-              helper.vx = Math.cos(angle) * 3;
-              helper.vy = Math.sin(angle) * 3;
-            } else {
-              helper.vx *= 0.9;
-              helper.vy *= 0.9;
-            }
-          }
-
-          helper.x += helper.vx;
-          helper.y += helper.vy;
-
-          // Shoot at enemies
-          if (closestEnemy && closestDist < 450 && Date.now() - helper.lastShot > 800) {
-            const dx = closestEnemy.x + closestEnemy.width / 2 - helper.x;
-            const dy = closestEnemy.y + closestEnemy.height / 2 - helper.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            
-            for (let i = 0; i < 3; i++) {
-              const spreadAngle = Math.atan2(dy, dx) + (i - 1) * 0.15;
-              game.bullets.push({
-                x: helper.x,
-                y: helper.y,
-                vx: Math.cos(spreadAngle) * 12,
-                vy: Math.sin(spreadAngle) * 12,
-                damage: helper.damage,
-                size: 10,
-                color: helper.color,
-                fromPlayer: true,
-                fromHelper: true
-              });
-            }
-            
-            helper.lastShot = Date.now();
-          }
-
-          // Draw helper
-          const screenX = helper.x - game.camera.x;
-          const screenY = helper.y - game.camera.y;
-
-          ctx.save();
-          
-          // Draw based on type
-          if (helper.type === 'guangzhi') {
-            // Simplified Guangzhi
-            ctx.fillStyle = '#ff4500';
-            ctx.strokeStyle = '#7f1d1d';
-            ctx.lineWidth = 4;
-            
-            ctx.beginPath();
-            ctx.ellipse(screenX, screenY, helper.width / 2, helper.height / 2, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
-            
-            // Flame aura
-            ctx.strokeStyle = '#fbbf24';
-            ctx.lineWidth = 3;
-            ctx.globalAlpha = 0.6;
-            ctx.beginPath();
-            ctx.arc(screenX, screenY, helper.width / 2 + 10, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.globalAlpha = 1;
-          } else if (helper.type === 'xiaowang') {
-            // Dragon
-            ctx.fillStyle = '#fbbf24';
-            ctx.strokeStyle = '#92400e';
-            ctx.lineWidth = 3;
-            
-            for (let i = 0; i < 4; i++) {
-              const y = screenY - helper.height / 2 + i * 20;
-              ctx.beginPath();
-              ctx.ellipse(screenX, y, 20 - i * 2, 15, 0, 0, Math.PI * 2);
-              ctx.fill();
-              ctx.stroke();
-            }
-          } else if (helper.type === 'longhaixing') {
-            // Star
-            ctx.fillStyle = '#22d3ee';
-            ctx.strokeStyle = '#0e7490';
-            ctx.lineWidth = 3;
-            
-            ctx.beginPath();
-            for (let i = 0; i < 5; i++) {
-              const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
-              const x = screenX + Math.cos(angle) * helper.width / 2;
-              const y = screenY + Math.sin(angle) * helper.height / 2;
-              if (i === 0) ctx.moveTo(x, y);
-              else ctx.lineTo(x, y);
-            }
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
-          } else if (helper.type === 'zhongdalin') {
-            // Stone person
-            ctx.fillStyle = '#4ade80';
-            ctx.strokeStyle = '#166534';
-            ctx.lineWidth = 3;
-            
-            ctx.fillRect(screenX - helper.width / 2, screenY, helper.width, helper.height / 2);
-            ctx.strokeRect(screenX - helper.width / 2, screenY, helper.width, helper.height / 2);
-            
-            ctx.beginPath();
-            ctx.arc(screenX, screenY - 10, helper.width / 3, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
-          }
-
-          // Health bar
-          const healthPercent = helper.health / helper.maxHealth;
-          ctx.fillStyle = 'rgba(0,0,0,0.7)';
-          ctx.fillRect(screenX - helper.width / 2, screenY - helper.height / 2 - 15, helper.width, 8);
-          ctx.fillStyle = healthPercent > 0.5 ? '#22c55e' : '#ef4444';
-          ctx.fillRect(screenX - helper.width / 2, screenY - helper.height / 2 - 15, helper.width * healthPercent, 8);
-          
-          ctx.restore();
-
-          // Collision with enemies
-          game.enemies.forEach(enemy => {
-            const dx = Math.abs(helper.x - (enemy.x + enemy.width / 2));
-            const dy = Math.abs(helper.y - (enemy.y + enemy.height / 2));
-            
-            if (dx < (helper.width + enemy.width) / 2 && dy < (helper.height + enemy.height) / 2) {
-              if (game.animationFrame % 30 === 0) {
-                enemy.health -= helper.damage;
-                helper.health -= enemy.damage * 0.5;
-              }
-            }
-          });
-        }
-      } else {
-        game.maxLevelHelperUnit = null;
-      }
 
       // Update enemies
       game.enemies = game.enemies.filter(enemy => {

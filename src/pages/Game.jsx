@@ -472,20 +472,6 @@ export default function Game() {
     setSelectedWeapon(weaponId);
     setShowWeaponSelect(false);
     
-    // Check if weapon is MAX level and spawn helper
-    const weapon = weapons[weaponId];
-    const maxLevels = { chichao: 5, guigui: 8, dianchao: 5, totem: 5 };
-    if (weapon && weapon.level >= maxLevels[weaponId]) {
-      const helpers = {
-        chichao: 'guangzhi',
-        guigui: 'longhaixing',
-        dianchao: 'xiaowang',
-        totem: 'zhongdalin'
-      };
-      setMaxLevelHelper(helpers[weaponId]);
-      setHelperTimer(60); // 60 seconds
-    }
-    
     continueGameAfterWeaponSelect(gameMode);
   };
 
