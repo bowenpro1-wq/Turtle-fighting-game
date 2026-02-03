@@ -307,7 +307,6 @@ export default function GameUI({
       <div className="hidden md:block absolute bottom-16 right-2 text-white/70 text-xs bg-black/40 px-3 py-2 rounded-lg backdrop-blur-sm space-y-1">
         <div>B-商店</div>
         <div>F-锻造</div>
-        <div>G-升级</div>
       </div>
     </div>
   );

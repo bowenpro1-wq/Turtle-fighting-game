@@ -24,7 +24,7 @@ export default function AdminPanel() {
   const handleLogin = () => {
     if (password === '20140626') {
       setIsAuthenticated(true);
-      setMessage('登录成功,2B 一位!！');
+      setMessage('登录成功！');
     } else {
       setMessage('密码错误');
     }

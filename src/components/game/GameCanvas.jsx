@@ -480,7 +480,6 @@ export default function GameCanvas({
   gameMode,
   selectedWeapon,
   weaponLevel,
-  weaponStats = { damage: 0, fireRate: 0, range: 0, special: 0 },
   onPlayerDamage,
   onEnemyKill,
   onBossDamage,
@@ -699,8 +698,6 @@ export default function GameCanvas({
             game.flameLineActive = true;
           } else if (selectedWeapon === 'dianchao') {
             // 电巢 - 四周喷射强力电流（增强版）
-            const damageBonus = 1 + (weaponStats.damage * 0.15);
-            const rangeBonus = 1 + (weaponStats.range * 0.10);
             for (let i = 0; i < 12; i++) {
               const spreadAngle = (Math.PI * 2 / 12) * i;
               game.bullets.push({
@@ -708,13 +705,13 @@ export default function GameCanvas({
                 y: py,
                 vx: Math.cos(spreadAngle) * 14,
                 vy: Math.sin(spreadAngle) * 14,
-                damage: (20 + weaponLevel * 3) * upgrades.damage * damageBonus,
+                damage: (20 + weaponLevel * 3) * upgrades.damage,
                 size: 10,
                 color: '#fbbf24',
                 fromPlayer: true,
                 weaponType: 'electric',
                 distanceTraveled: 0,
-                maxDistance: 450 * rangeBonus,
+                maxDistance: 450,
                 pierce: true
               });
             }
@@ -1432,9 +1429,7 @@ export default function GameCanvas({
         const py = game.player.y + game.player.height / 2;
         const angle = game.player.angle;
         
-        const damageBonus = 1 + (weaponStats.damage * 0.15);
-        const rangeBonus = 1 + (weaponStats.range * 0.10);
-        const flameLength = 600 * rangeBonus;
+        const flameLength = 600;
         
         // 创建火线伤害检测点
         for (let dist = 40; dist < flameLength; dist += 25) {
@@ -1449,7 +1444,7 @@ export default function GameCanvas({
             const distToBoss = Math.sqrt(dx * dx + dy * dy);
             
             if (distToBoss < currentBoss.size / 2 + 20) {
-              onBossDamage((4 + weaponLevel * 0.8) * upgrades.damage * damageBonus);
+              onBossDamage((4 + weaponLevel * 0.8) * upgrades.damage);
             }
           }
           
@@ -1460,7 +1455,7 @@ export default function GameCanvas({
             const distToEnemy = Math.sqrt(dx * dx + dy * dy);
             
             if (distToEnemy < 30) {
-              enemy.health -= (4 + weaponLevel * 0.8) * upgrades.damage * damageBonus;
+              enemy.health -= (4 + weaponLevel * 0.8) * upgrades.damage;
             }
           });
           
@@ -2459,226 +2454,69 @@ export default function GameCanvas({
 
           ctx.save();
           
-          // Draw based on type - match boss appearance
+          // Draw based on type
           if (helper.type === 'guangzhi') {
-            // 广智形象 - 和Boss一致
-            const baseSize = helper.width;
-            
-            // 火焰斗篷
-            const cloakFlames = 12;
-            for (let i = 0; i < cloakFlames; i++) {
-              const angle = (Math.PI * 2 / cloakFlames) * i;
-              const flameHeight = 20 + Math.sin(frame * 0.15 + i * 0.5) * 8;
-              const x1 = screenX + Math.cos(angle) * (baseSize * 0.3);
-              const y1 = screenY + Math.sin(angle) * (baseSize * 0.35);
-              const x2 = screenX + Math.cos(angle) * (baseSize * 0.3 + flameHeight);
-              const y2 = screenY + Math.sin(angle) * (baseSize * 0.35 + flameHeight);
-              
-              const flameGradient = ctx.createLinearGradient(x1, y1, x2, y2);
-              flameGradient.addColorStop(0, '#ff6347');
-              flameGradient.addColorStop(0.5, '#ff4500');
-              flameGradient.addColorStop(1, '#dc2626');
-              
-              ctx.fillStyle = flameGradient;
-              ctx.beginPath();
-              ctx.moveTo(x1, y1);
-              ctx.lineTo(x2, y2);
-              const nextAngle = angle + (Math.PI * 2 / cloakFlames);
-              ctx.lineTo(
-                screenX + Math.cos(nextAngle) * (baseSize * 0.3),
-                screenY + Math.sin(nextAngle) * (baseSize * 0.35)
-              );
-              ctx.closePath();
-              ctx.fill();
-            }
-            
-            // 身体主体
-            const bodyGradient = ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, baseSize * 0.3);
-            bodyGradient.addColorStop(0, '#fbbf24');
-            bodyGradient.addColorStop(0.4, '#f59e0b');
-            bodyGradient.addColorStop(1, '#dc2626');
-            
-            ctx.fillStyle = bodyGradient;
-            ctx.strokeStyle = '#451a03';
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.ellipse(screenX, screenY, baseSize * 0.3, baseSize * 0.35, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
-            
-            // 头部
-            const headY = screenY - baseSize * 0.25;
-            ctx.fillStyle = '#dc2626';
-            ctx.strokeStyle = '#7f1d1d';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.arc(screenX, headY, 20, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
-            
-            // 眼睛
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = '#ff4500';
-            ctx.fillStyle = '#fff';
-            ctx.beginPath();
-            ctx.ellipse(screenX - 8, headY, 5, 7, 0.2, 0, Math.PI * 2);
-            ctx.ellipse(screenX + 8, headY, 5, 7, -0.2, 0, Math.PI * 2);
-            ctx.fill();
-            
+            // Simplified Guangzhi
             ctx.fillStyle = '#ff4500';
+            ctx.strokeStyle = '#7f1d1d';
+            ctx.lineWidth = 4;
+            
             ctx.beginPath();
-            ctx.arc(screenX - 8, headY, 3, 0, Math.PI * 2);
-            ctx.arc(screenX + 8, headY, 3, 0, Math.PI * 2);
+            ctx.ellipse(screenX, screenY, helper.width / 2, helper.height / 2, 0, 0, Math.PI * 2);
             ctx.fill();
-            ctx.shadowBlur = 0;
+            ctx.stroke();
             
-            // 符文
-            ctx.fillStyle = '#fef3c7';
-            ctx.font = 'bold 16px "STKaiti", "KaiTi", serif';
-            ctx.textAlign = 'center';
-            ctx.fillText('广智', screenX, screenY + 5);
+            // Flame aura
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 3;
+            ctx.globalAlpha = 0.6;
+            ctx.beginPath();
+            ctx.arc(screenX, screenY, helper.width / 2 + 10, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
           } else if (helper.type === 'xiaowang') {
-            // 小黄龙形象 - 和Boss一致
-            const baseSize = helper.width;
+            // Dragon
+            ctx.fillStyle = '#fbbf24';
+            ctx.strokeStyle = '#92400e';
+            ctx.lineWidth = 3;
             
-            // 龙身
-            const bodySegments = 4;
-            for (let i = 0; i < bodySegments; i++) {
-              const offsetX = Math.sin((frame * 0.08) + i * 0.7) * 12;
-              const offsetY = Math.cos((frame * 0.08) + i * 0.5) * 5;
-              const y = screenY - baseSize/2 + (i * 15) + offsetY;
-              const segmentSize = 18 - i * 2;
-              
-              const gradient = ctx.createRadialGradient(screenX + offsetX, y, 0, screenX + offsetX, y, segmentSize);
-              gradient.addColorStop(0, '#fbbf24');
-              gradient.addColorStop(0.5, '#f59e0b');
-              gradient.addColorStop(1, '#d97706');
-              
-              ctx.fillStyle = gradient;
-              ctx.strokeStyle = '#92400e';
-              ctx.lineWidth = 2;
+            for (let i = 0; i < 4; i++) {
+              const y = screenY - helper.height / 2 + i * 20;
               ctx.beginPath();
-              ctx.ellipse(screenX + offsetX, y, segmentSize, 13, 0, 0, Math.PI * 2);
+              ctx.ellipse(screenX, y, 20 - i * 2, 15, 0, 0, Math.PI * 2);
               ctx.fill();
               ctx.stroke();
             }
-            
-            // 龙头
-            const headX = screenX;
-            const headY = screenY - baseSize/2 - 20;
-            
-            const headGradient = ctx.createRadialGradient(headX, headY, 0, headX, headY, 25);
-            headGradient.addColorStop(0, '#fbbf24');
-            headGradient.addColorStop(0.6, '#f59e0b');
-            headGradient.addColorStop(1, '#ea580c');
-            
-            ctx.fillStyle = headGradient;
-            ctx.strokeStyle = '#92400e';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.ellipse(headX, headY, 25, 22, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
-            
-            // 龙角
-            ctx.strokeStyle = '#fcd34d';
-            ctx.lineWidth = 4;
-            ctx.lineCap = 'round';
-            ctx.beginPath();
-            ctx.moveTo(headX - 15, headY - 15);
-            ctx.quadraticCurveTo(headX - 20, headY - 30, headX - 18, headY - 40);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(headX + 15, headY - 15);
-            ctx.quadraticCurveTo(headX + 20, headY - 30, headX + 18, headY - 40);
-            ctx.stroke();
-            
-            // 龙眼
-            ctx.shadowBlur = 12;
-            ctx.shadowColor = '#fbbf24';
-            ctx.fillStyle = '#fef3c7';
-            ctx.beginPath();
-            ctx.ellipse(headX - 10, headY - 3, 6, 7, 0.3, 0, Math.PI * 2);
-            ctx.ellipse(headX + 10, headY - 3, 6, 7, -0.3, 0, Math.PI * 2);
-            ctx.fill();
-            
-            ctx.fillStyle = '#dc2626';
-            ctx.beginPath();
-            ctx.arc(headX - 10, headY - 3, 3, 0, Math.PI * 2);
-            ctx.arc(headX + 10, headY - 3, 3, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.shadowBlur = 0;
           } else if (helper.type === 'longhaixing') {
-            // 海星形象 - 和Boss一致
-            const baseSize = helper.width;
-            
-            // 五角星身体
+            // Star
             ctx.fillStyle = '#22d3ee';
             ctx.strokeStyle = '#0e7490';
             ctx.lineWidth = 3;
             
             ctx.beginPath();
-            for (let i = 0; i < 10; i++) {
-              const angle = (Math.PI * 2 / 10) * i - Math.PI / 2;
-              const radius = i % 2 === 0 ? baseSize * 0.45 : baseSize * 0.2;
-              const x = screenX + Math.cos(angle) * radius;
-              const y = screenY + Math.sin(angle) * radius;
+            for (let i = 0; i < 5; i++) {
+              const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
+              const x = screenX + Math.cos(angle) * helper.width / 2;
+              const y = screenY + Math.sin(angle) * helper.height / 2;
               if (i === 0) ctx.moveTo(x, y);
               else ctx.lineTo(x, y);
             }
             ctx.closePath();
             ctx.fill();
             ctx.stroke();
-            
-            // 中心装饰
-            ctx.fillStyle = '#67e8f9';
-            ctx.beginPath();
-            ctx.arc(screenX, screenY, baseSize * 0.15, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // 海星纹理
-            ctx.strokeStyle = '#0891b2';
-            ctx.lineWidth = 2;
-            for (let i = 0; i < 5; i++) {
-              const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
-              ctx.beginPath();
-              ctx.moveTo(screenX, screenY);
-              ctx.lineTo(screenX + Math.cos(angle) * baseSize * 0.3, screenY + Math.sin(angle) * baseSize * 0.3);
-              ctx.stroke();
-            }
           } else if (helper.type === 'zhongdalin') {
-            // 中大林形象 - 和Boss一致
-            const baseSize = helper.width;
-            
+            // Stone person
             ctx.fillStyle = '#4ade80';
             ctx.strokeStyle = '#166534';
             ctx.lineWidth = 3;
             
-            const bodyWidth = baseSize * 0.7;
-            const bodyHeight = baseSize * 0.8;
-            ctx.fillRect(screenX - bodyWidth/2, screenY - bodyHeight/2, bodyWidth, bodyHeight);
-            ctx.strokeRect(screenX - bodyWidth/2, screenY - bodyHeight/2, bodyWidth, bodyHeight);
+            ctx.fillRect(screenX - helper.width / 2, screenY, helper.width, helper.height / 2);
+            ctx.strokeRect(screenX - helper.width / 2, screenY, helper.width, helper.height / 2);
             
-            // 石纹
-            ctx.fillStyle = '#22c55e';
-            for (let i = 0; i < 3; i++) {
-              ctx.fillRect(screenX - bodyWidth/2 + 5, screenY - bodyHeight/2 + i * 15, bodyWidth - 10, 6);
-            }
-            
-            // 头部
-            const headSize = baseSize * 0.25;
-            ctx.fillStyle = '#4ade80';
             ctx.beginPath();
-            ctx.arc(screenX, screenY - bodyHeight/2 - headSize, headSize, 0, Math.PI * 2);
+            ctx.arc(screenX, screenY - 10, helper.width / 3, 0, Math.PI * 2);
             ctx.fill();
             ctx.stroke();
-            
-            // 眼睛
-            ctx.fillStyle = '#166534';
-            ctx.beginPath();
-            ctx.arc(screenX - 6, screenY - bodyHeight/2 - headSize, 3, 0, Math.PI * 2);
-            ctx.arc(screenX + 6, screenY - bodyHeight/2 - headSize, 3, 0, Math.PI * 2);
-            ctx.fill();
           }
 
           // Health bar
