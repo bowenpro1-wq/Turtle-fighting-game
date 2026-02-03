@@ -119,6 +119,19 @@ export default function Game() {
     const loadProfile = async () => {
       try {
         const user = await base44.auth.me();
+        
+        // Admin unlock all weapons at max level - do this first
+        if (user.role === 'admin') {
+          const adminWeapons = {
+            chichao: { level: 5, unlocked: true },
+            guigui: { level: 8, unlocked: true },
+            dianchao: { level: 5, unlocked: true },
+            totem: { level: 5, unlocked: true }
+          };
+          setWeapons(adminWeapons);
+          localStorage.setItem('weapons', JSON.stringify(adminWeapons));
+        }
+        
         const profiles = await base44.entities.PlayerProfile.filter({ user_email: user.email });
         
         if (profiles.length > 0) {
@@ -129,18 +142,6 @@ export default function Game() {
             user_email: user.email
           });
           setPlayerProfile(newProfile);
-        }
-        
-        // Admin unlock all weapons at max level
-        if (user.role === 'admin') {
-          const adminWeapons = {
-            chichao: { level: 5, unlocked: true },
-            guigui: { level: 8, unlocked: true },
-            dianchao: { level: 5, unlocked: true },
-            totem: { level: 5, unlocked: true }
-          };
-          setWeapons(adminWeapons);
-          localStorage.setItem('weapons', JSON.stringify(adminWeapons));
         }
       } catch (error) {
         console.error('Failed to load profile:', error);

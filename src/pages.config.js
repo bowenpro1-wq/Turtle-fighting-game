@@ -47,25 +47,25 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
-import Admin from './pages/Admin';
 import Forge from './pages/Forge';
-import Game from './pages/Game';
 import Leaderboard from './pages/Leaderboard';
 import MiniGames from './pages/MiniGames';
 import Multiplayer from './pages/Multiplayer';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
+import Admin from './pages/Admin';
+import Game from './pages/Game';
 
 
 export const PAGES = {
-    "Admin": Admin,
     "Forge": Forge,
-    "Game": Game,
     "Leaderboard": Leaderboard,
     "MiniGames": MiniGames,
     "Multiplayer": Multiplayer,
     "Profile": Profile,
     "Settings": Settings,
+    "Admin": Admin,
+    "Game": Game,
 }
 
 export const pagesConfig = {
