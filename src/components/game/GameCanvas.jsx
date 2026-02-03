@@ -834,43 +834,7 @@ export default function GameCanvas({
         }
       }
       
-      // U键 - 龟龟之手召唤技能
-      if (e.key.toLowerCase() === 'u' && selectedWeapon === 'guigui') {
-        const px = game.player.x + game.player.width / 2;
-        const py = game.player.y + game.player.height / 2;
-        
-        game.allies = game.allies || [];
-        if (game.allies.length < 5) {
-          for (let i = 0; i < 2; i++) {
-            const spawnAngle = Math.random() * Math.PI * 2;
-            const spawnDist = 100;
-            game.allies.push({
-              x: px + Math.cos(spawnAngle) * spawnDist,
-              y: py + Math.sin(spawnAngle) * spawnDist,
-              width: 45,
-              height: 55,
-              health: 80 + weaponLevel * 15,
-              maxHealth: 80 + weaponLevel * 15,
-              damage: 12 + weaponLevel * 2,
-              lifetime: 400 + weaponLevel * 60,
-              lastShot: Date.now()
-            });
-          }
-          
-          // 召唤特效
-          for (let i = 0; i < 30; i++) {
-            game.particles.push({
-              x: px,
-              y: py,
-              vx: (Math.random() - 0.5) * 10,
-              vy: (Math.random() - 0.5) * 10,
-              life: 35,
-              color: '#22c55e',
-              size: 8
-            });
-          }
-        }
-      }
+
 
       // H键 - 根据武器改变技能
       if (e.key.toLowerCase() === 'h') {
@@ -1164,8 +1128,8 @@ export default function GameCanvas({
         }
       }
 
-      // P键 - 主动召唤战友技能
-      if (e.key.toLowerCase() === 'p') {
+      // U键 - 主动召唤战友技能
+      if (e.key.toLowerCase() === 'u') {
         if (allOutAttack()) {
           const px = game.player.x + game.player.width / 2;
           const py = game.player.y + game.player.height / 2;
@@ -1263,7 +1227,18 @@ export default function GameCanvas({
                 });
               }
             }
-          } else if (selectedWeapon === 'guigui') {
+          }
+        }
+      }
+
+      // P键 - 武器终极技能
+      if (e.key.toLowerCase() === 'p') {
+        if (allOutAttack()) {
+          const px = game.player.x + game.player.width / 2;
+          const py = game.player.y + game.player.height / 2;
+          game.screenShake = 25;
+
+          if (selectedWeapon === 'guigui') {
             // 龟龟之手 - 超强龟文诅咒
             for (let i = 0; i < 300; i++) {
               const angle = Math.random() * Math.PI * 2;
