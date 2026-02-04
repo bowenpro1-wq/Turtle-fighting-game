@@ -104,10 +104,10 @@ export default function StartScreen({ onStart, onStartTutorial, defeatedBosses =
         transition={{ type: "spring", bounce: 0.5, delay: 0.2 }}
         className="text-center mb-12"
       >
-        <h1 className="text-4xl md:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-500 drop-shadow-2xl mb-4 px-4 text-center">
+        <h1 className="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-500 drop-shadow-2xl mb-3 px-4 text-center">
           龟龟冒险岛
         </h1>
-        <p className="text-lg md:text-2xl text-cyan-200/80 font-semibold">
+        <p className="text-sm md:text-lg text-cyan-200/80 font-semibold">
           Turtle Adventure Island
         </p>
       </motion.div>
@@ -118,39 +118,43 @@ export default function StartScreen({ onStart, onStartTutorial, defeatedBosses =
         transition={{ delay: 0.5 }}
         className="bg-black/40 backdrop-blur-sm rounded-2xl p-4 md:p-6 mb-6 border-2 border-cyan-500/30 max-w-2xl mx-4"
       >
-        <h3 className="text-cyan-300 text-lg md:text-xl font-semibold mb-4 text-center">操作指南</h3>
-        <div className="grid grid-cols-2 gap-3 md:gap-4 text-white/90 text-sm md:text-base">
-          <div className="flex items-center gap-2 md:gap-3 col-span-2 justify-center">
-            <kbd className="px-3 py-2 bg-white/20 rounded-lg font-mono font-bold text-xs md:text-sm">WASD</kbd>
-            <span className="text-xs md:text-sm">移动</span>
+        <h3 className="text-cyan-300 text-sm md:text-base font-semibold mb-3 text-center">操作指南</h3>
+        <div className="grid grid-cols-2 gap-2 md:gap-3 text-white/90 text-xs md:text-sm">
+          <div className="flex items-center gap-1.5 md:gap-2 col-span-2 justify-center">
+            <kbd className="px-2 py-1 bg-white/20 rounded font-mono font-bold text-[10px] md:text-xs">WASD</kbd>
+            <span className="text-[10px] md:text-xs">移动</span>
           </div>
-          <div className="flex items-center gap-2">
-            <kbd className="px-3 py-2 bg-red-500/40 rounded-lg font-mono font-bold text-xs md:text-sm">K</kbd>
-            <span className="text-xs md:text-sm">射击</span>
+          <div className="flex items-center gap-1.5">
+            <kbd className="px-2 py-1 bg-red-500/40 rounded font-mono font-bold text-[10px] md:text-xs">K</kbd>
+            <span className="text-[10px] md:text-xs">射击</span>
           </div>
-          <div className="flex items-center gap-2">
-            <kbd className="px-3 py-2 bg-cyan-500/40 rounded-lg font-mono font-bold text-xs md:text-sm">J</kbd>
-            <span className="text-xs md:text-sm">近战</span>
+          <div className="flex items-center gap-1.5">
+            <kbd className="px-2 py-1 bg-cyan-500/40 rounded font-mono font-bold text-[10px] md:text-xs">J</kbd>
+            <span className="text-[10px] md:text-xs">近战</span>
           </div>
-          <div className="flex items-center gap-2">
-            <kbd className="px-3 py-2 bg-green-500/40 rounded-lg font-mono font-bold text-xs md:text-sm">H</kbd>
-            <span className="text-xs md:text-sm">治疗</span>
+          <div className="flex items-center gap-1.5">
+            <kbd className="px-2 py-1 bg-green-500/40 rounded font-mono font-bold text-[10px] md:text-xs">H</kbd>
+            <span className="text-[10px] md:text-xs">治疗</span>
           </div>
-          <div className="flex items-center gap-2">
-            <kbd className="px-3 py-2 bg-blue-500/40 rounded-lg font-mono font-bold text-xs md:text-sm">O</kbd>
-            <span className="text-xs md:text-sm">飞行</span>
+          <div className="flex items-center gap-1.5">
+            <kbd className="px-2 py-1 bg-blue-500/40 rounded font-mono font-bold text-[10px] md:text-xs">O</kbd>
+            <span className="text-[10px] md:text-xs">飞行</span>
           </div>
-          <div className="flex items-center gap-2">
-            <kbd className="px-3 py-2 bg-yellow-500/40 rounded-lg font-mono font-bold text-xs md:text-sm">B</kbd>
-            <span className="text-xs md:text-sm">商店</span>
+          <div className="flex items-center gap-1.5">
+            <kbd className="px-2 py-1 bg-yellow-500/40 rounded font-mono font-bold text-[10px] md:text-xs">B</kbd>
+            <span className="text-[10px] md:text-xs">商店</span>
           </div>
-          <div className="flex items-center gap-2">
-            <kbd className="px-3 py-2 bg-orange-500/40 rounded-lg font-mono font-bold text-xs md:text-sm">L</kbd>
-            <span className="text-xs md:text-sm">大招</span>
+          <div className="flex items-center gap-1.5">
+            <kbd className="px-2 py-1 bg-orange-500/40 rounded font-mono font-bold text-[10px] md:text-xs">L</kbd>
+            <span className="text-[10px] md:text-xs">大招</span>
           </div>
-          <div className="flex items-center gap-2">
-            <kbd className="px-3 py-2 bg-purple-500/40 rounded-lg font-mono font-bold text-xs md:text-sm">P</kbd>
-            <span className="text-xs md:text-sm">终极</span>
+          <div className="flex items-center gap-1.5">
+            <kbd className="px-2 py-1 bg-purple-500/40 rounded font-mono font-bold text-[10px] md:text-xs">U</kbd>
+            <span className="text-[10px] md:text-xs">召唤</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <kbd className="px-2 py-1 bg-pink-500/40 rounded font-mono font-bold text-[10px] md:text-xs">P</kbd>
+            <span className="text-[10px] md:text-xs">终极</span>
           </div>
         </div>
       </motion.div>
@@ -161,21 +165,30 @@ export default function StartScreen({ onStart, onStartTutorial, defeatedBosses =
         transition={{ type: "spring", delay: 0.7 }}
         className="space-y-2 md:space-y-3 px-4 w-full max-w-md"
       >
+        {/* Tutorial Button */}
+        <Button
+          onClick={onStartTutorial}
+          className="w-full px-5 py-5 md:py-6 bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 hover:from-cyan-700 hover:via-blue-700 hover:to-indigo-700 rounded-xl text-white text-base md:text-lg font-bold border-2 border-cyan-400/50 active:scale-95 transition-transform"
+        >
+          <Play className="w-5 h-5 mr-2" fill="white" />
+          📖 新手教程
+        </Button>
+
         {/* Login / Load Progress */}
         {!isLoggedIn ? (
           <Button
             onClick={handleLogin}
-            className="w-full px-6 py-6 md:py-7 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 rounded-xl text-white text-lg md:text-xl font-bold border-2 border-blue-400/50 active:scale-95 transition-transform"
+            className="w-full px-5 py-5 md:py-6 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 rounded-xl text-white text-base md:text-lg font-bold border-2 border-blue-400/50 active:scale-95 transition-transform"
           >
-            <LogIn className="w-6 h-6 mr-2" />
+            <LogIn className="w-5 h-5 mr-2" />
             🔐 登录保存进度
           </Button>
         ) : hasProgress && (
           <Button
             onClick={handleLoadProgress}
-            className="w-full px-6 py-6 md:py-7 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 rounded-xl text-white text-lg md:text-xl font-bold border-2 border-green-400/50 active:scale-95 transition-transform animate-pulse"
+            className="w-full px-5 py-5 md:py-6 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 rounded-xl text-white text-base md:text-lg font-bold border-2 border-green-400/50 active:scale-95 transition-transform animate-pulse"
           >
-            <Save className="w-6 h-6 mr-2" />
+            <Save className="w-5 h-5 mr-2" />
             📂 继续上次游戏
           </Button>
         )}
@@ -183,26 +196,26 @@ export default function StartScreen({ onStart, onStartTutorial, defeatedBosses =
         <div className="grid grid-cols-2 gap-2 md:gap-3">
           <Button
             onClick={() => handleModeSelect('normal')}
-            className="px-4 py-5 md:py-6 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 rounded-xl text-white text-sm md:text-base font-bold shadow-xl active:scale-95 transition-transform"
+            className="px-3 py-4 md:py-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 rounded-xl text-white text-xs md:text-sm font-bold shadow-xl active:scale-95 transition-transform"
           >
-            <Play className="w-4 h-4 mr-1" fill="white" />
+            <Play className="w-3.5 h-3.5 mr-1" fill="white" />
             正常
           </Button>
           <Button
             onClick={() => handleModeSelect('endless')}
-            className="px-4 py-5 md:py-6 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-xl text-white text-sm md:text-base font-bold shadow-xl active:scale-95 transition-transform"
+            className="px-3 py-4 md:py-5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-xl text-white text-xs md:text-sm font-bold shadow-xl active:scale-95 transition-transform"
           >
             无尽
           </Button>
           <Button
             onClick={() => handleModeSelect('survival')}
-            className="px-4 py-5 md:py-6 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 rounded-xl text-white text-sm md:text-base font-bold shadow-xl active:scale-95 transition-transform"
+            className="px-3 py-4 md:py-5 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 rounded-xl text-white text-xs md:text-sm font-bold shadow-xl active:scale-95 transition-transform"
           >
             生存
           </Button>
           <Button
             onClick={() => handleModeSelect('bossrush')}
-            className="px-4 py-5 md:py-6 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 rounded-xl text-white text-sm md:text-base font-bold shadow-xl active:scale-95 transition-transform"
+            className="px-3 py-4 md:py-5 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 rounded-xl text-white text-xs md:text-sm font-bold shadow-xl active:scale-95 transition-transform"
           >
             连战
           </Button>
@@ -210,32 +223,32 @@ export default function StartScreen({ onStart, onStartTutorial, defeatedBosses =
         
         <Button
           onClick={() => handleModeSelect('tower')}
-          className="w-full px-6 py-6 md:py-7 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 rounded-xl text-white text-lg md:text-xl font-bold border-2 border-green-400/50 active:scale-95 transition-transform"
+          className="w-full px-5 py-5 md:py-6 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 rounded-xl text-white text-base md:text-lg font-bold border-2 border-green-400/50 active:scale-95 transition-transform"
         >
           🗿 中大林之塔
         </Button>
         
         <Button
           onClick={() => handleModeSelect('busbreak')}
-          className="w-full px-6 py-6 md:py-7 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-700 hover:via-pink-700 hover:to-rose-700 rounded-xl text-white text-lg md:text-xl font-bold border-2 border-purple-400/50 active:scale-95 transition-transform"
+          className="w-full px-5 py-5 md:py-6 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-700 hover:via-pink-700 hover:to-rose-700 rounded-xl text-white text-base md:text-lg font-bold border-2 border-purple-400/50 active:scale-95 transition-transform"
         >
           ⚔️ Boss试炼
         </Button>
         
         <Link to={createPageUrl('Multiplayer')} className="block">
           <Button
-            className="w-full px-6 py-6 md:py-7 bg-gradient-to-r from-cyan-600 via-blue-600 to-purple-600 hover:from-cyan-700 hover:via-blue-700 hover:to-purple-700 rounded-xl text-white text-lg md:text-xl font-bold border-2 border-cyan-400/50 active:scale-95 transition-transform"
+            className="w-full px-5 py-5 md:py-6 bg-gradient-to-r from-cyan-600 via-blue-600 to-purple-600 hover:from-cyan-700 hover:via-blue-700 hover:to-purple-700 rounded-xl text-white text-base md:text-lg font-bold border-2 border-cyan-400/50 active:scale-95 transition-transform"
           >
-            <Users className="w-6 h-6 mr-2" />
+            <Users className="w-5 h-5 mr-2" />
             🎮 多人模式
           </Button>
         </Link>
         
         <Link to={createPageUrl('Forge')} className="block">
           <Button
-            className="w-full px-6 py-6 md:py-7 bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 hover:from-amber-700 hover:via-orange-700 hover:to-red-700 rounded-xl text-white text-lg md:text-xl font-bold border-2 border-amber-400/50 active:scale-95 transition-transform"
+            className="w-full px-5 py-5 md:py-6 bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 hover:from-amber-700 hover:via-orange-700 hover:to-red-700 rounded-xl text-white text-base md:text-lg font-bold border-2 border-amber-400/50 active:scale-95 transition-transform"
           >
-            <Hammer className="w-5 h-5 mr-2" />
+            <Hammer className="w-4 h-4 mr-2" />
             🔨 锻造处
           </Button>
         </Link>
@@ -243,18 +256,18 @@ export default function StartScreen({ onStart, onStartTutorial, defeatedBosses =
         <div className="grid grid-cols-2 gap-2 md:gap-3">
           <Link to={createPageUrl('Profile')} className="block">
             <Button
-              className="w-full px-4 py-5 md:py-6 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 rounded-xl text-white text-base md:text-lg font-bold border-2 border-blue-400/50 active:scale-95 transition-transform"
+              className="w-full px-3 py-4 md:py-5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 rounded-xl text-white text-sm md:text-base font-bold border-2 border-blue-400/50 active:scale-95 transition-transform"
             >
-              <User className="w-4 h-4 mr-1" />
+              <User className="w-3.5 h-3.5 mr-1" />
               玩家档案
             </Button>
           </Link>
           
           <Link to={createPageUrl('Settings')} className="block">
             <Button
-              className="w-full px-4 py-5 md:py-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-xl text-white text-base md:text-lg font-bold border-2 border-purple-400/50 active:scale-95 transition-transform"
+              className="w-full px-3 py-4 md:py-5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-xl text-white text-sm md:text-base font-bold border-2 border-purple-400/50 active:scale-95 transition-transform"
             >
-              <Settings className="w-4 h-4 mr-1" />
+              <Settings className="w-3.5 h-3.5 mr-1" />
               游戏设置
             </Button>
           </Link>
@@ -263,15 +276,15 @@ export default function StartScreen({ onStart, onStartTutorial, defeatedBosses =
         <div className="grid grid-cols-2 gap-2 md:gap-3">
           <Button
             onClick={() => setShowPromoCode(true)}
-            className="px-4 py-5 md:py-6 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 rounded-xl text-white text-base md:text-lg font-bold border-2 border-pink-400/50 active:scale-95 transition-transform"
+            className="px-3 py-4 md:py-5 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 rounded-xl text-white text-sm md:text-base font-bold border-2 border-pink-400/50 active:scale-95 transition-transform"
           >
-            <Gift className="w-4 h-4 mr-1" />
+            <Gift className="w-3.5 h-3.5 mr-1" />
             优惠码
           </Button>
           
           <Link to={createPageUrl('Admin')} className="block">
             <Button
-              className="px-4 py-5 md:py-6 bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-800 hover:to-black rounded-xl text-white text-base md:text-lg font-bold border-2 border-slate-500/50 active:scale-95 transition-transform"
+              className="px-3 py-4 md:py-5 bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-800 hover:to-black rounded-xl text-white text-sm md:text-base font-bold border-2 border-slate-500/50 active:scale-95 transition-transform"
             >
               🔧 管理员
             </Button>
@@ -283,12 +296,12 @@ export default function StartScreen({ onStart, onStartTutorial, defeatedBosses =
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}
-        className="mt-4 md:mt-6 text-center space-y-1 px-4"
+        className="mt-3 md:mt-4 text-center space-y-0.5 px-4"
       >
-        <p className="text-orange-300/80 text-sm md:text-base font-medium">
+        <p className="text-orange-300/80 text-xs md:text-sm font-medium">
           击败 20 个 BOSS 赢得胜利！
         </p>
-        <p className="text-cyan-300/70 text-xs md:text-sm">
+        <p className="text-cyan-300/70 text-[10px] md:text-xs">
           每得 800 分挑战一个 BOSS
         </p>
       </motion.div>
