@@ -13,6 +13,7 @@ import WeaponSelect from '@/components/game/WeaponSelect';
 import Forge from '@/components/game/Forge';
 import BusBreakSelect from '@/components/game/BusBreakSelect';
 import XiaowangConfirm from '@/components/game/XiaowangConfirm';
+import Tutorial from '@/components/game/Tutorial';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import BottomNav from '@/components/BottomNav';
 import EmailSubscriptionModal from '@/components/EmailSubscriptionModal';
