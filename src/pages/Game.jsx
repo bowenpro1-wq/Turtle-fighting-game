@@ -64,6 +64,8 @@ export default function Game() {
   const [showWeaponSelect, setShowWeaponSelect] = useState(false);
   const [showForge, setShowForge] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(true);
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [tutorialMode, setTutorialMode] = useState(false);
   const [isInShop, setIsInShop] = useState(false);
   const [waveNumber, setWaveNumber] = useState(1);
   const [survivalTime, setSurvivalTime] = useState(0);
@@ -355,6 +357,27 @@ export default function Game() {
     // Show weapon select for all other modes
     setGameMode(mode);
     setShowWeaponSelect(true);
+  };
+
+  const startTutorial = () => {
+    setTutorialMode(true);
+    setShowTutorial(true);
+    setGameMode('normal');
+    setPlayerHealth(100);
+    setMaxHealth(100);
+    setScore(0);
+    setCoins(1000);
+    window.tutorialEnemiesKilled = 0;
+    setTimeout(() => {
+      setGameState('playing');
+    }, 100);
+  };
+
+  const completeTutorial = () => {
+    setShowTutorial(false);
+    setTutorialMode(false);
+    setGameState('start');
+    window.tutorialEnemiesKilled = 0;
   };
 
   const continueGameAfterWeaponSelect = async (mode, fromCheckpoint = false) => {
@@ -677,6 +700,14 @@ export default function Game() {
   }, [isFlying, difficultyMultiplier, playerProfile, gameStartTime]);
 
   const handleEnemyKill = useCallback((enemyType) => {
+    // Tutorial tracking
+    if (tutorialMode && window.tutorialUpdateState) {
+      window.tutorialUpdateState({ 
+        enemiesKilled: (window.tutorialEnemiesKilled || 0) + 1 
+      });
+      window.tutorialEnemiesKilled = (window.tutorialEnemiesKilled || 0) + 1;
+    }
+
     // Track tower kills
     if (gameMode === 'tower' && enemyType === 'zhongdalin') {
       setTowerKillCount(prev => prev + 1);
@@ -941,7 +972,11 @@ export default function Game() {
 
       <AnimatePresence mode="wait">
         {gameState === 'start' && (
-          <StartScreen onStart={startGame} defeatedBosses={defeatedBosses} />
+          <StartScreen 
+            onStart={startGame} 
+            onStartTutorial={startTutorial}
+            defeatedBosses={defeatedBosses} 
+          />
         )}
 
         {gameState === 'busbreak_select' && !showXiaowangConfirm && (
@@ -965,6 +1000,13 @@ export default function Game() {
         
         {(gameState === 'playing' || gameState === 'boss') && (
           <>
+            {showTutorial && (
+              <Tutorial 
+                onComplete={completeTutorial}
+                onSkip={completeTutorial}
+              />
+            )}
+
             <VirtualKeyboard />
 
             <GameCanvas

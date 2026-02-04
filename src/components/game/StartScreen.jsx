@@ -10,7 +10,7 @@ import LanguageSwitcher from '../LanguageSwitcher';
 import BottomNav from '../BottomNav';
 import PromoCodeInput from '../PromoCodeInput';
 
-export default function StartScreen({ onStart, defeatedBosses = [] }) {
+export default function StartScreen({ onStart, onStartTutorial, defeatedBosses = [] }) {
   const [selectedMode, setSelectedMode] = useState(null);
   const [showPreBattleChat, setShowPreBattleChat] = useState(false);
   const [language, setLanguage] = useState('zh');
