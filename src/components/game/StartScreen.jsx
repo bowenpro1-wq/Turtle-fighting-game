@@ -73,43 +73,24 @@ export default function StartScreen({ onStart, onStartTutorial, defeatedBosses =
   };
 
   const handleDownloadApp = () => {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
+    const isMobile = isIOS || isAndroid;
+
     if (window.matchMedia('(display-mode: standalone)').matches) {
       alert('应用已安装！');
       return;
     }
 
-    // Try PWA install
-    if (window.deferredPrompt) {
-      window.deferredPrompt.prompt();
-      window.deferredPrompt.userChoice.then((choiceResult) => {
-        if (choiceResult.outcome === 'accepted') {
-          alert('安装成功！');
-        }
-        window.deferredPrompt = null;
-      });
+    if (isIOS) {
+      alert('📱 iOS安装步骤：\n\n1. 点击底部分享按钮 (□↑)\n2. 向下滚动\n3. 选择"添加到主屏幕"\n4. 点击"添加"');
+    } else if (isAndroid) {
+      alert('📱 安卓安装步骤：\n\n1. 点击浏览器菜单 (⋮)\n2. 选择"安装应用"或"添加到主屏幕"\n3. 确认安装');
     } else {
-      // Fallback instructions
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      const isAndroid = /Android/.test(navigator.userAgent);
-
-      if (isIOS) {
-        alert('在Safari中：点击分享按钮 → 添加到主屏幕');
-      } else if (isAndroid) {
-        alert('在Chrome中：点击菜单 → 安装应用');
-      } else {
-        alert('请在支持的移动浏览器中打开以安装应用');
-      }
+      // Desktop browsers
+      alert('💻 电脑安装步骤：\n\n1. 点击地址栏右侧的安装图标\n或\n2. 按 Ctrl+D (Windows) / Cmd+D (Mac) 添加书签\n\n推荐使用Chrome或Edge浏览器');
     }
   };
-
-  useEffect(() => {
-    const handler = (e) => {
-      e.preventDefault();
-      window.deferredPrompt = e;
-    };
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, []);
 
   return (
     <motion.div
