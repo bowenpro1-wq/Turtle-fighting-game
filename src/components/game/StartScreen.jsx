@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Hammer, User, Settings, Gift, Users, Save, LogIn } from 'lucide-react';
+import { Play, Hammer, User, Settings, Gift, Users, Save, LogIn, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -71,6 +71,45 @@ export default function StartScreen({ onStart, onStartTutorial, defeatedBosses =
     const newCoins = currentCoins + value;
     localStorage.setItem('gameCoins', newCoins.toString());
   };
+
+  const handleDownloadApp = () => {
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      alert('应用已安装！');
+      return;
+    }
+
+    // Try PWA install
+    if (window.deferredPrompt) {
+      window.deferredPrompt.prompt();
+      window.deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          alert('安装成功！');
+        }
+        window.deferredPrompt = null;
+      });
+    } else {
+      // Fallback instructions
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isAndroid = /Android/.test(navigator.userAgent);
+
+      if (isIOS) {
+        alert('在Safari中：点击分享按钮 → 添加到主屏幕');
+      } else if (isAndroid) {
+        alert('在Chrome中：点击菜单 → 安装应用');
+      } else {
+        alert('请在支持的移动浏览器中打开以安装应用');
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handler = (e) => {
+      e.preventDefault();
+      window.deferredPrompt = e;
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
 
   return (
     <motion.div
@@ -281,22 +320,30 @@ export default function StartScreen({ onStart, onStartTutorial, defeatedBosses =
           </Link>
         </div>
         
-        <div className="grid grid-cols-2 gap-2 md:gap-3">
+        <div className="grid grid-cols-3 gap-2 md:gap-3">
           <Button
             onClick={() => setShowPromoCode(true)}
-            className="px-3 py-4 md:py-5 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 rounded-xl text-white text-sm md:text-base font-bold border-2 border-pink-400/50 active:scale-95 transition-transform"
+            className="px-2 py-4 md:py-5 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 rounded-xl text-white text-xs md:text-sm font-bold border-2 border-pink-400/50 active:scale-95 transition-transform"
           >
             <Gift className="w-3.5 h-3.5 mr-1" />
             优惠码
           </Button>
-          
+
           <Link to={createPageUrl('Admin')} className="block">
             <Button
-              className="px-3 py-4 md:py-5 bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-800 hover:to-black rounded-xl text-white text-sm md:text-base font-bold border-2 border-slate-500/50 active:scale-95 transition-transform"
+              className="px-2 py-4 md:py-5 bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-800 hover:to-black rounded-xl text-white text-xs md:text-sm font-bold border-2 border-slate-500/50 active:scale-95 transition-transform"
             >
               🔧 管理员
             </Button>
           </Link>
+
+          <Button
+            onClick={handleDownloadApp}
+            className="px-2 py-4 md:py-5 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 rounded-xl text-white text-xs md:text-sm font-bold border-2 border-green-400/50 active:scale-95 transition-transform"
+          >
+            <Download className="w-3.5 h-3.5 mr-1" />
+            下载
+          </Button>
         </div>
         </motion.div>
 
