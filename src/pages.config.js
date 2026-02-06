@@ -55,6 +55,7 @@ import MiniGames from './pages/MiniGames';
 import Multiplayer from './pages/Multiplayer';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
+import Skins from './pages/Skins';
 
 
 export const PAGES = {
@@ -66,6 +67,7 @@ export const PAGES = {
     "Multiplayer": Multiplayer,
     "Profile": Profile,
     "Settings": Settings,
+    "Skins": Skins,
 }
 
 export const pagesConfig = {
