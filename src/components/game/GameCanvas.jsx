@@ -2474,11 +2474,11 @@ export default function GameCanvas({
         if (!isInShop) {
           // Zhongdalin melee behavior
           if (enemy.behaviorType === 'melee' && enemy.name === 'zhongdalin') {
-          // Ram attack - charge at player
-          enemy.vx = (dx / distToPlayer) * enemy.speed;
-          enemy.vy = (dy / distToPlayer) * enemy.speed;
-          enemy.x += enemy.vx;
-          enemy.y += enemy.vy;
+            // Ram attack - charge at player
+            enemy.vx = (dx / distToPlayer) * enemy.speed;
+            enemy.vy = (dy / distToPlayer) * enemy.speed;
+            enemy.x += enemy.vx;
+            enemy.y += enemy.vy;
 
           // Collision damage (ram attack)
           if (distToPlayer < 60 && !isFlying && !isInShop) {
