@@ -22,7 +22,7 @@ export default function AdminPanel() {
   const [message, setMessage] = useState('');
 
   const handleLogin = () => {
-    if (password === '20140626') {
+    if (password === '20150525') {
       setIsAuthenticated(true);
       setMessage('登录成功！');
     } else {
