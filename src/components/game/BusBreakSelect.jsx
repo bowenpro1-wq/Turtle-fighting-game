@@ -117,7 +117,7 @@ export default function BusBreakSelect({ onSelectBoss, onCancel, defeatedBosses 
           })}
         </div>
 
-        <div className="text-center text-purple-300/60 text-sm">
+        <div className="text-center text-purple-300/60 text-sm flex-shrink-0">
           提示: Boss每日可重复挑战，但只有首次击败才能获得奖励
         </div>
       </motion.div>
