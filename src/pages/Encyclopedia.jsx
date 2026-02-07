@@ -64,8 +64,30 @@ export default function Encyclopedia() {
   const loadUserEntries = async () => {
     try {
       const user = await base44.auth.me();
-      const entries = await base44.entities.EncyclopediaEntry.filter({ user_email: user.email });
-      setUserEntries(entries);
+      
+      // Admin users get all entries unlocked automatically
+      if (user.role === 'admin') {
+        const allEntries = [
+          ...ENCYCLOPEDIA_DATA.bosses.map(b => ({ entry_id: b.id, entry_type: 'boss' })),
+          ...ENCYCLOPEDIA_DATA.special_bosses.map(b => ({ entry_id: b.id, entry_type: 'boss' })),
+          ...ENCYCLOPEDIA_DATA.weapons.map(w => ({ entry_id: w.id, entry_type: 'weapon' })),
+          ...ENCYCLOPEDIA_DATA.upgrades.map(u => ({ entry_id: u.id, entry_type: 'upgrade' }))
+        ];
+        
+        const mockEntries = allEntries.map(e => ({
+          user_email: user.email,
+          entry_id: e.entry_id,
+          entry_type: e.entry_type,
+          unlocked: true,
+          times_encountered: 999,
+          times_defeated: 999
+        }));
+        
+        setUserEntries(mockEntries);
+      } else {
+        const entries = await base44.entities.EncyclopediaEntry.filter({ user_email: user.email });
+        setUserEntries(entries);
+      }
     } catch (error) {
       console.error('Failed to load encyclopedia entries:', error);
     } finally {
