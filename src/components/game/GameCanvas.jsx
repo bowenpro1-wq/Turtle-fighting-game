@@ -2515,27 +2515,27 @@ export default function GameCanvas({
               enemy.vy = Math.sin(enemy.patrolAngle) * enemy.speed * 0.5;
             }
           } else if (enemy.behaviorType === 'assault') {
-          const nearestBuilding = game.buildings
-            .filter(b => b.important)
-            .sort((a, b) => {
-              const distA = Math.sqrt((a.x - enemy.x)**2 + (a.y - enemy.y)**2);
-              const distB = Math.sqrt((b.x - enemy.x)**2 + (b.y - enemy.y)**2);
-              return distA - distB;
-            })[0];
-          
-          if (nearestBuilding) {
-            const bdx = nearestBuilding.x - enemy.x;
-            const bdy = nearestBuilding.y - enemy.y;
-            const bdist = Math.sqrt(bdx * bdx + bdy * bdy);
-            enemy.target = nearestBuilding;
-            enemy.vx = (bdx / bdist) * enemy.speed;
-            enemy.vy = (bdy / bdist) * enemy.speed;
-          }
-        } else if (enemy.behaviorType === 'flying') {
-          const angle = Math.atan2(dy, dx);
-          enemy.vx = Math.cos(angle + Math.sin(game.animationFrame * 0.05) * 0.5) * enemy.speed;
-          enemy.vy = Math.sin(angle + Math.sin(game.animationFrame * 0.05) * 0.5) * enemy.speed;
-        } else if (enemy.behaviorType === 'support') {
+            const nearestBuilding = game.buildings
+              .filter(b => b.important)
+              .sort((a, b) => {
+                const distA = Math.sqrt((a.x - enemy.x)**2 + (a.y - enemy.y)**2);
+                const distB = Math.sqrt((b.x - enemy.x)**2 + (b.y - enemy.y)**2);
+                return distA - distB;
+              })[0];
+            
+            if (nearestBuilding) {
+              const bdx = nearestBuilding.x - enemy.x;
+              const bdy = nearestBuilding.y - enemy.y;
+              const bdist = Math.sqrt(bdx * bdx + bdy * bdy);
+              enemy.target = nearestBuilding;
+              enemy.vx = (bdx / bdist) * enemy.speed;
+              enemy.vy = (bdy / bdist) * enemy.speed;
+            }
+          } else if (enemy.behaviorType === 'flying') {
+            const angle = Math.atan2(dy, dx);
+            enemy.vx = Math.cos(angle + Math.sin(game.animationFrame * 0.05) * 0.5) * enemy.speed;
+            enemy.vy = Math.sin(angle + Math.sin(game.animationFrame * 0.05) * 0.5) * enemy.speed;
+          } else if (enemy.behaviorType === 'support') {
           enemy.vx = (dx / distToPlayer) * enemy.speed * 0.3;
           enemy.vy = (dy / distToPlayer) * enemy.speed * 0.3;
           
