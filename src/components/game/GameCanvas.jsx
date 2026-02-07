@@ -2614,27 +2614,27 @@ export default function GameCanvas({
           enemy.x += enemy.vx;
           enemy.y += enemy.vy;
 
-        // Enemy shooting (snipers have longer range) - skip for melee enemies
-        const shootRange = enemy.longRange ? 800 : 600;
-        if (!isInShop && enemy.behaviorType !== 'melee' && Date.now() - enemy.lastShot > enemy.shootInterval && distToPlayer < shootRange) {
-          const target = enemy.target || game.player;
-          const dx = (target.x || target.x) - enemy.x;
-          const dy = ((target.y || target.y) + (target.height || 0) / 2) - (enemy.y + enemy.height / 2);
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          
-          game.enemyBullets.push({
-            x: enemy.x + enemy.width / 2,
-            y: enemy.y + enemy.height / 2,
-            vx: (dx / dist) * 8,
-            vy: (dy / dist) * 8,
-            damage: enemy.damage,
-            size: 6,
-            color: enemy.color,
-            targetBuilding: enemy.attacksBuildings && enemy.target
-          });
-          
-          enemy.lastShot = Date.now();
-        }
+          // Enemy shooting (snipers have longer range) - skip for melee enemies
+          const shootRange = enemy.longRange ? 800 : 600;
+          if (enemy.behaviorType !== 'melee' && Date.now() - enemy.lastShot > enemy.shootInterval && distToPlayer < shootRange) {
+            const target = enemy.target || game.player;
+            const dx = (target.x || target.x) - enemy.x;
+            const dy = ((target.y || target.y) + (target.height || 0) / 2) - (enemy.y + enemy.height / 2);
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            game.enemyBullets.push({
+              x: enemy.x + enemy.width / 2,
+              y: enemy.y + enemy.height / 2,
+              vx: (dx / dist) * 8,
+              vy: (dy / dist) * 8,
+              damage: enemy.damage,
+              size: 6,
+              color: enemy.color,
+              targetBuilding: enemy.attacksBuildings && enemy.target
+            });
+            
+            enemy.lastShot = Date.now();
+          }
         } // End of !isInShop check
 
         // Draw enemy
