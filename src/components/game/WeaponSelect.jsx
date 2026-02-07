@@ -134,18 +134,18 @@ export default function WeaponSelect({ availableWeapons, onSelect, onClose }) {
           })}
         </div>
 
-        <div className="flex gap-4">
+        <div className="flex gap-4 flex-shrink-0">
           <Button
             onClick={onClose}
             variant="outline"
-            className="flex-1 text-lg py-6"
+            className="flex-1 text-base md:text-lg py-4 md:py-6"
           >
             取消
           </Button>
           <Button
             onClick={handleConfirm}
             disabled={!selectedWeapon}
-            className="flex-1 text-lg py-6 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400"
+            className="flex-1 text-base md:text-lg py-4 md:py-6 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400"
           >
             确认选择
           </Button>
