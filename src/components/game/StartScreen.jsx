@@ -273,13 +273,23 @@ export default function StartScreen({ onStart, onStartTutorial, defeatedBosses =
           </Button>
         </Link>
 
-        <Link to={createPageUrl('Skins')} className="block">
-          <Button
-            className="w-full px-5 py-5 md:py-6 bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 hover:from-pink-700 hover:via-purple-700 hover:to-indigo-700 rounded-xl text-white text-base md:text-lg font-bold border-2 border-pink-400/50 active:scale-95 transition-transform"
-          >
-            ✨ 皮肤商店
-          </Button>
-        </Link>
+        <div className="grid grid-cols-2 gap-2 md:gap-3">
+          <Link to={createPageUrl('Skins')} className="block">
+            <Button
+              className="w-full px-3 py-4 md:py-5 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 rounded-xl text-white text-sm md:text-base font-bold border-2 border-pink-400/50 active:scale-95 transition-transform"
+            >
+              ✨ 皮肤商店
+            </Button>
+          </Link>
+
+          <Link to={createPageUrl('Encyclopedia')} className="block">
+            <Button
+              className="w-full px-3 py-4 md:py-5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl text-white text-sm md:text-base font-bold border-2 border-blue-400/50 active:scale-95 transition-transform"
+            >
+              📖 游戏百科
+            </Button>
+          </Link>
+        </div>
 
         <div className="grid grid-cols-2 gap-2 md:gap-3">
           <Link to={createPageUrl('Profile')} className="block">

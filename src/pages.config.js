@@ -56,6 +56,7 @@ import Multiplayer from './pages/Multiplayer';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Skins from './pages/Skins';
+import Encyclopedia from './pages/Encyclopedia';
 
 
 export const PAGES = {
@@ -68,6 +69,7 @@ export const PAGES = {
     "Profile": Profile,
     "Settings": Settings,
     "Skins": Skins,
+    "Encyclopedia": Encyclopedia,
 }
 
 export const pagesConfig = {

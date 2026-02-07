@@ -608,6 +608,10 @@ export default function Game() {
       setDefeatedBosses(prev => [...prev, currentBoss.id]);
       setScore(prev => prev + currentBoss.health * 10);
       
+      // Unlock boss in encyclopedia
+      const bossId = `boss_${currentBoss.id}`;
+      unlockEncyclopediaEntry(bossId, 'boss');
+      
       const bonusCoins = difficultyMultiplier >= 1.4 ? 200 : difficultyMultiplier >= 1.0 ? 100 : 150;
       setCoins(prev => {
         const newCoins = prev + bonusCoins;
@@ -699,6 +703,34 @@ export default function Game() {
       return newHealth;
     });
   }, [isFlying, difficultyMultiplier, playerProfile, gameStartTime]);
+
+  const unlockEncyclopediaEntry = async (entryId, entryType) => {
+    try {
+      const user = await base44.auth.me();
+      const existing = await base44.entities.EncyclopediaEntry.filter({
+        user_email: user.email,
+        entry_id: entryId
+      });
+
+      if (existing.length === 0) {
+        await base44.entities.EncyclopediaEntry.create({
+          user_email: user.email,
+          entry_id: entryId,
+          entry_type: entryType,
+          unlocked: true,
+          times_encountered: 1,
+          times_defeated: 1
+        });
+      } else {
+        await base44.entities.EncyclopediaEntry.update(existing[0].id, {
+          unlocked: true,
+          times_defeated: (existing[0].times_defeated || 0) + 1
+        });
+      }
+    } catch (error) {
+      console.error('Failed to unlock encyclopedia entry:', error);
+    }
+  };
 
   const handleEnemyKill = useCallback((enemyType) => {
     // Tutorial tracking
