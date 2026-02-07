@@ -2617,7 +2617,7 @@ export default function GameCanvas({
 
         // Enemy shooting (snipers have longer range) - skip for melee enemies
         const shootRange = enemy.longRange ? 800 : 600;
-        if (enemy.behaviorType !== 'melee' && Date.now() - enemy.lastShot > enemy.shootInterval && distToPlayer < shootRange) {
+        if (!isInShop && enemy.behaviorType !== 'melee' && Date.now() - enemy.lastShot > enemy.shootInterval && distToPlayer < shootRange) {
           const target = enemy.target || game.player;
           const dx = (target.x || target.x) - enemy.x;
           const dy = ((target.y || target.y) + (target.height || 0) / 2) - (enemy.y + enemy.height / 2);
