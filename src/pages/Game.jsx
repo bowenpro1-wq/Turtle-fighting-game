@@ -876,7 +876,7 @@ export default function Game() {
   }, []);
 
   const handlePurchase = (upgrade, cost) => {
-    if (coins >= cost) {
+      if (isAdmin || coins >= cost) {
       setCoins(prev => {
         const newCoins = prev - cost;
         localStorage.setItem('gameCoins', newCoins.toString());
