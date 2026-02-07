@@ -1048,6 +1048,10 @@ export default function Game() {
             )}
 
             <VirtualKeyboard />
+            <TouchShopButton onShopClick={() => {
+              setShowShop(true);
+              setIsInShop(true);
+            }} />
 
             <GameCanvas
               gameState={gameState}
