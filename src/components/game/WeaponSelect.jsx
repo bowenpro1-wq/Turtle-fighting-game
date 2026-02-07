@@ -140,6 +140,21 @@ export default function WeaponSelect({ availableWeapons, onSelect, onClose }) {
           })}
         </div>
 
+        {clickedWeapon && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4 flex-shrink-0"
+          >
+            <Button
+              onClick={handleConfirm}
+              className="w-full text-lg md:text-2xl py-6 md:py-8 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 font-bold animate-pulse"
+            >
+              ⚔️ 使用武器 - 开始战斗！
+            </Button>
+          </motion.div>
+        )}
+
         <div className="flex gap-4 flex-shrink-0">
           <Button
             onClick={onClose}
