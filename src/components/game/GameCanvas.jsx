@@ -2470,6 +2470,9 @@ export default function GameCanvas({
         const dy = game.player.y - enemy.y;
         const distToPlayer = Math.sqrt(dx * dx + dy * dy);
 
+        // Freeze enemy movement when shop is open
+        if (!isInShop) {
+
         // Zhongdalin melee behavior
         if (enemy.behaviorType === 'melee' && enemy.name === 'zhongdalin') {
           // Ram attack - charge at player
