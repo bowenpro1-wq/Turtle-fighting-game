@@ -99,7 +99,12 @@ export default function WeaponSelect({ availableWeapons, onSelect, onClose }) {
             return (
               <motion.button
                 key={weapon.id}
-                onClick={() => !isLocked && setSelectedWeapon(weapon.id)}
+                onClick={() => {
+                  if (!isLocked) {
+                    setSelectedWeapon(weapon.id);
+                    setClickedWeapon(weapon.id);
+                  }
+                }}
                 disabled={isLocked}
                 whileHover={!isLocked ? { scale: 1.05 } : {}}
                 whileTap={!isLocked ? { scale: 0.95 } : {}}
