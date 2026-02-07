@@ -2636,6 +2636,7 @@ export default function GameCanvas({
           
           enemy.lastShot = Date.now();
         }
+        } // End of !isInShop check
 
         // Draw enemy
         if (enemy.x + enemy.width > game.camera.x && enemy.x < game.camera.x + CANVAS_WIDTH) {
