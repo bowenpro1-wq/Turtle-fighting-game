@@ -2564,55 +2564,55 @@ export default function GameCanvas({
               game.lastObstacleCheck = Date.now();
             }
           } else if (enemy.behaviorType === 'stealth') {
-          if (Date.now() - (enemy.lastTeleport || 0) > 4000 && distToPlayer > 150) {
-            const angle = Math.random() * Math.PI * 2;
-            enemy.x = game.player.x + Math.cos(angle) * 100;
-            enemy.y = game.player.y + Math.sin(angle) * 100;
-            enemy.lastTeleport = Date.now();
-            for (let i = 0; i < 15; i++) {
-              game.particles.push({
-                x: enemy.x,
-                y: enemy.y,
-                vx: (Math.random() - 0.5) * 8,
-                vy: (Math.random() - 0.5) * 8,
-                life: 20,
-                color: '#8b5cf6',
-                size: 4
+            if (Date.now() - (enemy.lastTeleport || 0) > 4000 && distToPlayer > 150) {
+              const angle = Math.random() * Math.PI * 2;
+              enemy.x = game.player.x + Math.cos(angle) * 100;
+              enemy.y = game.player.y + Math.sin(angle) * 100;
+              enemy.lastTeleport = Date.now();
+              for (let i = 0; i < 15; i++) {
+                game.particles.push({
+                  x: enemy.x,
+                  y: enemy.y,
+                  vx: (Math.random() - 0.5) * 8,
+                  vy: (Math.random() - 0.5) * 8,
+                  life: 20,
+                  color: '#8b5cf6',
+                  size: 4
+                });
+              }
+            } else {
+              const angle = Math.atan2(dy, dx);
+              enemy.vx = Math.cos(angle) * enemy.speed;
+              enemy.vy = Math.sin(angle) * enemy.speed;
+            }
+          } else if (enemy.behaviorType === 'stationary') {
+            enemy.vx = 0;
+            enemy.vy = 0;
+
+            if (enemy.createsHazards && Date.now() - enemy.lastShot > enemy.shootInterval + 2000) {
+              game.hazardZones.push({
+                x: game.player.x + (Math.random() - 0.5) * 200,
+                y: game.player.y + (Math.random() - 0.5) * 200,
+                radius: 80,
+                damage: 20,
+                life: 100,
+                warning: 50
               });
             }
-          } else {
+          } else if (enemy.behaviorType === 'kamikaze') {
+            // Rush towards player
             const angle = Math.atan2(dy, dx);
             enemy.vx = Math.cos(angle) * enemy.speed;
             enemy.vy = Math.sin(angle) * enemy.speed;
-          }
-        } else if (enemy.behaviorType === 'stationary') {
-          enemy.vx = 0;
-          enemy.vy = 0;
 
-          if (enemy.createsHazards && Date.now() - enemy.lastShot > enemy.shootInterval + 2000) {
-            game.hazardZones.push({
-              x: game.player.x + (Math.random() - 0.5) * 200,
-              y: game.player.y + (Math.random() - 0.5) * 200,
-              radius: 80,
-              damage: 20,
-              life: 100,
-              warning: 50
-            });
+            // Explode if close to player
+            if (distToPlayer < 60) {
+              enemy.health = 0;
+            }
           }
-        } else if (enemy.behaviorType === 'kamikaze') {
-          // Rush towards player
-          const angle = Math.atan2(dy, dx);
-          enemy.vx = Math.cos(angle) * enemy.speed;
-          enemy.vy = Math.sin(angle) * enemy.speed;
 
-          // Explode if close to player
-          if (distToPlayer < 60) {
-            enemy.health = 0;
-          }
-        }
-
-        enemy.x += enemy.vx;
-        enemy.y += enemy.vy;
+          enemy.x += enemy.vx;
+          enemy.y += enemy.vy;
 
         // Enemy shooting (snipers have longer range) - skip for melee enemies
         const shootRange = enemy.longRange ? 800 : 600;
