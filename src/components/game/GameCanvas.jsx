@@ -2472,9 +2472,8 @@ export default function GameCanvas({
 
         // Freeze enemy movement when shop is open
         if (!isInShop) {
-
-        // Zhongdalin melee behavior
-        if (enemy.behaviorType === 'melee' && enemy.name === 'zhongdalin') {
+          // Zhongdalin melee behavior
+          if (enemy.behaviorType === 'melee' && enemy.name === 'zhongdalin') {
           // Ram attack - charge at player
           enemy.vx = (dx / distToPlayer) * enemy.speed;
           enemy.vy = (dy / distToPlayer) * enemy.speed;
