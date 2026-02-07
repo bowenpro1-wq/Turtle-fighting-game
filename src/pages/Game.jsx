@@ -774,9 +774,10 @@ export default function Game() {
         if (nextFloor % 10 === 1 && nextFloor > 1) {
           setCheckpoint(nextFloor);
         }
-        // Reset kill counter and increase requirement
+        // Reset kill counter - always 20
         setTowerKillCount(0);
-        setTowerRequiredKills(10 + Math.floor(nextFloor / 10) * 2);
+        setTowerRequiredKills(20);
+        setShowTowerDoor(false);
       }
       return;
     }
