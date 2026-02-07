@@ -877,11 +877,13 @@ export default function Game() {
 
   const handlePurchase = (upgrade, cost) => {
       if (isAdmin || coins >= cost) {
-      setCoins(prev => {
-        const newCoins = prev - cost;
-        localStorage.setItem('gameCoins', newCoins.toString());
-        return newCoins;
-      });
+        if (!isAdmin) {
+          setCoins(prev => {
+            const newCoins = prev - cost;
+            localStorage.setItem('gameCoins', newCoins.toString());
+            return newCoins;
+          });
+        }
       
       if (upgrade === 'homingBullets') {
         setHasHomingBullets(true);
