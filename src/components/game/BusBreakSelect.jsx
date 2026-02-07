@@ -52,10 +52,10 @@ export default function BusBreakSelect({ onSelectBoss, onCancel, defeatedBosses 
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="bg-gradient-to-b from-purple-900 to-slate-900 rounded-2xl p-8 max-w-5xl w-full border-4 border-purple-500/50 shadow-2xl"
+        className="bg-gradient-to-b from-purple-900 to-slate-900 rounded-2xl p-4 md:p-8 max-w-5xl w-full max-h-[90vh] border-4 border-purple-500/50 shadow-2xl flex flex-col overflow-hidden"
       >
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+        <div className="flex justify-between items-center mb-4 md:mb-6 flex-shrink-0">
+          <h2 className="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
             ⚔️ Boss试炼 ⚔️
           </h2>
           <Button
@@ -68,12 +68,12 @@ export default function BusBreakSelect({ onSelectBoss, onCancel, defeatedBosses 
           </Button>
         </div>
 
-        <p className="text-center text-purple-300 mb-8 text-xl">
+        <p className="text-center text-purple-300 mb-4 md:mb-8 text-sm md:text-xl flex-shrink-0">
           挑战特殊Boss，解锁强力武器和升级模板！<br />
           击败每个Boss解锁对应奖励，每4个Boss额外获得1个升级模板
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 md:mb-6 overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
           {BUSBREAK_BOSSES.map((boss) => {
             const isDefeated = defeatedBosses?.[boss.id] || false;
             
