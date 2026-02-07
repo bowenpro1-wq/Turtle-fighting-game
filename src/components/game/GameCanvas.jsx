@@ -2480,31 +2480,31 @@ export default function GameCanvas({
             enemy.x += enemy.vx;
             enemy.y += enemy.vy;
 
-          // Collision damage (ram attack)
-          if (distToPlayer < 60 && !isFlying && !isInShop) {
-            if (game.animationFrame % 30 === 0) {
-              onPlayerDamage(enemy.damage * 0.5);
+            // Collision damage (ram attack)
+            if (distToPlayer < 60 && !isFlying && !isInShop) {
+              if (game.animationFrame % 30 === 0) {
+                onPlayerDamage(enemy.damage * 0.5);
+              }
             }
-          }
 
-          // Vine attack - slow moving vines
-          if (Date.now() - enemy.lastShot > 3000 && distToPlayer < 400) {
-            for (let i = 0; i < 3; i++) {
-              const angle = Math.atan2(dy, dx) + (i - 1) * 0.4;
-              game.enemyBullets.push({
-                x: enemy.x + enemy.width / 2,
-                y: enemy.y + enemy.height / 2,
-                vx: Math.cos(angle) * 3,
-                vy: Math.sin(angle) * 3,
-                damage: enemy.damage * 0.7,
-                size: 8,
-                color: '#22c55e',
-                type: 'vine'
-              });
+            // Vine attack - slow moving vines
+            if (Date.now() - enemy.lastShot > 3000 && distToPlayer < 400) {
+              for (let i = 0; i < 3; i++) {
+                const angle = Math.atan2(dy, dx) + (i - 1) * 0.4;
+                game.enemyBullets.push({
+                  x: enemy.x + enemy.width / 2,
+                  y: enemy.y + enemy.height / 2,
+                  vx: Math.cos(angle) * 3,
+                  vy: Math.sin(angle) * 3,
+                  damage: enemy.damage * 0.7,
+                  size: 8,
+                  color: '#22c55e',
+                  type: 'vine'
+                });
+              }
+              enemy.lastShot = Date.now();
             }
-            enemy.lastShot = Date.now();
-          }
-        } else if (enemy.behaviorType === 'patrol') {
+          } else if (enemy.behaviorType === 'patrol') {
           if (distToPlayer < 400) {
             enemy.state = 'attack';
             enemy.vx = (dx / distToPlayer) * enemy.speed;
