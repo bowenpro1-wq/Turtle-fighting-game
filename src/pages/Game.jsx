@@ -1130,7 +1130,7 @@ export default function Game() {
             <AnimatePresence>
               {showShop && (
                 <Shop
-                  coins={coins}
+                  coins={isAdmin ? 999999999 : coins}
                   upgrades={upgrades}
                   hasHomingBullets={hasHomingBullets}
                   hasPiercingShots={hasPiercingShots}
