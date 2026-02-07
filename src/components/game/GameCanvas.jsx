@@ -2536,34 +2536,34 @@ export default function GameCanvas({
             enemy.vx = Math.cos(angle + Math.sin(game.animationFrame * 0.05) * 0.5) * enemy.speed;
             enemy.vy = Math.sin(angle + Math.sin(game.animationFrame * 0.05) * 0.5) * enemy.speed;
           } else if (enemy.behaviorType === 'support') {
-          enemy.vx = (dx / distToPlayer) * enemy.speed * 0.3;
-          enemy.vy = (dy / distToPlayer) * enemy.speed * 0.3;
-          
-          if (enemy.buffAllies && game.animationFrame % 120 === 0) {
-            game.enemies.forEach(ally => {
-              if (ally !== enemy && ally.name !== 'commander') {
-                const adx = ally.x - enemy.x;
-                const ady = ally.y - enemy.y;
-                const adist = Math.sqrt(adx * adx + ady * ady);
-                if (adist < 250) {
-                  ally.buffed = 60;
+            enemy.vx = (dx / distToPlayer) * enemy.speed * 0.3;
+            enemy.vy = (dy / distToPlayer) * enemy.speed * 0.3;
+            
+            if (enemy.buffAllies && game.animationFrame % 120 === 0) {
+              game.enemies.forEach(ally => {
+                if (ally !== enemy && ally.name !== 'commander') {
+                  const adx = ally.x - enemy.x;
+                  const ady = ally.y - enemy.y;
+                  const adist = Math.sqrt(adx * adx + ady * ady);
+                  if (adist < 250) {
+                    ally.buffed = 60;
+                  }
                 }
-              }
-            });
-          }
-          
-          if (Date.now() - game.lastObstacleCheck > 8000 && Math.random() < 0.3) {
-            game.obstacles.push({
-              x: enemy.x,
-              y: enemy.y,
-              width: 60,
-              height: 60,
-              type: 'barrier',
-              health: 50
-            });
-            game.lastObstacleCheck = Date.now();
-          }
-        } else if (enemy.behaviorType === 'stealth') {
+              });
+            }
+            
+            if (Date.now() - game.lastObstacleCheck > 8000 && Math.random() < 0.3) {
+              game.obstacles.push({
+                x: enemy.x,
+                y: enemy.y,
+                width: 60,
+                height: 60,
+                type: 'barrier',
+                health: 50
+              });
+              game.lastObstacleCheck = Date.now();
+            }
+          } else if (enemy.behaviorType === 'stealth') {
           if (Date.now() - (enemy.lastTeleport || 0) > 4000 && distToPlayer > 150) {
             const angle = Math.random() * Math.PI * 2;
             enemy.x = game.player.x + Math.cos(angle) * 100;
