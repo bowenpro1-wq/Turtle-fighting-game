@@ -126,6 +126,7 @@ export default function Game() {
         
         // Admin unlock all weapons at max level - do this first
         if (user.role === 'admin') {
+          setIsAdmin(true);
           const adminWeapons = {
             chichao: { level: 5, unlocked: true },
             guigui: { level: 8, unlocked: true },
