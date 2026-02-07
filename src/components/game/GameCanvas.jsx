@@ -2505,16 +2505,16 @@ export default function GameCanvas({
               enemy.lastShot = Date.now();
             }
           } else if (enemy.behaviorType === 'patrol') {
-          if (distToPlayer < 400) {
-            enemy.state = 'attack';
-            enemy.vx = (dx / distToPlayer) * enemy.speed;
-            enemy.vy = (dy / distToPlayer) * enemy.speed;
-          } else {
-            enemy.patrolAngle += 0.02;
-            enemy.vx = Math.cos(enemy.patrolAngle) * enemy.speed * 0.5;
-            enemy.vy = Math.sin(enemy.patrolAngle) * enemy.speed * 0.5;
-          }
-        } else if (enemy.behaviorType === 'assault') {
+            if (distToPlayer < 400) {
+              enemy.state = 'attack';
+              enemy.vx = (dx / distToPlayer) * enemy.speed;
+              enemy.vy = (dy / distToPlayer) * enemy.speed;
+            } else {
+              enemy.patrolAngle += 0.02;
+              enemy.vx = Math.cos(enemy.patrolAngle) * enemy.speed * 0.5;
+              enemy.vy = Math.sin(enemy.patrolAngle) * enemy.speed * 0.5;
+            }
+          } else if (enemy.behaviorType === 'assault') {
           const nearestBuilding = game.buildings
             .filter(b => b.important)
             .sort((a, b) => {
