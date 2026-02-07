@@ -1090,7 +1090,7 @@ export default function Game() {
               health={playerHealth}
               maxHealth={maxHealth}
               score={score}
-              coins={coins}
+              coins={isAdmin ? '∞' : coins}
               shootCooldown={shootCooldown / SHOOT_CD}
               healCooldown={healCooldown / HEAL_CD}
               flyCooldown={flyCooldown / FLY_CD}
