@@ -17,6 +17,7 @@ import Tutorial from '@/components/game/Tutorial';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import BottomNav from '@/components/BottomNav';
 import EmailSubscriptionModal from '@/components/EmailSubscriptionModal';
+import TouchShopButton from '@/components/game/TouchShopButton';
 
 const BOSSES = [
   { id: 1, name: "海星守卫", health: 100, damage: 15, speed: 1.5, size: 60, color: "#ff6b6b", pattern: "circle" },
