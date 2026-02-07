@@ -82,14 +82,14 @@ export default function WeaponSelect({ availableWeapons, onSelect, onClose }) {
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="bg-gradient-to-b from-slate-800 to-slate-900 rounded-2xl p-8 max-w-4xl w-full border-2 border-cyan-500/30 shadow-2xl"
+        className="bg-gradient-to-b from-slate-800 to-slate-900 rounded-2xl p-4 md:p-8 max-w-4xl w-full max-h-[90vh] border-2 border-cyan-500/30 shadow-2xl flex flex-col overflow-hidden"
       >
-        <h2 className="text-4xl font-bold text-center mb-2 text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-2 text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
           选择你的武器
         </h2>
-        <p className="text-center text-gray-400 mb-8">选择一个武器进入战斗</p>
+        <p className="text-center text-gray-400 mb-4 md:mb-8">选择一个武器进入战斗</p>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4 md:mb-8 overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
           {Object.values(weapons).map((weapon) => {
             const Icon = weapon.icon;
             const isSelected = selectedWeapon === weapon.id;
