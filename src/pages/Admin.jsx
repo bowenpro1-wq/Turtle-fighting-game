@@ -26,7 +26,7 @@ export default function AdminPanel() {
       setIsAuthenticated(true);
       setMessage('登录成功！');
     } else {
-      setMessage('密码错误');
+      setMessage('密码错误,你个 2B');
     }
   };
 
