@@ -105,7 +105,9 @@ export default function Game() {
   const [towerSpecialFloor, setTowerSpecialFloor] = useState(null);
   const [gemDefeated, setGemDefeated] = useState(false);
   const [towerKillCount, setTowerKillCount] = useState(0);
-  const [towerRequiredKills, setTowerRequiredKills] = useState(10);
+  const [towerRequiredKills, setTowerRequiredKills] = useState(20);
+  const [showTowerDoor, setShowTowerDoor] = useState(false);
+  const [showWhiteFlash, setShowWhiteFlash] = useState(false);
 
   // Profile and difficulty
   const [playerProfile, setPlayerProfile] = useState(null);
@@ -653,9 +655,10 @@ export default function Game() {
           if (nextFloor % 10 === 1 && nextFloor > 1) {
             setCheckpoint(nextFloor);
           }
-          // Reset kill counter for next floor
+          // Reset kill counter for next floor - always 20
           setTowerKillCount(0);
-          setTowerRequiredKills(10 + Math.floor(nextFloor / 10) * 2);
+          setTowerRequiredKills(20);
+          setShowTowerDoor(false);
           setGameState('playing');
         }
       } else {
@@ -746,7 +749,17 @@ export default function Game() {
 
     // Track tower kills
     if (gameMode === 'tower' && enemyType === 'zhongdalin') {
-      setTowerKillCount(prev => prev + 1);
+      const newCount = towerKillCount + 1;
+      setTowerKillCount(newCount);
+      
+      // When 20 kills reached, show white flash and door
+      if (newCount >= 20) {
+        setShowWhiteFlash(true);
+        setTimeout(() => {
+          setShowWhiteFlash(false);
+          setShowTowerDoor(true);
+        }, 200);
+      }
     }
 
     // Floor complete trigger for tower mode
@@ -1093,7 +1106,8 @@ export default function Game() {
               isInShop={isInShop}
               towerKillCount={towerKillCount}
               towerRequiredKills={towerRequiredKills}
-            />
+              showTowerDoor={showTowerDoor}
+              />
             
             <GameUI
               health={playerHealth}
@@ -1129,6 +1143,15 @@ export default function Game() {
             <AnimatePresence>
               {showBossIntro && currentBoss && (
                 <BossIntro boss={currentBoss} />
+              )}
+              
+              {showWhiteFlash && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 bg-white z-50"
+                />
               )}
             </AnimatePresence>
 

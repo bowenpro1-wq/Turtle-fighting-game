@@ -514,7 +514,9 @@ export default function GameCanvas({
   helperTimer,
   isInShop = false,
   towerKillCount = 0,
-  towerRequiredKills = 10
+  towerRequiredKills = 20,
+  showTowerDoor = false,
+  onDoorEnter
 }) {
   const canvasRef = useRef(null);
   const WORLD_WIDTH = gameMode === 'tower' ? 1800 : 4000;
@@ -552,7 +554,8 @@ export default function GameCanvas({
     screenShake: 0,
     totemShotCount: 0,
     towerKillCount: 0,
-    towerRequiredKills: 10,
+    towerRequiredKills: 20,
+    towerDoor: null,
     isHoldingK: false,
     lastBeamTick: 0,
     flameLineActive: false,
@@ -1562,6 +1565,21 @@ export default function GameCanvas({
         game.lastBeamTick = Date.now();
       }
 
+      // Create tower door when 20 kills reached
+      if (gameMode === 'tower' && showTowerDoor && !game.towerDoor) {
+        game.towerDoor = {
+          x: game.player.x + 200,
+          y: game.player.y,
+          width: 80,
+          height: 120
+        };
+      }
+      
+      // Remove door when floor changes
+      if (gameMode === 'tower' && !showTowerDoor && game.towerDoor) {
+        game.towerDoor = null;
+      }
+
       // Tower mode spawning
       if (gameMode === 'tower' && gameState === 'playing') {
         // Check for special floors
@@ -1575,8 +1593,8 @@ export default function GameCanvas({
           onTowerSpecialFloor(null);
         }
 
-        // Spawn fewer Zhongdalin
-        if (Date.now() - game.lastEnemySpawn > 2500 && game.enemies.length < game.towerRequiredKills) {
+        // Spawn fewer Zhongdalin - stop spawning at 20 kills
+        if (Date.now() - game.lastEnemySpawn > 2500 && game.enemies.length < game.towerRequiredKills && towerKillCount < 20) {
           const baseCount = Math.min(Math.floor(currentFloor / 10) + 2, 5);
           let spawnCount = baseCount;
 
@@ -1603,23 +1621,28 @@ export default function GameCanvas({
           game.lastEnemySpawn = Date.now();
         }
 
-        // Check if enough kills to advance
-        if (game.towerKillCount >= game.towerRequiredKills && game.enemies.length === 0) {
-          // Advance floor
-          if (currentFloor % 10 === 0 && !currentBoss) {
-            const bossNumber = Math.floor(currentFloor / 10);
-            setTimeout(() => {
-              if (currentFloor === 100) {
-                // Final boss - handled separately with gem mechanic
-              } else {
-                onTriggerBoss(bossNumber - 1);
-              }
-            }, 1000);
-          } else if (currentFloor % 10 !== 0) {
-            // Normal floor complete
-            game.towerKillCount = 0;
-            game.towerRequiredKills = 10 + Math.floor(currentFloor / 10) * 2;
-            onEnemyKill('floor_complete');
+        // Check door collision for floor advancement
+        if (game.towerDoor && showTowerDoor) {
+          const dx = Math.abs(game.player.x - game.towerDoor.x);
+          const dy = Math.abs(game.player.y - game.towerDoor.y);
+          
+          if (dx < 60 && dy < 80) {
+            // Player entered door - advance floor
+            if (currentFloor % 10 === 0 && !currentBoss) {
+              const bossNumber = Math.floor(currentFloor / 10);
+              setTimeout(() => {
+                if (currentFloor === 100) {
+                  // Final boss - handled separately with gem mechanic
+                } else {
+                  onTriggerBoss(bossNumber - 1);
+                }
+              }, 100);
+            } else if (currentFloor % 10 !== 0) {
+              // Normal floor complete
+              game.towerKillCount = 0;
+              game.towerRequiredKills = 20;
+              onEnemyKill('floor_complete');
+            }
           }
         }
       }
@@ -3233,6 +3256,61 @@ export default function GameCanvas({
           ctx.lineTo(endX, endY);
           ctx.stroke();
         }
+        ctx.restore();
+      }
+
+      // Draw tower door
+      if (gameMode === 'tower' && game.towerDoor) {
+        const doorScreenX = game.towerDoor.x - game.camera.x;
+        const doorScreenY = game.towerDoor.y - game.camera.y;
+        
+        ctx.save();
+        
+        // Door glow effect
+        const glowIntensity = 0.5 + Math.sin(game.animationFrame * 0.1) * 0.3;
+        ctx.shadowBlur = 30 * glowIntensity;
+        ctx.shadowColor = '#fbbf24';
+        
+        // Door frame
+        ctx.fillStyle = '#78350f';
+        ctx.strokeStyle = '#92400e';
+        ctx.lineWidth = 4;
+        ctx.fillRect(doorScreenX - game.towerDoor.width/2, doorScreenY - game.towerDoor.height/2, game.towerDoor.width, game.towerDoor.height);
+        ctx.strokeRect(doorScreenX - game.towerDoor.width/2, doorScreenY - game.towerDoor.height/2, game.towerDoor.width, game.towerDoor.height);
+        
+        // Door portal effect
+        const gradient = ctx.createRadialGradient(doorScreenX, doorScreenY, 0, doorScreenX, doorScreenY, 50);
+        gradient.addColorStop(0, 'rgba(251, 191, 36, 0.9)');
+        gradient.addColorStop(0.5, 'rgba(245, 158, 11, 0.6)');
+        gradient.addColorStop(1, 'rgba(217, 119, 6, 0.2)');
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(doorScreenX - 30, doorScreenY - 50, 60, 100);
+        
+        // Animated particles around door
+        for (let i = 0; i < 8; i++) {
+          const angle = (Math.PI * 2 / 8) * i + game.animationFrame * 0.05;
+          const radius = 50 + Math.sin(game.animationFrame * 0.1 + i) * 10;
+          const px = doorScreenX + Math.cos(angle) * radius;
+          const py = doorScreenY + Math.sin(angle) * radius;
+          
+          ctx.fillStyle = '#fbbf24';
+          ctx.globalAlpha = 0.7;
+          ctx.beginPath();
+          ctx.arc(px, py, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        
+        ctx.globalAlpha = 1;
+        
+        // "Enter" text
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 18px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#000';
+        ctx.fillText('进入下一层', doorScreenX, doorScreenY - 70);
+        
         ctx.restore();
       }
 

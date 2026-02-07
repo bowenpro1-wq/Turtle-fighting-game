@@ -48,6 +48,7 @@
  * The mainPage value must match a key in the PAGES object exactly.
  */
 import Admin from './pages/Admin';
+import Encyclopedia from './pages/Encyclopedia';
 import Forge from './pages/Forge';
 import Game from './pages/Game';
 import Leaderboard from './pages/Leaderboard';
@@ -56,11 +57,11 @@ import Multiplayer from './pages/Multiplayer';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Skins from './pages/Skins';
-import Encyclopedia from './pages/Encyclopedia';
 
 
 export const PAGES = {
     "Admin": Admin,
+    "Encyclopedia": Encyclopedia,
     "Forge": Forge,
     "Game": Game,
     "Leaderboard": Leaderboard,
@@ -69,7 +70,6 @@ export const PAGES = {
     "Profile": Profile,
     "Settings": Settings,
     "Skins": Skins,
-    "Encyclopedia": Encyclopedia,
 }
 
 export const pagesConfig = {
