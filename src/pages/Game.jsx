@@ -916,11 +916,13 @@ export default function Game() {
         setHasPiercingShots(false);
         setHasExplosiveShots(false);
         setWeaponType('normal');
-        setCoins(prev => {
-          const newCoins = prev + Math.floor(cost * 0.5);
-          localStorage.setItem('gameCoins', newCoins.toString());
-          return newCoins;
-        });
+        if (!isAdmin) {
+          setCoins(prev => {
+            const newCoins = prev + Math.floor(cost * 0.5);
+            localStorage.setItem('gameCoins', newCoins.toString());
+            return newCoins;
+          });
+        }
       } else {
         setUpgrades(prev => ({
           ...prev,
