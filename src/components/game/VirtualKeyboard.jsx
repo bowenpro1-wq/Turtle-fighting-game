@@ -5,6 +5,7 @@ export default function VirtualKeyboard() {
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   const [activeKeys, setActiveKeys] = useState(new Set());
   const activeKeysRef = useRef(new Set());
+  const keyPressIntervalsRef = useRef(new Map());
 
   useEffect(() => {
     // Detect if it's a touch device
@@ -15,6 +16,10 @@ export default function VirtualKeyboard() {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      // Clear all intervals
+      keyPressIntervalsRef.current.forEach(interval => clearInterval(interval));
+      keyPressIntervalsRef.current.clear();
+      
       // Release all active keys on unmount
       activeKeysRef.current.forEach(key => {
         window.dispatchEvent(new KeyboardEvent('keyup', { key }));
@@ -24,14 +29,38 @@ export default function VirtualKeyboard() {
   }, []);
 
   const handleKeyDown = (key) => {
+    // Don't add if already active
+    if (activeKeysRef.current.has(key)) return;
+    
     activeKeysRef.current.add(key);
     setActiveKeys(new Set(activeKeysRef.current));
+    
+    // Dispatch initial keydown
     window.dispatchEvent(new KeyboardEvent('keydown', { key }));
+    
+    // Set up continuous keydown dispatch for movement keys
+    if (['w', 'a', 's', 'd'].includes(key.toLowerCase())) {
+      const interval = setInterval(() => {
+        if (activeKeysRef.current.has(key)) {
+          window.dispatchEvent(new KeyboardEvent('keydown', { key }));
+        }
+      }, 50); // Dispatch every 50ms for smooth continuous movement
+      
+      keyPressIntervalsRef.current.set(key, interval);
+    }
   };
 
   const handleKeyUp = (key) => {
     activeKeysRef.current.delete(key);
     setActiveKeys(new Set(activeKeysRef.current));
+    
+    // Clear interval if exists
+    const interval = keyPressIntervalsRef.current.get(key);
+    if (interval) {
+      clearInterval(interval);
+      keyPressIntervalsRef.current.delete(key);
+    }
+    
     window.dispatchEvent(new KeyboardEvent('keyup', { key }));
   };
 
