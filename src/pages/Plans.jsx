@@ -47,7 +47,8 @@ export default function Plans() {
       });
       console.log('Created:', created);
 
-      const keyUrl = `${window.location.origin}${createPageUrl('Key')}?=${key}`;
+      const keyPagePath = createPageUrl('Key');
+      const keyUrl = `${keyPagePath}?=${key}`;
       console.log('Redirecting to:', keyUrl);
       window.location.href = keyUrl;
     } catch (error) {
