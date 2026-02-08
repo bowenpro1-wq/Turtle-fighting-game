@@ -125,28 +125,47 @@ class SoundManager {
         break;
       
       case 'heal':
-        oscillator.frequency.value = 600;
-        oscillator.type = 'sine';
-        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-        oscillator.start(ctx.currentTime);
-        oscillator.stop(ctx.currentTime + 0.3);
-        break;
+        // Healing chime sequence
+        [659, 784, 880, 1047].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.frequency.value = freq;
+          osc.type = 'sine';
+          gain.gain.setValueAtTime(this.volume * 0.2, ctx.currentTime + i * 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.1 + 0.3);
+          osc.start(ctx.currentTime + i * 0.1);
+          osc.stop(ctx.currentTime + i * 0.1 + 0.3);
+        });
+        return;
       
       case 'jump':
-        oscillator.frequency.value = 400;
-        oscillator.type = 'triangle';
-        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
-        oscillator.start(ctx.currentTime);
-        oscillator.stop(ctx.currentTime + 0.15);
-        break;
-      
-      case 'enemyDie':
-        oscillator.frequency.value = 200;
-        oscillator.type = 'sawtooth';
+        // Jump swoosh
+        oscillator.frequency.setValueAtTime(400, ctx.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.15);
+        oscillator.type = 'sine';
+        gainNode.gain.setValueAtTime(this.volume * 0.3, ctx.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
         oscillator.start(ctx.currentTime);
         oscillator.stop(ctx.currentTime + 0.2);
         break;
+      
+      case 'enemyDie':
+        // Multi-tone death sound
+        [400, 300, 200].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.frequency.value = freq;
+          osc.type = 'sawtooth';
+          gain.gain.setValueAtTime(this.volume * 0.2, ctx.currentTime + i * 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.05 + 0.15);
+          osc.start(ctx.currentTime + i * 0.05);
+          osc.stop(ctx.currentTime + i * 0.05 + 0.15);
+        });
+        return;
       
       case 'enemySpawn':
         oscillator.frequency.value = 300;
@@ -194,12 +213,20 @@ class SoundManager {
         return;
       
       case 'gameOver':
-        oscillator.frequency.value = 110;
-        oscillator.type = 'triangle';
-        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1);
-        oscillator.start(ctx.currentTime);
-        oscillator.stop(ctx.currentTime + 1);
-        break;
+        // Game over descending notes
+        [523, 494, 440, 392, 349, 330].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.frequency.value = freq;
+          osc.type = 'sine';
+          gain.gain.setValueAtTime(this.volume * 0.3, ctx.currentTime + i * 0.15);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.15 + 0.4);
+          osc.start(ctx.currentTime + i * 0.15);
+          osc.stop(ctx.currentTime + i * 0.15 + 0.4);
+        });
+        return;
       
       case 'powerup':
         // Powerup arpeggio
@@ -218,11 +245,25 @@ class SoundManager {
         return;
       
       case 'hit':
-        oscillator.frequency.value = 250;
-        oscillator.type = 'square';
-        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+        // Impact sound with bass
+        oscillator.frequency.value = 150;
+        oscillator.type = 'sawtooth';
+        gainNode.gain.setValueAtTime(this.volume * 0.4, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
         oscillator.start(ctx.currentTime);
-        oscillator.stop(ctx.currentTime + 0.1);
+        oscillator.stop(ctx.currentTime + 0.12);
+        
+        // Add high frequency hit
+        const hit2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        hit2.connect(gain2);
+        gain2.connect(ctx.destination);
+        hit2.frequency.value = 800;
+        hit2.type = 'square';
+        gain2.gain.setValueAtTime(this.volume * 0.2, ctx.currentTime);
+        gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+        hit2.start(ctx.currentTime);
+        hit2.stop(ctx.currentTime + 0.05);
         break;
     }
   }
@@ -244,6 +285,13 @@ class SoundManager {
 
   toggleMusicMute() {
     this.musicMuted = !this.musicMuted;
+    if (this.musicMuted) {
+      this.stopBackgroundMusic();
+    } else if (this.currentMusicMode) {
+      const mode = this.currentMusicMode;
+      this.currentMusicMode = null;
+      this.playBackgroundMusic(mode);
+    }
     localStorage.setItem('gameMusicMuted', this.musicMuted.toString());
   }
 
