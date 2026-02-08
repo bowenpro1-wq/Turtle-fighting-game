@@ -1563,8 +1563,8 @@ export default function GameCanvas({
           // Heal player
           for (let i = 0; i < 10; i++) {
             game.particles.push({
-              x: game.player.x + player.width / 2,
-              y: game.player.y + player.height / 2,
+              x: game.player.x + game.player.width / 2,
+              y: game.player.y + game.player.height / 2,
               vx: (Math.random() - 0.5) * 3,
               vy: -Math.random() * 4,
               life: 30,
