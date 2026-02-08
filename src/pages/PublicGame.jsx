@@ -18,9 +18,20 @@ export default function PublicGame() {
   const [totalKills, setTotalKills] = useState(0);
 
   useEffect(() => {
-    loadProfile();
-    findOrCreateGame();
+    const init = async () => {
+      const loadedProfile = await loadProfile();
+      if (loadedProfile) {
+        await findOrCreateGame();
+      }
+    };
+    init();
   }, []);
+  
+  useEffect(() => {
+    if (profile && !gameSession) {
+      findOrCreateGame();
+    }
+  }, [profile]);
 
   useEffect(() => {
     if (gameState === 'playing' && gameSession) {
@@ -50,15 +61,23 @@ export default function PublicGame() {
           turtle_color: ['green', 'blue', 'red', 'purple', 'yellow'][Math.floor(Math.random() * 5)]
         });
         setProfile(newProfile);
+        return newProfile;
       } else {
         setProfile(profiles[0]);
+        return profiles[0];
       }
     } catch (error) {
       console.error('Failed to load profile:', error);
+      return null;
     }
   };
 
   const findOrCreateGame = async () => {
+    if (!profile) {
+      console.log('Waiting for profile...');
+      return;
+    }
+    
     try {
       const user = await base44.auth.me();
       
@@ -71,13 +90,13 @@ export default function PublicGame() {
         const updatedPlayers = [...game.players, {
           email: user.email,
           name: user.full_name,
-          turtle_id: profile?.turtle_id || 'TURTLE-NEW',
+          turtle_id: profile.turtle_id,
           score: 0,
           kills: 0
         }];
         
         await base44.entities.PublicGame.update(game.id, { players: updatedPlayers });
-        setGameSession(game);
+        setGameSession({ ...game, players: updatedPlayers });
       } else {
         // Create new game
         const newGame = await base44.entities.PublicGame.create({
@@ -86,7 +105,7 @@ export default function PublicGame() {
           players: [{
             email: user.email,
             name: user.full_name,
-            turtle_id: profile?.turtle_id || 'TURTLE-NEW',
+            turtle_id: profile.turtle_id,
             score: 0,
             kills: 0
           }],

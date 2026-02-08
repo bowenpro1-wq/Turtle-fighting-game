@@ -50,32 +50,32 @@
 import Admin from './pages/Admin';
 import Encyclopedia from './pages/Encyclopedia';
 import Forge from './pages/Forge';
+import Friends from './pages/Friends';
+import Game from './pages/Game';
 import Leaderboard from './pages/Leaderboard';
 import MiniGames from './pages/MiniGames';
 import Multiplayer from './pages/Multiplayer';
 import Profile from './pages/Profile';
+import PublicChat from './pages/PublicChat';
+import PublicGame from './pages/PublicGame';
 import Settings from './pages/Settings';
 import Skins from './pages/Skins';
-import Game from './pages/Game';
-import PublicChat from './pages/PublicChat';
-import Friends from './pages/Friends';
-import PublicGame from './pages/PublicGame';
 
 
 export const PAGES = {
     "Admin": Admin,
     "Encyclopedia": Encyclopedia,
     "Forge": Forge,
+    "Friends": Friends,
+    "Game": Game,
     "Leaderboard": Leaderboard,
     "MiniGames": MiniGames,
     "Multiplayer": Multiplayer,
     "Profile": Profile,
+    "PublicChat": PublicChat,
+    "PublicGame": PublicGame,
     "Settings": Settings,
     "Skins": Skins,
-    "Game": Game,
-    "PublicChat": PublicChat,
-    "Friends": Friends,
-    "PublicGame": PublicGame,
 }
 
 export const pagesConfig = {
