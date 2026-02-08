@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { base44 } from '@/api/base44Client';
-import { ArrowLeft, Mail, Coins, Gift, Sparkles, Send, Loader2 } from 'lucide-react';
+import { ArrowLeft, Mail, Coins, Gift, Sparkles, Send, Loader2, BarChart3, TrendingUp, Users, Trophy } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
@@ -20,14 +20,58 @@ export default function AdminPanel() {
   const [promoCode, setPromoCode] = useState('');
   const [promoValue, setPromoValue] = useState('');
   const [message, setMessage] = useState('');
+  const [analytics, setAnalytics] = useState(null);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
 
   const handleLogin = () => {
     if (password === '20150525') {
       setIsAuthenticated(true);
       setMessage('登录成功！');
+      loadAnalytics();
     } else {
       setMessage('密码错误,你个 2B');
     }
+  };
+
+  const loadAnalytics = async () => {
+    setLoadingAnalytics(true);
+    try {
+      const profiles = await base44.entities.PlayerProfile.list();
+      const progress = await base44.entities.GameProgress.list();
+      
+      // Calculate statistics
+      const totalPlayers = profiles.length;
+      const avgScore = profiles.reduce((sum, p) => sum + (p.highest_score || 0), 0) / totalPlayers || 0;
+      const totalGamesPlayed = profiles.reduce((sum, p) => sum + (p.total_games_played || 0), 0);
+      const totalBossesDefeated = profiles.reduce((sum, p) => sum + (p.total_bosses_defeated || 0), 0);
+      
+      // Game mode preferences
+      const modeCount = {};
+      progress.forEach(p => {
+        modeCount[p.game_mode] = (modeCount[p.game_mode] || 0) + 1;
+      });
+      
+      // Highest floor in tower mode
+      const towerProgress = progress.filter(p => p.game_mode === 'tower');
+      const highestFloor = towerProgress.length > 0 
+        ? Math.max(...towerProgress.map(p => p.current_floor || 1))
+        : 0;
+      
+      setAnalytics({
+        totalPlayers,
+        avgScore: Math.round(avgScore),
+        totalGamesPlayed,
+        totalBossesDefeated,
+        modePreferences: modeCount,
+        highestFloor,
+        topPlayers: profiles
+          .sort((a, b) => (b.highest_score || 0) - (a.highest_score || 0))
+          .slice(0, 5)
+      });
+    } catch (error) {
+      console.error('Failed to load analytics:', error);
+    }
+    setLoadingAnalytics(false);
   };
 
   const handleDraftEmail = async () => {
@@ -75,6 +119,7 @@ export default function AdminPanel() {
       for (const sub of subscriptions) {
         try {
           await base44.integrations.Core.SendEmail({
+            from_name: 'Star Pro Games',
             to: sub.email,
             subject: emailSubject,
             body: emailBody
@@ -191,6 +236,95 @@ export default function AdminPanel() {
             {message}
           </motion.div>
         )}
+
+        {/* Analytics Section */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-br from-purple-900/50 to-pink-900/50 rounded-xl p-6 border border-purple-500/50 mb-6"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <BarChart3 className="w-6 h-6 text-purple-400" />
+              <h2 className="text-2xl font-bold text-white">📊 游戏数据分析</h2>
+            </div>
+            <Button
+              onClick={loadAnalytics}
+              disabled={loadingAnalytics}
+              variant="outline"
+              size="sm"
+            >
+              {loadingAnalytics ? <Loader2 className="w-4 h-4 animate-spin" /> : '🔄 刷新'}
+            </Button>
+          </div>
+
+          {analytics ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <Users className="w-5 h-5 text-blue-400" />
+                  <p className="text-white/70 text-sm">总玩家数</p>
+                </div>
+                <p className="text-3xl font-bold text-white">{analytics.totalPlayers}</p>
+              </div>
+
+              <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <TrendingUp className="w-5 h-5 text-green-400" />
+                  <p className="text-white/70 text-sm">平均分数</p>
+                </div>
+                <p className="text-3xl font-bold text-white">{analytics.avgScore}</p>
+              </div>
+
+              <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <Trophy className="w-5 h-5 text-yellow-400" />
+                  <p className="text-white/70 text-sm">最高楼层</p>
+                </div>
+                <p className="text-3xl font-bold text-white">{analytics.highestFloor}F</p>
+              </div>
+
+              <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="w-5 h-5 text-purple-400" />
+                  <p className="text-white/70 text-sm">Boss击败</p>
+                </div>
+                <p className="text-3xl font-bold text-white">{analytics.totalBossesDefeated}</p>
+              </div>
+
+              <div className="col-span-2 bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                <p className="text-white/70 text-sm mb-3">游戏模式偏好</p>
+                <div className="space-y-2">
+                  {Object.entries(analytics.modePreferences).map(([mode, count]) => (
+                    <div key={mode} className="flex justify-between items-center">
+                      <span className="text-white text-sm capitalize">{mode}</span>
+                      <span className="text-white/80 font-bold">{count}次</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="col-span-2 bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                <p className="text-white/70 text-sm mb-3">排行榜 TOP 5</p>
+                <div className="space-y-2">
+                  {analytics.topPlayers.map((player, idx) => (
+                    <div key={player.id} className="flex justify-between items-center">
+                      <span className="text-white text-sm flex items-center gap-2">
+                        <span className="text-yellow-400">#{idx + 1}</span>
+                        {player.user_email?.split('@')[0]}
+                      </span>
+                      <span className="text-white/80 font-bold">{player.highest_score || 0}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center text-white/60 py-8">
+              点击刷新按钮加载数据...
+            </div>
+          )}
+        </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Email Section */}

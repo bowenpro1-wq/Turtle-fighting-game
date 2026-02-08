@@ -47,8 +47,31 @@ export default function EmailSubscriptionModal({ onClose, onSubscribe }) {
         subscribed: true
       });
       
+      // Send welcome email
+      try {
+        await base44.integrations.Core.SendEmail({
+          from_name: 'Star Pro Games',
+          to: email,
+          subject: '🎮 欢迎加入龟龟冒险岛！',
+          body: `感谢您订阅龟龟冒险岛！
+
+🐢 您将获得：
+• 每周游戏更新通知
+• 新功能抢先体验
+• 独家奖励和优惠码
+
+祝您游戏愉快！
+
+---
+龟龟冒险岛团队
+contact@star-pro.org`
+        });
+      } catch (emailError) {
+        console.error('Failed to send welcome email:', emailError);
+      }
+      
       localStorage.setItem('turtleGameEmailSubscribed', 'true');
-      alert('订阅成功！您将每周收到游戏更新邮件 📧');
+      alert('订阅成功！欢迎邮件已发送至您的邮箱 📧');
       onSubscribe();
       setShow(false);
     } catch (error) {

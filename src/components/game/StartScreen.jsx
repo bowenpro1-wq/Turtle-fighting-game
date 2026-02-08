@@ -239,7 +239,19 @@ export default function StartScreen({ onStart, onStartTutorial, defeatedBosses =
           >
             连战
           </Button>
-        </div>
+          <Button
+            onClick={() => handleModeSelect('multiboss')}
+            className="px-3 py-4 md:py-5 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 rounded-xl text-white text-xs md:text-sm font-bold shadow-xl active:scale-95 transition-transform"
+          >
+            🔥 多Boss
+          </Button>
+          <Button
+            onClick={() => handleModeSelect('superattack')}
+            className="px-3 py-4 md:py-5 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 rounded-xl text-white text-xs md:text-sm font-bold shadow-xl active:scale-95 transition-transform"
+          >
+            ⚡ 超强攻击
+          </Button>
+          </div>
         
         <Button
           onClick={() => handleModeSelect('tower')}
