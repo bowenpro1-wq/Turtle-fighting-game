@@ -35,27 +35,22 @@ export default function Plans() {
     const promoCode = `PROMO${Date.now().toString(36).toUpperCase()}`;
     const goldAmount = planType === 'silver' ? 10000 : 150000;
 
-    try {
-      console.log('Creating database entry...');
-      await base44.entities.GoldPlanKey.create({
-        key: key,
-        plan_type: planType,
-        promo_code: promoCode,
-        gold_amount: goldAmount,
-        used: false
-      });
-      console.log('Database entry created, redirecting NOW...');
-
-      // Immediate redirect with full URL path
-      const baseUrl = window.location.origin + window.location.pathname.split('/').slice(0, -1).join('/');
-      const keyUrl = `${baseUrl}/Key?=${key}`;
-      console.log('Full redirect URL:', keyUrl);
-      window.location.replace(keyUrl);
-    } catch (error) {
-      console.error('Credit generation error:', error);
+    console.log('Creating database entry...');
+    
+    base44.entities.GoldPlanKey.create({
+      key: key,
+      plan_type: planType,
+      promo_code: promoCode,
+      gold_amount: goldAmount,
+      used: false
+    }).then(() => {
+      console.log('SUCCESS - REDIRECTING');
+      window.location.href = window.location.origin + '/app/Key?=' + key;
+    }).catch(error => {
+      console.error('ERROR:', error);
       alert('Error: ' + error.message);
       setStatus('error');
-    }
+    });
   };
 
   if (status === 'generating') {
