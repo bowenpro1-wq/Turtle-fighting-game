@@ -516,7 +516,9 @@ export default function GameCanvas({
   towerKillCount = 0,
   towerRequiredKills = 20,
   showTowerDoor = false,
-  onDoorEnter
+  onDoorEnter,
+  multiBossMode = false,
+  activeBosses = []
 }) {
   const canvasRef = useRef(null);
   const WORLD_WIDTH = gameMode === 'tower' ? 1800 : 4000;
@@ -1440,33 +1442,22 @@ export default function GameCanvas({
       // Remove destroyed buildings
       game.buildings = game.buildings.filter(b => b.health > 0);
 
-      // Super attack mode - spawn 100 fast enemies at start
-      if (gameMode === 'superattack' && gameState === 'playing' && game.lastEnemySpawn === 0) {
-        for (let i = 0; i < 100; i++) {
-          const enemy = spawnEnemy();
-          enemy.speed *= 2;
-          enemy.damage *= 1.5;
-          enemy.shootInterval = Math.max(2000, enemy.shootInterval * 0.5);
-          game.enemies.push(enemy);
-        }
-        game.lastEnemySpawn = Date.now();
-      }
-
-      // Super attack mode - continuous fast spawning
-      if (gameMode === 'superattack' && gameState === 'playing' && Date.now() - game.lastEnemySpawn > 1000) {
-        const spawnCount = 15;
+      // Super Attack mode - 100 enemies, faster and more aggressive
+      if (gameMode === 'superattack' && Date.now() - game.lastEnemySpawn > 1000) {
+        const spawnCount = 100;
         for (let i = 0; i < spawnCount; i++) {
           const enemy = spawnEnemy();
-          enemy.speed *= 2;
+          // Make enemies faster and stronger
+          enemy.speed *= 2.5;
           enemy.damage *= 1.5;
-          enemy.shootInterval = Math.max(2000, enemy.shootInterval * 0.5);
+          enemy.shootInterval *= 0.5;
           game.enemies.push(enemy);
         }
         game.lastEnemySpawn = Date.now();
       }
 
       // Spawn LOTS of enemies every 2 seconds in normal mode
-      if (gameMode !== 'tower' && gameMode !== 'busbreak' && gameMode !== 'superattack' && gameState === 'playing' && Date.now() - game.lastEnemySpawn > 2000) {
+      else if (gameMode !== 'tower' && gameMode !== 'busbreak' && gameMode !== 'superattack' && gameMode !== 'multiboss' && gameState === 'playing' && Date.now() - game.lastEnemySpawn > 2000) {
         const baseSpawn = Math.floor(score / 1000) + 5;
         const spawnCount = Math.floor(Math.random() * baseSpawn) + baseSpawn;
         for (let i = 0; i < spawnCount; i++) {
@@ -1476,7 +1467,7 @@ export default function GameCanvas({
       }
 
       // Boss mode: spawn LOTS of enemies continuously
-      if (gameMode !== 'tower' && gameMode !== 'busbreak' && gameState === 'boss') {
+      if (gameMode !== 'tower' && gameMode !== 'busbreak' && gameMode !== 'multiboss' && gameMode !== 'superattack' && gameState === 'boss') {
         // Initial spawn of 30-50 enemies when boss appears
         if (game.lastBossEnemySpawn === 0) {
           const initialCount = Math.floor(Math.random() * 21) + 30;
@@ -1491,10 +1482,97 @@ export default function GameCanvas({
             game.enemies.push(spawnEnemy());
           }
           game.lastBossEnemySpawn = Date.now();
-        }
-      } else if (gameMode !== 'tower' && gameMode !== 'busbreak') {
-        game.lastBossEnemySpawn = 0;
-      }
+          }
+          } else if (gameMode !== 'tower' && gameMode !== 'busbreak' && gameMode !== 'multiboss' && gameMode !== 'superattack') {
+          game.lastBossEnemySpawn = 0;
+          }
+
+          // Multi-boss mode rendering
+          if (multiBossMode && activeBosses.length > 0) {
+          activeBosses.forEach((boss, idx) => {
+          if (!game.multiBosses) game.multiBosses = {};
+
+          if (!game.multiBosses[boss.id]) {
+            const angle = (Math.PI * 2 / activeBosses.length) * idx;
+            game.multiBosses[boss.id] = {
+              x: game.player.x + Math.cos(angle) * 400,
+              y: game.player.y + Math.sin(angle) * 400,
+              vx: 0,
+              vy: 0,
+              lastShot: Date.now(),
+              health: boss.health,
+              maxHealth: boss.health
+            };
+          }
+
+          const bossState = game.multiBosses[boss.id];
+          const dx = game.player.x - bossState.x;
+          const dy = game.player.y - bossState.y;
+          const distToPlayer = Math.sqrt(dx * dx + dy * dy);
+
+          // Simple chase AI
+          bossState.vx = (dx / distToPlayer) * boss.speed;
+          bossState.vy = (dy / distToPlayer) * boss.speed;
+          bossState.x += bossState.vx;
+          bossState.y += bossState.vy;
+
+          // Draw boss
+          const bossScreenX = bossState.x - game.camera.x;
+          const bossScreenY = bossState.y - game.camera.y;
+
+          ctx.save();
+          ctx.fillStyle = boss.color;
+          ctx.strokeStyle = '#000';
+          ctx.lineWidth = 4;
+          ctx.shadowBlur = 20;
+          ctx.shadowColor = boss.color;
+          ctx.beginPath();
+          ctx.arc(bossScreenX, bossScreenY, boss.size / 2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+
+          // Boss name
+          ctx.fillStyle = 'rgba(0,0,0,0.7)';
+          ctx.fillRect(bossScreenX - 60, bossScreenY - boss.size/2 - 40, 120, 25);
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold 14px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(boss.name, bossScreenX, bossScreenY - boss.size/2 - 22);
+
+          // Health bar
+          const healthPercent = bossState.health / bossState.maxHealth;
+          ctx.fillStyle = 'rgba(0,0,0,0.7)';
+          ctx.fillRect(bossScreenX - 60, bossScreenY - boss.size/2 - 50, 120, 8);
+          ctx.fillStyle = healthPercent > 0.5 ? '#22c55e' : healthPercent > 0.25 ? '#f59e0b' : '#ef4444';
+          ctx.fillRect(bossScreenX - 60, bossScreenY - boss.size/2 - 50, 120 * healthPercent, 8);
+
+          ctx.restore();
+
+          // Collision damage
+          if (distToPlayer < boss.size + 25 && !isFlying && !isInShop) {
+            if (game.animationFrame % 30 === 0) {
+              onPlayerDamage(boss.damage * 0.5);
+            }
+          }
+
+          // Shooting
+          if (Date.now() - bossState.lastShot > 2000 && distToPlayer < 600) {
+            for (let i = 0; i < 5; i++) {
+              const spreadAngle = Math.atan2(dy, dx) + (i - 2) * 0.2;
+              game.enemyBullets.push({
+                x: bossState.x,
+                y: bossState.y,
+                vx: Math.cos(spreadAngle) * 8,
+                vy: Math.sin(spreadAngle) * 8,
+                damage: boss.damage,
+                size: 10,
+                color: boss.color
+              });
+            }
+            bossState.lastShot = Date.now();
+          }
+          });
+          }
 
       // 赤潮持续火线攻击
       if (selectedWeapon === 'chichao' && game.flameLineActive && Date.now() - game.lastFlameLineTick > 50) {
@@ -2842,6 +2920,41 @@ export default function GameCanvas({
           return false;
         }
 
+        // Check multi-boss collision
+        if (multiBossMode && game.multiBosses) {
+          for (const bossId in game.multiBosses) {
+            const bossState = game.multiBosses[bossId];
+            const boss = activeBosses.find(b => b.id === bossId);
+            if (!boss) continue;
+
+            const dx = bullet.x - bossState.x;
+            const dy = bullet.y - bossState.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < boss.size / 2) {
+              bossState.health -= bullet.damage;
+
+              if (bossState.health <= 0) {
+                delete game.multiBosses[bossId];
+                onBossDamage(999999); // Trigger boss defeat
+              }
+
+              for (let i = 0; i < 15; i++) {
+                game.particles.push({
+                  x: bullet.x,
+                  y: bullet.y,
+                  vx: (Math.random() - 0.5) * 10,
+                  vy: (Math.random() - 0.5) * 10,
+                  life: 25,
+                  color: boss.color,
+                  size: 4
+                });
+              }
+              return false;
+            }
+          }
+        }
+
         // Check boss collision (Bus Break mode)
         if (gameMode === 'busbreak' && game.busBreakBoss && currentBoss) {
           const boss = game.busBreakBoss;
@@ -2849,7 +2962,7 @@ export default function GameCanvas({
           const dx = bullet.x - boss.x;
           const dy = bullet.y - boss.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          
+
           if (dist < bossRadius) {
             onBossDamage(bullet.damage);
             

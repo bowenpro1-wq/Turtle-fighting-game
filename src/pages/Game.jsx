@@ -49,7 +49,6 @@ const BOSSES = [
 export default function Game() {
   const [showSplash, setShowSplash] = useState(true);
   const [gameState, setGameState] = useState('start');
-  const [selectedBosses, setSelectedBosses] = useState([]);
   const [gameMode, setGameMode] = useState('normal');
   const [language, setLanguage] = useState('zh');
   const [playerHealth, setPlayerHealth] = useState(100);
@@ -114,6 +113,11 @@ export default function Game() {
   const [towerRequiredKills, setTowerRequiredKills] = useState(20);
   const [showTowerDoor, setShowTowerDoor] = useState(false);
   const [showWhiteFlash, setShowWhiteFlash] = useState(false);
+  
+  // Multi-boss mode state
+  const [multiBossSelected, setMultiBossSelected] = useState([]);
+  const [multiBossCount, setMultiBossCount] = useState(2);
+  const [showMultiBossSelect, setShowMultiBossSelect] = useState(false);
 
   // Profile and difficulty
   const [playerProfile, setPlayerProfile] = useState(null);
@@ -349,7 +353,6 @@ export default function Game() {
   };
 
   const startGame = (mode = 'normal', fromCheckpoint = false) => {
-    soundManager.playSound('powerup');
     setGameStartTime(Date.now());
     // Reset all state first
     setGameState('start');
@@ -368,16 +371,9 @@ export default function Game() {
     }
     
     if (mode === 'multiboss') {
-      // Multi-boss mode - show forge for boss selection
+      // Multi-boss mode - show boss selection
       setGameMode(mode);
-      setShowForge(true);
-      return;
-    }
-    
-    if (mode === 'superattack') {
-      // Super attack mode - enhanced enemies
-      setGameMode(mode);
-      setShowWeaponSelect(true);
+      setShowMultiBossSelect(true);
       return;
     }
     
@@ -448,11 +444,60 @@ export default function Game() {
       setTimeout(() => {
         triggerBusBreakBoss(selectedBusBreakBoss);
       }, 2000);
+    } else if (mode === 'multiboss' && multiBossSelected.length > 0) {
+      // Trigger multiple bosses
+      setTimeout(() => {
+        triggerMultipleBosses(multiBossSelected, multiBossCount);
+      }, 2000);
+    } else if (mode === 'superattack') {
+      // Super attack mode - already in playing state
+      soundManager.playSound('gameOver');
     }
     
     setTimeout(() => {
       setGameState('playing');
     }, 0);
+  };
+
+  const handleMultiBossStart = (selectedBosses, count) => {
+    setMultiBossSelected(selectedBosses);
+    setMultiBossCount(count);
+    setShowMultiBossSelect(false);
+    setShowWeaponSelect(true);
+  };
+
+  const triggerMultipleBosses = (bossIds, count) => {
+    const BUSBREAK_BOSSES = {
+      zhongdalin: { name: '中大林', health: 3000, damage: 40, speed: 2.0, size: 120, color: '#4ade80', pattern: 'chase' },
+      xiaowang: { name: '小黄龙', health: 3500, damage: 50, speed: 3.5, size: 110, color: '#f59e0b', pattern: 'dash' },
+      longhaixing: { name: '海星', health: 2800, damage: 38, speed: 2.5, size: 110, color: '#06b6d4', pattern: 'teleport' },
+      qigong: { name: '气功大师', health: 3500, damage: 45, speed: 1.5, size: 130, color: '#8b5cf6', pattern: 'spiral' },
+      guangzhi: { name: '广智', health: 3000, damage: 60, speed: 2.3, size: 160, color: '#ff4500', pattern: 'flame' }
+    };
+
+    // Spawn multiple bosses simultaneously
+    const bossesToSpawn = [];
+    for (let i = 0; i < Math.min(count, bossIds.length); i++) {
+      const bossId = bossIds[i % bossIds.length];
+      const boss = BUSBREAK_BOSSES[bossId];
+      if (boss) {
+        bossesToSpawn.push({ ...boss, id: `${bossId}_${i}` });
+      }
+    }
+
+    if (bossesToSpawn.length > 0) {
+      setCurrentBoss(bossesToSpawn[0]); // Set first boss as current
+      setBossHealth(bossesToSpawn[0].health);
+      setBossMaxHealth(bossesToSpawn[0].health);
+      window.multiBosses = bossesToSpawn; // Store all bosses globally for canvas
+      setShowBossIntro(true);
+      setGameState('boss');
+      soundManager.playSound('bossSpawn');
+      
+      setTimeout(() => {
+        setShowBossIntro(false);
+      }, 2000);
+    }
   };
 
   const triggerBusBreakBoss = useCallback((bossId) => {
@@ -522,26 +567,7 @@ export default function Game() {
     setSelectedWeapon(weaponId);
     setShowWeaponSelect(false);
     
-    if (gameMode === 'multiboss' && selectedBosses.length > 0) {
-      // Start multi-boss mode
-      continueGameAfterWeaponSelect(gameMode);
-      // Trigger all selected bosses after delay
-      setTimeout(() => {
-        selectedBosses.forEach((bossId, index) => {
-          setTimeout(() => {
-            triggerBusBreakBoss(bossId);
-          }, index * 500);
-        });
-      }, 2000);
-    } else {
-      continueGameAfterWeaponSelect(gameMode);
-    }
-  };
-
-  const handleMultiBossConfirm = (bosses) => {
-    setSelectedBosses(bosses);
-    setShowForge(false);
-    setShowWeaponSelect(true);
+    continueGameAfterWeaponSelect(gameMode);
   };
 
   const handleBossSelect = (bossId) => {
@@ -635,12 +661,12 @@ export default function Game() {
   const triggerBoss = useCallback((bossIndex) => {
     const boss = BOSSES[bossIndex];
     if (boss && !defeatedBosses.includes(boss.id)) {
-      soundManager.playSound('bossSpawn');
       setCurrentBoss(boss);
       setBossHealth(boss.health);
       setBossMaxHealth(boss.health);
       setShowBossIntro(true);
       setGameState('boss');
+      soundManager.playSound('bossSpawn');
       
       setTimeout(() => {
         setShowBossIntro(false);
@@ -650,7 +676,6 @@ export default function Game() {
 
   const defeatBoss = useCallback(() => {
     if (currentBoss) {
-      soundManager.playSound('victory');
       const newDefeatedCount = defeatedBosses.length + 1;
       setDefeatedBosses(prev => [...prev, currentBoss.id]);
       setScore(prev => prev + currentBoss.health * 10);
@@ -690,6 +715,7 @@ export default function Game() {
         const nextFloor = currentFloor + 1;
         if (nextFloor > 100) {
           setHasTheHand(true);
+          soundManager.playSound('victory');
           setGameState('victory');
         } else {
           setCurrentFloor(nextFloor);
@@ -723,6 +749,7 @@ export default function Game() {
               }
             });
           }
+          soundManager.playSound('victory');
           setGameState('victory');
         }
       }
@@ -731,12 +758,10 @@ export default function Game() {
 
   const handlePlayerDamage = useCallback((damage) => {
     if (isFlying) return;
-    soundManager.playSound('hit');
     const adjustedDamage = damage * difficultyMultiplier;
     setPlayerHealth(prev => {
       const newHealth = prev - adjustedDamage;
       if (newHealth <= 0) {
-        soundManager.playSound('gameOver');
         if (playerProfile) {
           const playtime = gameStartTime ? Math.floor((Date.now() - gameStartTime) / 60000) : 0;
           updateProfileStats({
@@ -747,9 +772,11 @@ export default function Game() {
             }
           });
         }
+        soundManager.playSound('gameOver');
         setGameState('gameover');
         return 0;
       }
+      soundManager.playSound('hit');
       return newHealth;
     });
   }, [isFlying, difficultyMultiplier, playerProfile, gameStartTime]);
@@ -885,8 +912,8 @@ export default function Game() {
 
   const shoot = useCallback(() => {
     if (shootCooldown <= 0) {
-      soundManager.playSound('shoot');
       setShootCooldown(SHOOT_CD);
+      soundManager.playSound('shoot');
       return true;
     }
     return false;
@@ -894,10 +921,10 @@ export default function Game() {
 
   const heal = useCallback(() => {
     if (healCooldown <= 0 && playerHealth < maxHealth) {
-      soundManager.playSound('heal');
       setHealCooldown(HEAL_CD);
       const healAmount = 30 + (upgrades.abilityPower - 1) * 10;
       setPlayerHealth(prev => Math.min(maxHealth, prev + healAmount));
+      soundManager.playSound('heal');
       return true;
     }
     return false;
@@ -905,9 +932,9 @@ export default function Game() {
 
   const fly = useCallback(() => {
     if (flyCooldown <= 0 && !isFlying) {
-      soundManager.playSound('jump');
       setFlyCooldown(FLY_CD);
       setIsFlying(true);
+      soundManager.playSound('jump');
       setTimeout(() => setIsFlying(false), FLY_DURATION);
       return true;
     }
@@ -917,6 +944,7 @@ export default function Game() {
   const largeAttack = useCallback(() => {
     if (largeAttackCooldown <= 0) {
       setLargeAttackCooldown(LARGE_ATTACK_CD);
+      soundManager.playSound('powerup');
       return true;
     }
     return false;
@@ -1062,8 +1090,10 @@ export default function Game() {
       {showSplash && (
         <SplashScreen onComplete={() => setShowSplash(false)} />
       )}
-      
-      {!showSplash && showEmailModal && gameState === 'start' && (
+
+      <SoundSettings />
+
+      {showEmailModal && gameState === 'start' && !showSplash && (
         <EmailSubscriptionModal 
           onClose={() => setShowEmailModal(false)}
           onSubscribe={() => setShowEmailModal(false)}
@@ -1071,20 +1101,27 @@ export default function Game() {
       )}
 
       {(gameState === 'playing' || gameState === 'boss') && (
-        <>
-          <SoundSettings />
-          <div className="absolute top-2 right-2 z-40">
-            <LanguageSwitcher currentLang={language} onLanguageChange={setLanguage} />
-          </div>
-        </>
+        <div className="absolute top-2 right-2 z-40">
+          <LanguageSwitcher currentLang={language} onLanguageChange={setLanguage} />
+        </div>
       )}
 
       <AnimatePresence mode="wait">
-        {gameState === 'start' && (
+        {gameState === 'start' && !showSplash && (
           <StartScreen 
             onStart={startGame} 
             onStartTutorial={startTutorial}
             defeatedBosses={defeatedBosses} 
+          />
+        )}
+
+        {showMultiBossSelect && (
+          <MultiBossSelect
+            onStart={handleMultiBossStart}
+            onCancel={() => {
+              setShowMultiBossSelect(false);
+              setGameState('start');
+            }}
           />
         )}
 
@@ -1127,6 +1164,8 @@ export default function Game() {
               gameMode={gameMode}
               selectedWeapon={selectedWeapon}
               weaponLevel={weapons[selectedWeapon]?.level || 0}
+              multiBossMode={gameMode === 'multiboss'}
+              activeBosses={window.multiBosses || []}
               onPlayerDamage={handlePlayerDamage}
               onEnemyKill={handleEnemyKill}
               onBossDamage={handleBossDamage}
@@ -1163,6 +1202,8 @@ export default function Game() {
               towerKillCount={towerKillCount}
               towerRequiredKills={towerRequiredKills}
               showTowerDoor={showTowerDoor}
+              multiBossMode={gameMode === 'multiboss'}
+              activeBosses={window.multiBosses || []}
               />
             
             <GameUI
@@ -1230,22 +1271,12 @@ export default function Game() {
                 />
               )}
 
-            {showForge && gameMode !== 'multiboss' && (
+            {showForge && (
               <Forge
                 weapons={weapons}
                 templates={upgradeTemplates}
                 onUpgrade={handleWeaponUpgrade}
                 onClose={() => setShowForge(false)}
-              />
-            )}
-            
-            {showForge && gameMode === 'multiboss' && (
-              <MultiBossSelect
-                onConfirm={handleMultiBossConfirm}
-                onCancel={() => {
-                  setShowForge(false);
-                  setGameState('start');
-                }}
               />
             )}
           </AnimatePresence>
