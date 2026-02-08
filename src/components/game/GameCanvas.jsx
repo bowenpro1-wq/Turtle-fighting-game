@@ -473,6 +473,71 @@ const ENEMY_TYPES = {
     behaviorType: 'blink',
     attacksBuildings: false,
     teleportFrequency: 3000
+  },
+  LANCER: {
+    name: 'lancer',
+    width: 42,
+    height: 55,
+    speed: 2.8,
+    health: 85,
+    damage: 30,
+    shootInterval: 5500,
+    color: '#0ea5e9',
+    behaviorType: 'charge',
+    attacksBuildings: false,
+    chargeAttack: true
+  },
+  VENOM: {
+    name: 'venom',
+    width: 40,
+    height: 52,
+    speed: 2.0,
+    health: 75,
+    damage: 22,
+    shootInterval: 7000,
+    color: '#84cc16',
+    behaviorType: 'poison',
+    attacksBuildings: false,
+    poisonAttack: true
+  },
+  SHADOW: {
+    name: 'shadow',
+    width: 36,
+    height: 48,
+    speed: 3.2,
+    health: 45,
+    damage: 28,
+    shootInterval: 6000,
+    color: '#4c1d95',
+    behaviorType: 'invisible',
+    attacksBuildings: false,
+    canCloak: true
+  },
+  TITAN: {
+    name: 'titan',
+    width: 90,
+    height: 100,
+    speed: 0.4,
+    health: 350,
+    damage: 50,
+    shootInterval: 12000,
+    color: '#78350f',
+    behaviorType: 'colossus',
+    attacksBuildings: true,
+    areaSmash: true
+  },
+  WITCH: {
+    name: 'witch',
+    width: 38,
+    height: 54,
+    speed: 1.1,
+    health: 55,
+    damage: 18,
+    shootInterval: 8500,
+    color: '#7c2d12',
+    behaviorType: 'curse',
+    attacksBuildings: false,
+    cursesPlayer: true
   }
 };
 
@@ -572,7 +637,11 @@ export default function GameCanvas({
     raidWave: 0,
     lastRaidSpawn: 0,
     // Superattack mode
-    superattackBosses: []
+    superattackBosses: [],
+    // AI Turtle Team
+    aiTurtles: [],
+    // Home regen
+    lastHomeRegen: 0
   });
 
   const generateWorld = useCallback(() => {
@@ -1617,29 +1686,40 @@ export default function GameCanvas({
         }
       }
 
-      // Raid mode - fast assassins attacking SEPARATELY from different directions
+      // Raid mode - fast assassins attacking SEPARATELY from all directions
       if (gameMode === 'raid') {
-        if (Date.now() - game.lastRaidSpawn > 1500) {
+        if (Date.now() - game.lastRaidSpawn > 1200) {
           const wave = Math.floor((Date.now() - (game.defenseStartTime || Date.now())) / 15000) + 1;
-          const spawnCount = 15 + wave * 3;
+          const spawnCount = 12 + wave * 2;
           
-          for (let i = 0; i < spawnCount; i++) {
-            const enemy = spawnEnemy(ENEMY_TYPES.ASSASSIN);
-            enemy.speed *= 1.5;
-            enemy.damage *= 1.3;
-            
-            // Spread spawn positions - different angles
-            const spreadAngle = (Math.PI * 2 / spawnCount) * i + Math.random() * 0.5;
-            const spreadDist = 600 + Math.random() * 400;
-            enemy.x = game.player.x + Math.cos(spreadAngle) * spreadDist;
-            enemy.y = game.player.y + Math.sin(spreadAngle) * spreadDist;
-            
-            // Individual attack timing
-            enemy.attackDelay = Math.random() * 2000;
-            enemy.spawnTime = Date.now();
-            
-            game.enemies.push(enemy);
-          }
+          // Create 4 separate attack groups from each cardinal direction
+          const directions = [
+            { angle: 0, name: 'East' },
+            { angle: Math.PI / 2, name: 'South' },
+            { angle: Math.PI, name: 'West' },
+            { angle: Math.PI * 1.5, name: 'North' }
+          ];
+          
+          directions.forEach((dir, dirIndex) => {
+            for (let i = 0; i < Math.floor(spawnCount / 4); i++) {
+              const enemy = spawnEnemy(ENEMY_TYPES.ASSASSIN);
+              enemy.speed *= (1.5 + Math.random() * 0.5);
+              enemy.damage *= 1.3;
+              
+              // Spawn from specific direction with spread
+              const angleSpread = dir.angle + (Math.random() - 0.5) * 0.8;
+              const spreadDist = 700 + Math.random() * 500;
+              enemy.x = game.player.x + Math.cos(angleSpread) * spreadDist;
+              enemy.y = game.player.y + Math.sin(angleSpread) * spreadDist;
+              
+              // Individual attack patterns
+              enemy.attackDelay = dirIndex * 300 + i * 100;
+              enemy.spawnTime = Date.now();
+              enemy.attackDirection = dir.name;
+              
+              game.enemies.push(enemy);
+            }
+          });
           game.lastRaidSpawn = Date.now();
         }
       }
