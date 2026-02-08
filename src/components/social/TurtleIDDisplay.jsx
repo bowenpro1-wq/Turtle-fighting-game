@@ -6,10 +6,23 @@ import { Button } from '@/components/ui/button';
 export default function TurtleIDDisplay() {
   const [turtleId, setTurtleId] = useState('');
   const [copied, setCopied] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    loadTurtleId();
+    checkAuthAndLoad();
   }, []);
+
+  const checkAuthAndLoad = async () => {
+    try {
+      const authenticated = await base44.auth.isAuthenticated();
+      setIsAuthenticated(authenticated);
+      if (authenticated) {
+        loadTurtleId();
+      }
+    } catch (error) {
+      console.error('Auth check failed:', error);
+    }
+  };
 
   const loadTurtleId = async () => {
     try {
@@ -42,6 +55,8 @@ export default function TurtleIDDisplay() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  if (!isAuthenticated || !turtleId) return null;
 
   return (
     <div className="flex items-center gap-2 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 px-4 py-2 rounded-lg border border-cyan-500/30">
