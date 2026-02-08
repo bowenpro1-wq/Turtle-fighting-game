@@ -48,8 +48,11 @@
  * The mainPage value must match a key in the PAGES object exactly.
  */
 import Admin from './pages/Admin';
+import ChatRooms from './pages/ChatRooms';
+import CoopGame from './pages/CoopGame';
 import Encyclopedia from './pages/Encyclopedia';
 import Forge from './pages/Forge';
+import Friends from './pages/Friends';
 import Game from './pages/Game';
 import Leaderboard from './pages/Leaderboard';
 import MiniGames from './pages/MiniGames';
@@ -57,15 +60,15 @@ import Multiplayer from './pages/Multiplayer';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Skins from './pages/Skins';
-import Friends from './pages/Friends';
-import ChatRooms from './pages/ChatRooms';
-import CoopGame from './pages/CoopGame';
 
 
 export const PAGES = {
     "Admin": Admin,
+    "ChatRooms": ChatRooms,
+    "CoopGame": CoopGame,
     "Encyclopedia": Encyclopedia,
     "Forge": Forge,
+    "Friends": Friends,
     "Game": Game,
     "Leaderboard": Leaderboard,
     "MiniGames": MiniGames,
@@ -73,9 +76,6 @@ export const PAGES = {
     "Profile": Profile,
     "Settings": Settings,
     "Skins": Skins,
-    "Friends": Friends,
-    "ChatRooms": ChatRooms,
-    "CoopGame": CoopGame,
 }
 
 export const pagesConfig = {
