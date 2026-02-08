@@ -21,9 +21,12 @@ import TouchShopButton from '@/components/game/TouchShopButton';
 import SplashScreen from '@/components/game/SplashScreen';
 import SoundSettings from '@/components/game/SoundSettings';
 import MultiBossSelect from '@/components/game/MultiBossSelect';
-import SocialButtons from '@/components/SocialButtons';
-import TurtleIDDisplay from '@/components/TurtleIDDisplay';
 import { soundManager } from '@/components/game/SoundManager';
+import TurtleIDDisplay from '@/components/social/TurtleIDDisplay';
+import FriendSearch from '@/components/social/FriendSearch';
+import PublicChatRoom from '@/components/social/PublicChatRoom';
+import FriendsList from '@/components/social/FriendsList';
+import PublicGameLobby from '@/components/social/PublicGameLobby';
 
 const BOSSES = [
   { id: 1, name: "海星守卫", health: 100, damage: 15, speed: 1.5, size: 60, color: "#ff6b6b", pattern: "circle" },
@@ -1138,6 +1141,9 @@ export default function Game() {
     setCurrentBoss(null);
     setShowShop(false);
     setShowForge(false);
+    setIsInShop(false);
+    setShowTutorial(false);
+    setTutorialMode(false);
   };
 
   return (
@@ -1158,25 +1164,54 @@ export default function Game() {
       {(gameState === 'playing' || gameState === 'boss') && (
         <>
           <div className="absolute top-2 left-2 z-40">
-            <Button onClick={exitGame} variant="outline" size="sm" className="bg-red-600/80 hover:bg-red-700 text-white border-red-500">
-              退出游戏
-            </Button>
+            <TurtleIDDisplay />
           </div>
-          <div className="absolute top-2 right-2 z-40">
+          
+          <div className="absolute top-2 right-2 z-40 flex gap-2">
+            <Button
+              size="sm"
+              onClick={() => setShowChatRoom(true)}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              💬 公共聊天室
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => setShowFriendSearch(true)}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              👥 添加好友
+            </Button>
+            <Button
+              size="sm"
+              onClick={exitGame}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              ❌ 退出
+            </Button>
             <LanguageSwitcher currentLang={language} onLanguageChange={setLanguage} />
           </div>
         </>
       )}
 
       {gameState === 'start' && !showSplash && (
-        <>
-          <SocialButtons />
+        <div className="absolute top-4 left-4 z-40 flex gap-2">
           <TurtleIDDisplay />
-        </>
-      )}
-      
-      {(gameState === 'playing' || gameState === 'boss') && (
-        <TurtleIDDisplay />
+          <Button
+            size="sm"
+            onClick={() => setShowChatRoom(true)}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            💬 公共聊天室
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => setShowFriendSearch(true)}
+            className="bg-purple-600 hover:bg-purple-700"
+          >
+            👥 添加好友
+          </Button>
+        </div>
       )}
 
       <AnimatePresence mode="wait">
