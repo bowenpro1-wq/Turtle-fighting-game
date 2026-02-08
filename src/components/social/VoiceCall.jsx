@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Mic, MicOff, Phone, PhoneOff } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { base44 } from '@/api/base44Client';
 
 export default function VoiceCall({ friend, myProfile, onClose }) {
   const [isMuted, setIsMuted] = useState(false);
@@ -10,11 +11,24 @@ export default function VoiceCall({ friend, myProfile, onClose }) {
   const localStreamRef = useRef(null);
   const peerConnectionRef = useRef(null);
   const remoteAudioRef = useRef(null);
+  const callIdRef = useRef(`call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
 
   useEffect(() => {
     initializeCall();
+    
+    // Subscribe to WebRTC signals
+    const unsubscribe = base44.entities.WebRTCSignal.subscribe((event) => {
+      if (event.type === 'create' && 
+          event.data.call_id === callIdRef.current && 
+          event.data.to_turtle_id === myProfile.turtle_id &&
+          !event.data.processed) {
+        handleSignal(event.data);
+      }
+    });
+    
     return () => {
       cleanup();
+      unsubscribe();
     };
   }, []);
 
@@ -56,17 +70,39 @@ export default function VoiceCall({ friend, myProfile, onClose }) {
       };
 
       // Handle ICE candidates
-      pc.onicecandidate = (event) => {
+      pc.onicecandidate = async (event) => {
         if (event.candidate) {
-          // In production, send to signaling server
-          console.log('New ICE candidate:', event.candidate);
+          await base44.entities.WebRTCSignal.create({
+            call_id: callIdRef.current,
+            from_turtle_id: myProfile.turtle_id,
+            to_turtle_id: friend.turtle_id,
+            signal_type: 'ice-candidate',
+            signal_data: { candidate: event.candidate }
+          });
         }
       };
 
-      // Simulate connection (in production, use signaling server)
-      setTimeout(() => {
-        setCallStatus('connected');
-      }, 2000);
+      pc.onconnectionstatechange = () => {
+        if (pc.connectionState === 'connected') {
+          setCallStatus('connected');
+        } else if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+          setCallStatus('failed');
+          alert('连接失败，请重试');
+          onClose();
+        }
+      };
+
+      // Create and send offer
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      
+      await base44.entities.WebRTCSignal.create({
+        call_id: callIdRef.current,
+        from_turtle_id: myProfile.turtle_id,
+        to_turtle_id: friend.turtle_id,
+        signal_type: 'offer',
+        signal_data: { offer: offer }
+      });
 
     } catch (error) {
       console.error('Failed to initialize call:', error);
@@ -91,6 +127,36 @@ export default function VoiceCall({ friend, myProfile, onClose }) {
         audioTrack.enabled = !audioTrack.enabled;
         setIsMuted(!audioTrack.enabled);
       }
+    }
+  };
+
+  const handleSignal = async (signal) => {
+    try {
+      const pc = peerConnectionRef.current;
+      if (!pc) return;
+
+      if (signal.signal_type === 'offer') {
+        await pc.setRemoteDescription(new RTCSessionDescription(signal.signal_data.offer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        
+        await base44.entities.WebRTCSignal.create({
+          call_id: callIdRef.current,
+          from_turtle_id: myProfile.turtle_id,
+          to_turtle_id: friend.turtle_id,
+          signal_type: 'answer',
+          signal_data: { answer: answer }
+        });
+      } else if (signal.signal_type === 'answer') {
+        await pc.setRemoteDescription(new RTCSessionDescription(signal.signal_data.answer));
+      } else if (signal.signal_type === 'ice-candidate') {
+        await pc.addIceCandidate(new RTCIceCandidate(signal.signal_data.candidate));
+      }
+
+      // Mark as processed
+      await base44.entities.WebRTCSignal.update(signal.id, { processed: true });
+    } catch (error) {
+      console.error('Signal handling error:', error);
     }
   };
 
