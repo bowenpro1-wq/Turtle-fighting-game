@@ -1,10 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { ArrowLeft, Coins } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import BottomNav from '@/components/BottomNav';
+
+function GameCard({ emoji, title, reward, gradient, onClick, disabled }) {
+  return (
+    <motion.div
+      whileHover={!disabled ? { scale: 1.05 } : {}}
+      className={`bg-gradient-to-br ${gradient} p-4 rounded-xl cursor-pointer ${disabled ? 'opacity-50' : ''}`}
+      onClick={!disabled ? onClick : undefined}
+    >
+      <div className="text-4xl mb-2">{emoji}</div>
+      <h3 className="text-lg font-bold text-white mb-1">{title}</h3>
+      <p className="text-white/80 text-sm">{reward}</p>
+    </motion.div>
+  );
+}
 import ReactionGame from '@/components/minigames/ReactionGame';
 import QuizGame from '@/components/minigames/QuizGame';
 import LuckyWheel from '@/components/minigames/LuckyWheel';
@@ -24,6 +39,41 @@ export default function MiniGames() {
   const [matchedCards, setMatchedCards] = useState([]);
   const [currentGame, setCurrentGame] = useState(null);
   const [hasSubscribed, setHasSubscribed] = useState(() => localStorage.getItem('youtubeSubscribed') === 'true');
+  
+  // Reaction game
+  const [reactionWaiting, setReactionWaiting] = useState(false);
+  const [reactionActive, setReactionActive] = useState(false);
+  const [reactionStartTime, setReactionStartTime] = useState(0);
+  const [reactionScore, setReactionScore] = useState(null);
+  
+  // Quiz game
+  const [quizQuestion, setQuizQuestion] = useState(null);
+  const [quizScore, setQuizScore] = useState(0);
+  const [quizIndex, setQuizIndex] = useState(0);
+  
+  // Whack-a-mole
+  const [moles, setMoles] = useState(Array(9).fill(false));
+  const [moleScore, setMoleScore] = useState(0);
+  const [moleTime, setMoleTime] = useState(30);
+  const [moleActive, setMoleActive] = useState(false);
+  
+  // Simon Says
+  const [simonSequence, setSimonSequence] = useState([]);
+  const [simonInput, setSimonInput] = useState([]);
+  const [simonRound, setSimonRound] = useState(0);
+  const [simonPlaying, setSimonPlaying] = useState(false);
+  
+  // Number Guess
+  const [targetNumber, setTargetNumber] = useState(0);
+  const [guessAttempts, setGuessAttempts] = useState(0);
+  const [guessInput, setGuessInput] = useState('');
+  const [guessHint, setGuessHint] = useState('');
+  
+  // Typing Speed
+  const [typingText, setTypingText] = useState('');
+  const [typingInput, setTypingInput] = useState('');
+  const [typingStartTime, setTypingStartTime] = useState(0);
+  const [typingWPM, setTypingWPM] = useState(0);
   
   // Reaction game
   const [reactionState, setReactionState] = useState('waiting');
@@ -109,6 +159,236 @@ export default function MiniGames() {
     setFlippedCards([]);
     setMatchedCards([]);
     setCurrentGame('memory');
+  };
+  
+  // Reaction Game
+  const startReactionGame = () => {
+    setReactionScore(null);
+    setReactionWaiting(false);
+    setReactionActive(false);
+    setCurrentGame('reaction');
+  };
+  
+  const handleReactionStart = () => {
+    setReactionWaiting(true);
+    const delay = Math.random() * 3000 + 1000;
+    setTimeout(() => {
+      setReactionWaiting(false);
+      setReactionActive(true);
+      setReactionStartTime(Date.now());
+    }, delay);
+  };
+  
+  const handleReactionClick = () => {
+    if (reactionWaiting) {
+      setReactionScore('太早了！');
+      setReactionWaiting(false);
+    } else if (reactionActive) {
+      const time = Date.now() - reactionStartTime;
+      setReactionScore(`${time}ms`);
+      setReactionActive(false);
+      if (time < 300) {
+        const earnedCoins = 150;
+        setCoins(prev => {
+          const newCoins = prev + earnedCoins;
+          localStorage.setItem('gameCoins', newCoins.toString());
+          return newCoins;
+        });
+        setTimeout(() => alert(`反应神速！获得 ${earnedCoins} 金币！`), 100);
+      }
+    }
+  };
+  
+  // Quiz Game
+  const QUIZ_QUESTIONS = [
+    { q: '中国的首都是？', options: ['北京', '上海', '广州', '深圳'], answer: 0 },
+    { q: '世界最高峰是？', options: ['珠穆朗玛峰', '乞力马扎罗', 'K2', '富士山'], answer: 0 },
+    { q: '太阳系有多少颗行星？', options: ['7', '8', '9', '10'], answer: 1 },
+    { q: '水的化学式是？', options: ['H2O', 'CO2', 'O2', 'H2'], answer: 0 },
+    { q: '1+1等于？', options: ['1', '2', '3', '11'], answer: 1 }
+  ];
+  
+  const startQuizGame = () => {
+    setQuizScore(0);
+    setQuizIndex(0);
+    setQuizQuestion(QUIZ_QUESTIONS[0]);
+    setCurrentGame('quiz');
+  };
+  
+  const handleQuizAnswer = (selectedIndex) => {
+    if (selectedIndex === quizQuestion.answer) {
+      const newScore = quizScore + 1;
+      setQuizScore(newScore);
+      
+      if (quizIndex + 1 >= QUIZ_QUESTIONS.length) {
+        const earnedCoins = newScore * 60;
+        setCoins(prev => {
+          const newCoins = prev + earnedCoins;
+          localStorage.setItem('gameCoins', newCoins.toString());
+          return newCoins;
+        });
+        alert(`完成问答！答对 ${newScore}/${QUIZ_QUESTIONS.length} 题，获得 ${earnedCoins} 金币！`);
+        setCurrentGame(null);
+      } else {
+        setQuizIndex(quizIndex + 1);
+        setQuizQuestion(QUIZ_QUESTIONS[quizIndex + 1]);
+      }
+    } else {
+      alert('回答错误！游戏结束');
+      setCurrentGame(null);
+    }
+  };
+  
+  // Whack-a-Mole
+  const startWhackAMole = () => {
+    setMoleScore(0);
+    setMoleTime(30);
+    setMoleActive(true);
+    setCurrentGame('mole');
+    
+    const moleInterval = setInterval(() => {
+      const newMoles = Array(9).fill(false);
+      const randomIndex = Math.floor(Math.random() * 9);
+      newMoles[randomIndex] = true;
+      setMoles(newMoles);
+    }, 800);
+    
+    const timeInterval = setInterval(() => {
+      setMoleTime(prev => {
+        if (prev <= 1) {
+          clearInterval(moleInterval);
+          clearInterval(timeInterval);
+          setMoleActive(false);
+          const earnedCoins = moleScore * 10;
+          setCoins(prevCoins => {
+            const newCoins = prevCoins + earnedCoins;
+            localStorage.setItem('gameCoins', newCoins.toString());
+            return newCoins;
+          });
+          setTimeout(() => alert(`打中 ${moleScore} 只地鼠！获得 ${earnedCoins} 金币！`), 100);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+  
+  const whackMole = (index) => {
+    if (moles[index] && moleActive) {
+      setMoleScore(prev => prev + 1);
+      setMoles(prev => {
+        const newMoles = [...prev];
+        newMoles[index] = false;
+        return newMoles;
+      });
+    }
+  };
+  
+  // Simon Says
+  const startSimonSays = () => {
+    setSimonSequence([Math.floor(Math.random() * 4)]);
+    setSimonInput([]);
+    setSimonRound(1);
+    setSimonPlaying(true);
+    setCurrentGame('simon');
+  };
+  
+  const handleSimonClick = (color) => {
+    if (!simonPlaying) return;
+    
+    const newInput = [...simonInput, color];
+    setSimonInput(newInput);
+    
+    if (newInput[newInput.length - 1] !== simonSequence[newInput.length - 1]) {
+      alert(`游戏结束！完成 ${simonRound} 轮`);
+      setCurrentGame(null);
+      const earnedCoins = simonRound * 40;
+      setCoins(prev => {
+        const newCoins = prev + earnedCoins;
+        localStorage.setItem('gameCoins', newCoins.toString());
+        return newCoins;
+      });
+      return;
+    }
+    
+    if (newInput.length === simonSequence.length) {
+      const newRound = simonRound + 1;
+      setSimonRound(newRound);
+      setTimeout(() => {
+        const newSequence = [...simonSequence, Math.floor(Math.random() * 4)];
+        setSimonSequence(newSequence);
+        setSimonInput([]);
+      }, 500);
+    }
+  };
+  
+  // Number Guess
+  const startNumberGuess = () => {
+    setTargetNumber(Math.floor(Math.random() * 100) + 1);
+    setGuessAttempts(0);
+    setGuessInput('');
+    setGuessHint('猜一个1-100的数字');
+    setCurrentGame('guess');
+  };
+  
+  const handleGuess = () => {
+    const guess = parseInt(guessInput);
+    const newAttempts = guessAttempts + 1;
+    setGuessAttempts(newAttempts);
+    
+    if (guess === targetNumber) {
+      const earnedCoins = Math.max(100 - newAttempts * 10, 20);
+      setCoins(prev => {
+        const newCoins = prev + earnedCoins;
+        localStorage.setItem('gameCoins', newCoins.toString());
+        return newCoins;
+      });
+      alert(`猜对了！用了 ${newAttempts} 次，获得 ${earnedCoins} 金币！`);
+      setCurrentGame(null);
+    } else if (guess < targetNumber) {
+      setGuessHint('太小了！');
+    } else {
+      setGuessHint('太大了！');
+    }
+    setGuessInput('');
+  };
+  
+  // Typing Speed
+  const TYPING_TEXTS = [
+    '龟龟冒险岛是一款激动人心的射击游戏',
+    'Turtle Adventure Island is an exciting game',
+    '快速打字可以获得更多金币奖励',
+    '坚持就是胜利加油加油加油'
+  ];
+  
+  const startTypingGame = () => {
+    setTypingText(TYPING_TEXTS[Math.floor(Math.random() * TYPING_TEXTS.length)]);
+    setTypingInput('');
+    setTypingStartTime(Date.now());
+    setTypingWPM(0);
+    setCurrentGame('typing');
+  };
+  
+  const handleTypingChange = (e) => {
+    const input = e.target.value;
+    setTypingInput(input);
+    
+    if (input === typingText) {
+      const timeSeconds = (Date.now() - typingStartTime) / 1000;
+      const words = typingText.length / 5;
+      const wpm = Math.round((words / timeSeconds) * 60);
+      setTypingWPM(wpm);
+      
+      const earnedCoins = wpm > 30 ? 250 : wpm > 20 ? 150 : 100;
+      setCoins(prev => {
+        const newCoins = prev + earnedCoins;
+        localStorage.setItem('gameCoins', newCoins.toString());
+        return newCoins;
+      });
+      
+      setTimeout(() => alert(`速度：${wpm} WPM！获得 ${earnedCoins} 金币！`), 100);
+      setCurrentGame(null);
+    }
   };
 
   const handleCardClick = (cardId) => {
