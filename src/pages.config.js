@@ -57,6 +57,9 @@ import Multiplayer from './pages/Multiplayer';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Skins from './pages/Skins';
+import Friends from './pages/Friends';
+import ChatRooms from './pages/ChatRooms';
+import CoopGame from './pages/CoopGame';
 
 
 export const PAGES = {
@@ -70,6 +73,9 @@ export const PAGES = {
     "Profile": Profile,
     "Settings": Settings,
     "Skins": Skins,
+    "Friends": Friends,
+    "ChatRooms": ChatRooms,
+    "CoopGame": CoopGame,
 }
 
 export const pagesConfig = {

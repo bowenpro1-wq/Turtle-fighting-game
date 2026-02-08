@@ -21,6 +21,7 @@ import TouchShopButton from '@/components/game/TouchShopButton';
 import SplashScreen from '@/components/game/SplashScreen';
 import SoundSettings from '@/components/game/SoundSettings';
 import MultiBossSelect from '@/components/game/MultiBossSelect';
+import SocialButtons from '@/components/SocialButtons';
 import { soundManager } from '@/components/game/SoundManager';
 
 const BOSSES = [
@@ -1116,6 +1117,14 @@ export default function Game() {
     return () => clearInterval(autoSaveInterval);
   }, [gameState, gameMode, currentFloor, checkpoint, score, coins, playerHealth, defeatedBosses, upgrades, selectedWeapon, hasCannonUpgrade]);
 
+  const exitGame = () => {
+    soundManager.stopBackgroundMusic();
+    setGameState('start');
+    setCurrentBoss(null);
+    setShowShop(false);
+    setShowForge(false);
+  };
+
   return (
     <div className="w-full h-screen bg-gradient-to-b from-[#87CEEB] via-[#5F9EA0] to-[#2F4F4F] overflow-hidden relative pb-12">
       {showSplash && (
@@ -1132,9 +1141,20 @@ export default function Game() {
       )}
 
       {(gameState === 'playing' || gameState === 'boss') && (
-        <div className="absolute top-2 right-2 z-40">
-          <LanguageSwitcher currentLang={language} onLanguageChange={setLanguage} />
-        </div>
+        <>
+          <div className="absolute top-2 left-2 z-40">
+            <Button onClick={exitGame} variant="outline" size="sm" className="bg-red-600/80 hover:bg-red-700 text-white border-red-500">
+              退出游戏
+            </Button>
+          </div>
+          <div className="absolute top-2 right-2 z-40">
+            <LanguageSwitcher currentLang={language} onLanguageChange={setLanguage} />
+          </div>
+        </>
+      )}
+
+      {gameState === 'start' && !showSplash && (
+        <SocialButtons />
       )}
 
       <AnimatePresence mode="wait">
