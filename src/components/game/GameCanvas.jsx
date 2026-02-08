@@ -2096,7 +2096,7 @@ export default function GameCanvas({
         const bossScreenX = boss.x - game.camera.x;
         const bossScreenY = boss.y - game.camera.y;
         
-        // Import and use custom boss drawing
+        // Use custom boss drawing function
         drawBusBreakBoss(ctx, boss, game.camera, game.animationFrame, bossScreenX, bossScreenY, currentBoss);
 
         // Boss name tag
@@ -2113,7 +2113,6 @@ export default function GameCanvas({
         game.busBreakBoss = null;
       }
       
-      // Helper function to draw custom boss visuals
       function drawBusBreakBoss(ctx, boss, camera, frame, bossScreenX, bossScreenY, currentBoss) {
         ctx.save();
         

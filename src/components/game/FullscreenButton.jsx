@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Maximize, Minimize } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Maximize, Minimize } from 'lucide-react';
 
 export default function FullscreenButton() {
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -30,12 +30,12 @@ export default function FullscreenButton() {
     <motion.button
       whileTap={{ scale: 0.9 }}
       onClick={toggleFullscreen}
-      className="w-12 h-12 bg-slate-800/80 backdrop-blur-sm rounded-full flex items-center justify-center border-2 border-cyan-500/50 hover:border-cyan-400 transition-colors"
+      className="w-12 h-12 bg-slate-800/80 backdrop-blur-sm rounded-full flex items-center justify-center border-2 border-emerald-500/50 hover:border-emerald-400 transition-colors"
     >
       {isFullscreen ? (
-        <Minimize className="w-5 h-5 text-cyan-400" />
+        <Minimize className="w-5 h-5 text-emerald-400" />
       ) : (
-        <Maximize className="w-5 h-5 text-cyan-400" />
+        <Maximize className="w-5 h-5 text-emerald-400" />
       )}
     </motion.button>
   );
