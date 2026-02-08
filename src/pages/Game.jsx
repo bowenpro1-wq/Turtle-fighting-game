@@ -1099,6 +1099,15 @@ export default function Game() {
         saveGameProgress();
         alert('进度已保存！');
       }
+      // ESC to exit game
+      if (e.key === 'Escape' && (gameState === 'playing' || gameState === 'boss')) {
+        e.preventDefault();
+        const confirmExit = window.confirm('确定要退出游戏吗？未保存的进度将丢失。');
+        if (confirmExit) {
+          soundManager.stopBackgroundMusic();
+          window.location.reload();
+        }
+      }
     };
 
     window.addEventListener('keydown', handleKeyPress);
