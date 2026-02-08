@@ -14,6 +14,7 @@ export default function Friends() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [activeCall, setActiveCall] = useState(null);
+  const [activeChat, setActiveChat] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {

@@ -93,7 +93,10 @@ export default function StartScreen({ onStart, onStartTutorial, defeatedBosses =
   };
 
   return (
-    <motion.div
+    <>
+      <ChatInvitationBanner />
+      
+      <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
