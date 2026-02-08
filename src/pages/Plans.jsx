@@ -44,12 +44,13 @@ export default function Plans() {
         gold_amount: goldAmount,
         used: false
       });
-      console.log('Database entry created, redirecting...');
+      console.log('Database entry created, redirecting NOW...');
 
-      // Use window.location for immediate redirect
-      const keyUrl = `/app/${createPageUrl('Key').split('/').pop()}?=${key}`;
-      console.log('Redirecting to:', keyUrl);
-      window.location.href = keyUrl;
+      // Immediate redirect with full URL path
+      const baseUrl = window.location.origin + window.location.pathname.split('/').slice(0, -1).join('/');
+      const keyUrl = `${baseUrl}/Key?=${key}`;
+      console.log('Full redirect URL:', keyUrl);
+      window.location.replace(keyUrl);
     } catch (error) {
       console.error('Credit generation error:', error);
       alert('Error: ' + error.message);
