@@ -23,34 +23,33 @@ export default function Plans() {
   }, []);
 
   const generateAndGiveCredits = async (planType) => {
+    console.log('Starting generation for plan:', planType);
+    
+    const keyLength = planType === 'silver' ? 8 : 20;
+    const key = Array.from({ length: keyLength }, () => 
+      Math.random().toString(36).substr(2, 1).toUpperCase()
+    ).join('');
+
+    console.log('Generated key:', key);
+
+    const promoCode = `PROMO${Date.now().toString(36).toUpperCase()}`;
+    const goldAmount = planType === 'silver' ? 10000 : 150000;
+
     try {
-      console.log('Starting generation for plan:', planType);
-      
-      // Wait 1 second before generating
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const keyLength = planType === 'silver' ? 8 : 20;
-      const key = Array.from({ length: keyLength }, () => 
-        Math.random().toString(36).substr(2, 1).toUpperCase()
-      ).join('');
-
-      console.log('Generated key:', key);
-
-      const promoCode = `PROMO${Date.now().toString(36).toUpperCase()}`;
-      const goldAmount = planType === 'silver' ? 10000 : 150000;
-
       console.log('Creating database entry...');
-      const created = await base44.entities.GoldPlanKey.create({
+      await base44.entities.GoldPlanKey.create({
         key: key,
         plan_type: planType,
         promo_code: promoCode,
         gold_amount: goldAmount,
         used: false
       });
-      console.log('Created:', created);
+      console.log('Database entry created');
 
       console.log('Navigating to Key page with key:', key);
-      navigate(`${createPageUrl('Key')}?=${key}`);
+      setTimeout(() => {
+        navigate(`${createPageUrl('Key')}?=${key}`);
+      }, 100);
     } catch (error) {
       console.error('Credit generation error:', error);
       alert('Error: ' + error.message);
