@@ -22,17 +22,15 @@ export default function Plans() {
 
   const generateAndGiveCredits = async (planType) => {
     try {
-      setTimeout(async () => {
-        const goldAmount = planType === 'silver' ? 10000 : 150000;
-        
-        // Add gold to localStorage
-        const currentCoins = parseInt(localStorage.getItem('gameCoins') || '0');
-        const newCoins = currentCoins + goldAmount;
-        localStorage.setItem('gameCoins', newCoins.toString());
+      const goldAmount = planType === 'silver' ? 10000 : 150000;
+      
+      // Add gold to localStorage
+      const currentCoins = parseInt(localStorage.getItem('gameCoins') || '0');
+      const newCoins = currentCoins + goldAmount;
+      localStorage.setItem('gameCoins', newCoins.toString());
 
-        setGoldAmount(goldAmount);
-        setStatus('success');
-      }, 10);
+      setGoldAmount(goldAmount);
+      setStatus('success');
     } catch (error) {
       console.error('Credit generation error:', error);
       setStatus('error');
