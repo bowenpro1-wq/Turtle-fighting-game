@@ -520,24 +520,7 @@ export default function GameCanvas({
   onDoorEnter,
   multiBossMode = false,
   activeBosses = [],
-  selectedBosses = [],
-  homeHealth = 1000,
-  setHomeHealth,
-  wallHealth = 500,
-  setWallHealth,
-  defenseTimer = 180,
-  setDefenseTimer,
-  bossWave = 1,
-  setBossWave,
-  raidWave = 1,
-  setRaidWave,
-  timeLeft = 120,
-  setTimeLeft,
-  killsInTime = 0,
-  setKillsInTime,
-  onDefenseVictory,
-  onDefenseDefeat,
-  onTimeAttackEnd
+  selectedBosses = []
 }) {
   const canvasRef = useRef(null);
   const WORLD_WIDTH = gameMode === 'tower' ? 1800 : 4000;
@@ -581,37 +564,18 @@ export default function GameCanvas({
     lastBeamTick: 0,
     flameLineActive: false,
     lastFlameLineTick: 0,
+    // Defense mode
     homeBase: null,
-    defenseWalls: [],
-    lastBossSpawn: 0,
-    superattackBosses: [],
-    raidEnemyType: null,
-    timeAttackStartTime: 0
+    wallSegments: [],
+    defenseStartTime: 0,
+    // Raid mode
+    raidWave: 0,
+    lastRaidSpawn: 0,
+    // Superattack mode
+    superattackBosses: []
   });
 
   const generateWorld = useCallback(() => {
-    // Defense mode - create home base
-    if (gameMode === 'defense') {
-      gameRef.current.homeBase = {
-        x: 200,
-        y: 200,
-        width: 200,
-        height: 200
-      };
-      
-      // Create 4 walls around the base
-      gameRef.current.defenseWalls = [
-        { x: 150, y: 150, width: 300, height: 20, side: 'top' },
-        { x: 150, y: 430, width: 300, height: 20, side: 'bottom' },
-        { x: 150, y: 170, width: 20, height: 260, side: 'left' },
-        { x: 430, y: 170, width: 20, height: 260, side: 'right' }
-      ];
-      
-      gameRef.current.buildings = [];
-      gameRef.current.worldGenerated = true;
-      return;
-    }
-    
     // Skip building generation in tower mode
     if (gameMode === 'tower') {
       gameRef.current.buildings = [];
@@ -1468,61 +1432,81 @@ export default function GameCanvas({
       
       // Draw defense mode home base
       if (gameMode === 'defense' && game.homeBase) {
-        const screenX = game.homeBase.x - game.camera.x;
-        const screenY = game.homeBase.y - game.camera.y;
+        const baseScreenX = game.homeBase.x - game.camera.x;
+        const baseScreenY = game.homeBase.y - game.camera.y;
         
         // Blue healing zone
         ctx.save();
-        const gradient = ctx.createRadialGradient(
-          screenX + game.homeBase.width/2, screenY + game.homeBase.height/2, 0,
-          screenX + game.homeBase.width/2, screenY + game.homeBase.height/2, game.homeBase.width/2
-        );
-        gradient.addColorStop(0, 'rgba(56, 189, 248, 0.4)');
-        gradient.addColorStop(0.5, 'rgba(14, 165, 233, 0.3)');
-        gradient.addColorStop(1, 'rgba(2, 132, 199, 0.1)');
+        const gradient = ctx.createRadialGradient(baseScreenX, baseScreenY, 0, baseScreenX, baseScreenY, game.homeBase.size);
+        gradient.addColorStop(0, 'rgba(59, 130, 246, 0.4)');
+        gradient.addColorStop(0.7, 'rgba(37, 99, 235, 0.2)');
+        gradient.addColorStop(1, 'rgba(29, 78, 216, 0)');
         ctx.fillStyle = gradient;
-        ctx.fillRect(screenX, screenY, game.homeBase.width, game.homeBase.height);
+        ctx.beginPath();
+        ctx.arc(baseScreenX, baseScreenY, game.homeBase.size, 0, Math.PI * 2);
+        ctx.fill();
         
-        // Home structure
-        ctx.fillStyle = '#3b82f6';
-        ctx.strokeStyle = '#1e3a8a';
+        // Pulsing border
+        ctx.strokeStyle = '#3b82f6';
         ctx.lineWidth = 4;
-        ctx.fillRect(screenX + 50, screenY + 50, 100, 100);
-        ctx.strokeRect(screenX + 50, screenY + 50, 100, 100);
+        ctx.globalAlpha = 0.6 + Math.sin(game.animationFrame * 0.1) * 0.3;
+        ctx.beginPath();
+        ctx.arc(baseScreenX, baseScreenY, game.homeBase.size - 10, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
         
-        // Door
-        ctx.fillStyle = '#1e40af';
-        ctx.fillRect(screenX + 85, screenY + 110, 30, 40);
-        
-        // Windows
-        ctx.fillStyle = '#60a5fa';
-        ctx.fillRect(screenX + 65, screenY + 70, 20, 20);
-        ctx.fillRect(screenX + 115, screenY + 70, 20, 20);
-        
+        // Home marker
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 24px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('🏠', baseScreenX, baseScreenY + 8);
         ctx.restore();
         
         // Draw walls
-        game.defenseWalls.forEach(wall => {
-          if (wall.health <= 0) return;
+        game.wallSegments.forEach(wall => {
+          const wallScreenX = wall.x - game.camera.x;
+          const wallScreenY = wall.y - game.camera.y;
           
-          const wx = wall.x - game.camera.x;
-          const wy = wall.y - game.camera.y;
+          const healthPercent = wall.health / wall.maxHealth;
+          const wallColor = healthPercent > 0.6 ? '#64748b' : healthPercent > 0.3 ? '#f59e0b' : '#ef4444';
           
-          ctx.save();
-          const healthPercent = wall.health / 500;
-          ctx.fillStyle = healthPercent > 0.5 ? '#78716c' : healthPercent > 0.25 ? '#57534e' : '#44403c';
-          ctx.strokeStyle = '#292524';
-          ctx.lineWidth = 3;
-          ctx.fillRect(wx, wy, wall.width, wall.height);
-          ctx.strokeRect(wx, wy, wall.width, wall.height);
+          ctx.fillStyle = wallColor;
+          ctx.strokeStyle = '#1e293b';
+          ctx.lineWidth = 4;
+          ctx.fillRect(wallScreenX, wallScreenY, wall.width, wall.height);
+          ctx.strokeRect(wallScreenX, wallScreenY, wall.width, wall.height);
           
-          // Wall health bar
+          // Wall bricks
+          ctx.fillStyle = '#475569';
+          const brickW = wall.side === 'left' || wall.side === 'right' ? wall.width : 40;
+          const brickH = wall.side === 'top' || wall.side === 'bottom' ? wall.height : 40;
+          for (let i = 0; i < (wall.side === 'left' || wall.side === 'right' ? wall.height : wall.width); i += 45) {
+            if (wall.side === 'left' || wall.side === 'right') {
+              ctx.fillRect(wallScreenX + 3, wallScreenY + i, wall.width - 6, 35);
+            } else {
+              ctx.fillRect(wallScreenX + i, wallScreenY + 3, 35, wall.height - 6);
+            }
+          }
+          
+          // Health bar
           ctx.fillStyle = 'rgba(0,0,0,0.7)';
-          ctx.fillRect(wx, wy - 15, wall.width, 8);
+          ctx.fillRect(wallScreenX, wallScreenY - 12, wall.width, 8);
           ctx.fillStyle = healthPercent > 0.5 ? '#22c55e' : healthPercent > 0.25 ? '#f59e0b' : '#ef4444';
-          ctx.fillRect(wx, wy - 15, wall.width * healthPercent, 8);
-          ctx.restore();
+          ctx.fillRect(wallScreenX, wallScreenY - 12, wall.width * healthPercent, 8);
         });
+        
+        // Timer display
+        const elapsed = Date.now() - game.defenseStartTime;
+        const remaining = Math.max(0, 180000 - elapsed);
+        const minutes = Math.floor(remaining / 60000);
+        const seconds = Math.floor((remaining % 60000) / 1000);
+        
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillRect(10, 10, 150, 40);
+        ctx.fillStyle = remaining < 60000 ? '#ef4444' : '#fff';
+        ctx.font = 'bold 24px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(`⏱️ ${minutes}:${seconds.toString().padStart(2, '0')}`, 20, 38);
       }
 
       // Draw buildings
@@ -1548,117 +1532,103 @@ export default function GameCanvas({
       // Remove destroyed buildings
       game.buildings = game.buildings.filter(b => b.health > 0);
 
-      // Defense mode - timer countdown and home healing
+      // Defense mode - protect home base for 3 minutes
       if (gameMode === 'defense') {
-        if (game.animationFrame % 60 === 0 && defenseTimer > 0) {
-          setDefenseTimer(prev => {
-            if (prev <= 1) {
-              onDefenseVictory();
-              return 0;
-            }
-            return prev - 1;
-          });
+        // Initialize home base
+        if (!game.homeBase) {
+          const homeSize = 200;
+          game.homeBase = {
+            x: WORLD_WIDTH / 2,
+            y: WORLD_HEIGHT / 2,
+            size: homeSize,
+            health: 100,
+            maxHealth: 100
+          };
+          
+          // Create 4 wall segments around home
+          game.wallSegments = [
+            { x: game.homeBase.x - homeSize, y: game.homeBase.y - homeSize/2, width: 30, height: homeSize, health: 200, maxHealth: 200, side: 'left' },
+            { x: game.homeBase.x + homeSize - 30, y: game.homeBase.y - homeSize/2, width: 30, height: homeSize, health: 200, maxHealth: 200, side: 'right' },
+            { x: game.homeBase.x - homeSize/2, y: game.homeBase.y - homeSize, width: homeSize, height: 30, health: 200, maxHealth: 200, side: 'top' },
+            { x: game.homeBase.x - homeSize/2, y: game.homeBase.y + homeSize - 30, width: homeSize, height: 30, health: 200, maxHealth: 200, side: 'bottom' }
+          ];
+          game.defenseStartTime = Date.now();
         }
         
-        // Spawn waves of building-targeting enemies
+        // Player heals when inside home base
+        const dx = game.player.x - game.homeBase.x;
+        const dy = game.player.y - game.homeBase.y;
+        const distToHome = Math.sqrt(dx * dx + dy * dy);
+        if (distToHome < game.homeBase.size - 30 && game.animationFrame % 60 === 0) {
+          // Heal player
+          for (let i = 0; i < 10; i++) {
+            game.particles.push({
+              x: game.player.x + player.width / 2,
+              y: game.player.y + player.height / 2,
+              vx: (Math.random() - 0.5) * 3,
+              vy: -Math.random() * 4,
+              life: 30,
+              color: '#22c55e',
+              size: 4
+            });
+          }
+        }
+        
+        // Spawn enemies targeting walls
         if (Date.now() - game.lastEnemySpawn > 3000) {
-          const waveSize = 5 + Math.floor(defenseTimer / 30);
-          for (let i = 0; i < waveSize; i++) {
+          const spawnCount = 8 + Math.floor((Date.now() - game.defenseStartTime) / 30000);
+          for (let i = 0; i < spawnCount; i++) {
             const enemy = spawnEnemy(ENEMY_TYPES.HEAVY);
             enemy.attacksBuildings = true;
-            enemy.targetHome = true;
+            enemy.targetWall = game.wallSegments[Math.floor(Math.random() * game.wallSegments.length)];
             game.enemies.push(enemy);
           }
           game.lastEnemySpawn = Date.now();
         }
-        
-        // Heal player in home base
-        if (game.homeBase) {
-          const dx = Math.abs(game.player.x + game.player.width/2 - (game.homeBase.x + game.homeBase.width/2));
-          const dy = Math.abs(game.player.y + game.player.height/2 - (game.homeBase.y + game.homeBase.height/2));
+      }
+
+      // Raid mode - fast assassins attacking
+      if (gameMode === 'raid') {
+        if (Date.now() - game.lastRaidSpawn > 1500) {
+          const wave = Math.floor((Date.now() - (game.defenseStartTime || Date.now())) / 15000) + 1;
+          const spawnCount = 15 + wave * 3;
           
-          if (dx < game.homeBase.width/2 && dy < game.homeBase.height/2) {
-            if (game.animationFrame % 30 === 0) {
-              setPlayerHealth(prev => Math.min(maxHealth, prev + 5));
-            }
+          for (let i = 0; i < spawnCount; i++) {
+            const enemy = spawnEnemy(ENEMY_TYPES.ASSASSIN);
+            enemy.speed *= 1.5;
+            enemy.damage *= 1.3;
+            game.enemies.push(enemy);
           }
+          game.lastRaidSpawn = Date.now();
         }
       }
-      
-      // Super Attack mode - waves of bosses
+
+      // Super Attack mode - multiple bosses attacking you
       if (gameMode === 'superattack') {
-        if (Date.now() - game.lastBossSpawn > 8000) {
-          game.superattackBosses = game.superattackBosses || [];
+        // Initialize bosses
+        if (!game.superattackBosses || game.superattackBosses.length === 0) {
+          game.superattackBosses = [];
+          const bossTypes = ['zhongdalin', 'xiaowang', 'longhaixing', 'qigong', 'guangzhi'];
           
-          // Spawn 2-3 bosses per wave
-          const bossCount = 2 + Math.floor(bossWave / 3);
-          for (let i = 0; i < bossCount; i++) {
-            const bossData = BOSSES[Math.floor(Math.random() * Math.min(10, BOSSES.length))];
-            const angle = (Math.PI * 2 / bossCount) * i;
+          for (let i = 0; i < 3; i++) {
+            const bossType = bossTypes[i % bossTypes.length];
+            const bossTemplate = BUSBREAK_BOSSES[bossType];
+            const angle = (Math.PI * 2 / 3) * i;
+            
             game.superattackBosses.push({
-              ...bossData,
+              id: `${bossType}_${i}`,
+              ...bossTemplate,
               x: game.player.x + Math.cos(angle) * 500,
               y: game.player.y + Math.sin(angle) * 500,
               vx: 0,
               vy: 0,
-              health: bossData.health * 0.7,
-              maxHealth: bossData.health * 0.7,
+              health: bossTemplate.health * 0.7,
+              maxHealth: bossTemplate.health * 0.7,
               lastShot: Date.now(),
-              bossId: `boss_${Date.now()}_${i}`
+              lastDash: Date.now(),
+              lastSpecialAttack: Date.now()
             });
           }
-          
-          setBossWave(prev => prev + 1);
-          game.lastBossSpawn = Date.now();
-          soundManager.playSound('bossSpawn');
-        }
-      }
-      
-      // Raid mode - fast attacking single enemy type
-      if (gameMode === 'raid') {
-        if (!game.raidEnemyType) {
-          const fastTypes = [ENEMY_TYPES.ASSASSIN, ENEMY_TYPES.SCOUT, ENEMY_TYPES.KAMIKAZE, ENEMY_TYPES.WARRIOR];
-          game.raidEnemyType = fastTypes[Math.floor(Math.random() * fastTypes.length)];
-        }
-        
-        if (Date.now() - game.lastEnemySpawn > 800) {
-          const waveSize = 3 + Math.floor(raidWave / 2);
-          for (let i = 0; i < waveSize; i++) {
-            const enemy = spawnEnemy(game.raidEnemyType);
-            enemy.speed *= 2.5;
-            enemy.damage *= 1.3;
-            enemy.shootInterval *= 0.6;
-            game.enemies.push(enemy);
-          }
-          game.lastEnemySpawn = Date.now();
-          
-          if (game.enemies.length >= 50 + raidWave * 10) {
-            setRaidWave(prev => prev + 1);
-          }
-        }
-      }
-      
-      // Time attack mode - timer and kill counter
-      if (gameMode === 'timeattack') {
-        if (!game.timeAttackStartTime) {
-          game.timeAttackStartTime = Date.now();
-        }
-        
-        const elapsed = Math.floor((Date.now() - game.timeAttackStartTime) / 1000);
-        const remaining = Math.max(0, 120 - elapsed);
-        setTimeLeft(remaining);
-        
-        if (remaining === 0) {
-          onTimeAttackEnd();
-        }
-        
-        // Spawn continuous enemies
-        if (Date.now() - game.lastEnemySpawn > 1200) {
-          const spawnCount = 8 + Math.floor(elapsed / 10);
-          for (let i = 0; i < spawnCount; i++) {
-            game.enemies.push(spawnEnemy());
-          }
-          game.lastEnemySpawn = Date.now();
         }
       }
 
@@ -2832,86 +2802,45 @@ export default function GameCanvas({
 
 
 
-      // Defense mode - check wall collisions and home damage
-      if (gameMode === 'defense' && game.defenseWalls) {
-        game.enemies.forEach(enemy => {
-          if (!enemy.targetHome) return;
-          
-          // Check wall collision
-          game.defenseWalls.forEach(wall => {
-            if (wall.health > 0 &&
-                enemy.x < wall.x + wall.width &&
-                enemy.x + enemy.width > wall.x &&
-                enemy.y < wall.y + wall.height &&
-                enemy.y + enemy.height > wall.y) {
-              
-              if (game.animationFrame % 30 === 0) {
-                wall.health = Math.max(0, wall.health - enemy.damage);
-                setWallHealth(prev => Math.max(0, prev - enemy.damage));
-                
-                // Explosion particles
-                for (let i = 0; i < 10; i++) {
-                  game.particles.push({
-                    x: wall.x + wall.width / 2,
-                    y: wall.y + wall.height / 2,
-                    vx: (Math.random() - 0.5) * 8,
-                    vy: (Math.random() - 0.5) * 8,
-                    life: 25,
-                    color: '#78716c',
-                    size: 5
-                  });
-                }
-              }
-            }
-          });
-          
-          // Check home collision if walls are down
-          if (game.homeBase) {
-            const allWallsDown = game.defenseWalls.every(w => w.health <= 0);
-            if (allWallsDown &&
-                enemy.x < game.homeBase.x + game.homeBase.width &&
-                enemy.x + enemy.width > game.homeBase.x &&
-                enemy.y < game.homeBase.y + game.homeBase.height &&
-                enemy.y + enemy.height > game.homeBase.y) {
-              
-              if (game.animationFrame % 30 === 0) {
-                setHomeHealth(prev => {
-                  const newHealth = prev - enemy.damage;
-                  if (newHealth <= 0) {
-                    onDefenseDefeat();
-                  }
-                  return Math.max(0, newHealth);
-                });
-              }
-            }
-          }
-        });
-      }
-      
-      // Update superattack bosses
+      // Super attack mode - boss AI
       if (gameMode === 'superattack' && game.superattackBosses) {
-        game.superattackBosses = game.superattackBosses.filter(boss => {
+        game.superattackBosses.forEach((boss, idx) => {
           const dx = game.player.x - boss.x;
           const dy = game.player.y - boss.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
+          const distToPlayer = Math.sqrt(dx * dx + dy * dy);
           
-          // Move towards player
-          boss.vx = (dx / dist) * boss.speed;
-          boss.vy = (dy / dist) * boss.speed;
+          // Boss movement
+          if (boss.pattern === 'chase') {
+            boss.vx = (dx / distToPlayer) * boss.speed;
+            boss.vy = (dy / distToPlayer) * boss.speed;
+          } else if (boss.pattern === 'dash') {
+            if (Date.now() - boss.lastDash > 2000) {
+              boss.vx = (dx / distToPlayer) * boss.speed * 3;
+              boss.vy = (dy / distToPlayer) * boss.speed * 3;
+              boss.lastDash = Date.now();
+            } else {
+              boss.vx *= 0.95;
+              boss.vy *= 0.95;
+            }
+          } else {
+            boss.vx = (dx / distToPlayer) * boss.speed;
+            boss.vy = (dy / distToPlayer) * boss.speed;
+          }
+          
           boss.x += boss.vx;
           boss.y += boss.vy;
           
-          // Shoot at player
-          if (Date.now() - boss.lastShot > 2500) {
-            for (let i = 0; i < 3; i++) {
-              const angle = Math.atan2(dy, dx) + (i - 1) * 0.3;
+          // Boss shooting
+          if (Date.now() - boss.lastShot > 1500) {
+            for (let i = 0; i < 8; i++) {
+              const angle = (Math.PI * 2 / 8) * i;
               game.enemyBullets.push({
                 x: boss.x,
                 y: boss.y,
-                vx: Math.cos(angle) * 8,
-                vy: Math.sin(angle) * 8,
-                damage: boss.damage * 0.8,
-                size: 10,
+                vx: Math.cos(angle) * 10,
+                vy: Math.sin(angle) * 10,
+                damage: boss.damage,
+                size: 12,
                 color: boss.color
               });
             }
@@ -2919,60 +2848,41 @@ export default function GameCanvas({
           }
           
           // Draw boss
-          const screenX = boss.x - game.camera.x;
-          const screenY = boss.y - game.camera.y;
+          const bossScreenX = boss.x - game.camera.x;
+          const bossScreenY = boss.y - game.camera.y;
           
           ctx.save();
           ctx.fillStyle = boss.color;
           ctx.strokeStyle = '#000';
           ctx.lineWidth = 4;
-          ctx.shadowBlur = 15;
+          ctx.shadowBlur = 20;
           ctx.shadowColor = boss.color;
           ctx.beginPath();
-          ctx.arc(screenX, screenY, boss.size/2, 0, Math.PI * 2);
+          ctx.arc(bossScreenX, bossScreenY, boss.width / 2, 0, Math.PI * 2);
           ctx.fill();
           ctx.stroke();
+          ctx.shadowBlur = 0;
           
-          // Boss health bar
+          // Boss name
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold 14px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(boss.name, bossScreenX, bossScreenY - boss.width/2 - 20);
+          
+          // Health bar
           const healthPercent = boss.health / boss.maxHealth;
           ctx.fillStyle = 'rgba(0,0,0,0.7)';
-          ctx.fillRect(screenX - 40, screenY - boss.size/2 - 20, 80, 8);
-          ctx.fillStyle = healthPercent > 0.5 ? '#22c55e' : '#ef4444';
-          ctx.fillRect(screenX - 40, screenY - boss.size/2 - 20, 80 * healthPercent, 8);
+          ctx.fillRect(bossScreenX - 50, bossScreenY - boss.width/2 - 35, 100, 8);
+          ctx.fillStyle = healthPercent > 0.5 ? '#22c55e' : healthPercent > 0.25 ? '#f59e0b' : '#ef4444';
+          ctx.fillRect(bossScreenX - 50, bossScreenY - boss.width/2 - 35, 100 * healthPercent, 8);
           ctx.restore();
           
-          // Check bullet collision
-          game.bullets.forEach((bullet, idx) => {
-            const bdx = bullet.x - boss.x;
-            const bdy = bullet.y - boss.y;
-            const bdist = Math.sqrt(bdx * bdx + bdy * bdy);
-            
-            if (bdist < boss.size / 2) {
-              boss.health -= bullet.damage;
-              game.bullets.splice(idx, 1);
-              
-              for (let i = 0; i < 15; i++) {
-                game.particles.push({
-                  x: bullet.x,
-                  y: bullet.y,
-                  vx: (Math.random() - 0.5) * 10,
-                  vy: (Math.random() - 0.5) * 10,
-                  life: 25,
-                  color: boss.color,
-                  size: 5
-                });
-              }
-            }
-          });
-          
-          // Contact damage
-          if (dist < boss.size / 2 + 25 && !isFlying) {
-            if (game.animationFrame % 30 === 0) {
-              onPlayerDamage(boss.damage * 0.6);
+          // Collision damage
+          if (distToPlayer < boss.width / 2 + 25 && !isFlying && !isInShop) {
+            if (game.animationFrame % 20 === 0) {
+              onPlayerDamage(boss.damage);
             }
           }
-          
-          return boss.health > 0;
         });
       }
 
@@ -2983,22 +2893,43 @@ export default function GameCanvas({
         const dy = game.player.y - enemy.y;
         const distToPlayer = Math.sqrt(dx * dx + dy * dy);
         
-        // Defense mode - target home base
-        if (gameMode === 'defense' && enemy.targetHome && game.homeBase) {
-          const homeX = game.homeBase.x + game.homeBase.width / 2;
-          const homeY = game.homeBase.y + game.homeBase.height / 2;
-          const hdx = homeX - enemy.x;
-          const hdy = homeY - enemy.y;
-          const homeDist = Math.sqrt(hdx * hdx + hdy * hdy);
-          
-          enemy.vx = (hdx / homeDist) * enemy.speed;
-          enemy.vy = (hdy / homeDist) * enemy.speed;
-          enemy.x += enemy.vx;
-          enemy.y += enemy.vy;
+        // Defense mode - enemies attack walls
+        if (gameMode === 'defense' && enemy.attacksBuildings && enemy.targetWall) {
+          const wall = enemy.targetWall;
+          if (wall.health > 0) {
+            const wdx = wall.x + wall.width / 2 - enemy.x;
+            const wdy = wall.y + wall.height / 2 - enemy.y;
+            const distToWall = Math.sqrt(wdx * wdx + wdy * wdy);
+            
+            enemy.vx = (wdx / distToWall) * enemy.speed;
+            enemy.vy = (wdy / distToWall) * enemy.speed;
+            
+            // Attack wall when close
+            if (distToWall < 100 && game.animationFrame % 60 === 0) {
+              wall.health -= enemy.damage;
+              
+              // Explosion particles
+              for (let i = 0; i < 15; i++) {
+                game.particles.push({
+                  x: wall.x + wall.width / 2,
+                  y: wall.y + wall.height / 2,
+                  vx: (Math.random() - 0.5) * 10,
+                  vy: (Math.random() - 0.5) * 10,
+                  life: 25,
+                  color: '#fbbf24',
+                  size: 5
+                });
+              }
+            }
+          } else {
+            // Wall destroyed, attack player
+            enemy.vx = (dx / distToPlayer) * enemy.speed;
+            enemy.vy = (dy / distToPlayer) * enemy.speed;
+          }
         }
 
         // Freeze enemy movement when shop is open
-        else if (!isInShop) {
+        if (!isInShop) {
           // Zhongdalin melee behavior
           if (enemy.behaviorType === 'melee' && enemy.name === 'zhongdalin') {
             // Ram attack - charge at player
@@ -3042,11 +2973,6 @@ export default function GameCanvas({
               enemy.vy = Math.sin(enemy.patrolAngle) * enemy.speed * 0.5;
             }
           } else if (enemy.behaviorType === 'assault') {
-            // In defense mode, assault units target home if they don't have targetHome flag
-            if (gameMode === 'defense' && !enemy.targetHome) {
-              enemy.targetHome = true;
-            }
-            
             const nearestBuilding = game.buildings
               .filter(b => b.important)
               .sort((a, b) => {
@@ -3368,6 +3294,34 @@ export default function GameCanvas({
           }
         }
 
+        // Check superattack bosses collision
+        if (gameMode === 'superattack' && game.superattackBosses) {
+          for (let boss of game.superattackBosses) {
+            const dx = bullet.x - boss.x;
+            const dy = bullet.y - boss.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            if (dist < boss.width / 2) {
+              boss.health -= bullet.damage;
+              
+              // Hit particles
+              for (let i = 0; i < 20; i++) {
+                game.particles.push({
+                  x: bullet.x,
+                  y: bullet.y,
+                  vx: (Math.random() - 0.5) * 12,
+                  vy: (Math.random() - 0.5) * 12,
+                  life: 25,
+                  color: boss.color,
+                  size: 5
+                });
+              }
+              
+              return false;
+            }
+          }
+        }
+        
         // Check boss collision (Bus Break mode)
         if (gameMode === 'busbreak' && game.busBreakBoss && currentBoss) {
           const boss = game.busBreakBoss;
@@ -3468,11 +3422,6 @@ export default function GameCanvas({
               // Track tower mode kills
               if (gameMode === 'tower' && enemy.name === 'zhongdalin') {
                 game.towerKillCount = (game.towerKillCount || 0) + 1;
-              }
-              
-              // Track time attack kills
-              if (gameMode === 'timeattack') {
-                setKillsInTime(prev => prev + 1);
               }
               
               onEnemyKill(enemy.name);
