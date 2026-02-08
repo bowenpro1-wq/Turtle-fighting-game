@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Loader2, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,6 +7,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
 export default function Plans() {
+  const navigate = useNavigate();
   const [status, setStatus] = useState('generating');
   const [goldAmount, setGoldAmount] = useState(0);
 
@@ -47,10 +49,8 @@ export default function Plans() {
       });
       console.log('Created:', created);
 
-      const keyPagePath = createPageUrl('Key');
-      const keyUrl = `${keyPagePath}?=${key}`;
-      console.log('Redirecting to:', keyUrl);
-      window.location.href = keyUrl;
+      console.log('Navigating to Key page with key:', key);
+      navigate(`${createPageUrl('Key')}?=${key}`);
     } catch (error) {
       console.error('Credit generation error:', error);
       alert('Error: ' + error.message);
