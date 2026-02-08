@@ -31,7 +31,14 @@ export default function GameUI({
   helperTimer,
   towerKillCount = 0,
   towerRequiredKills = 10,
-  weaponLevel = 0
+  weaponLevel = 0,
+  homeHealth = 1000,
+  wallHealth = 500,
+  defenseTimer = 180,
+  bossWave = 1,
+  raidWave = 1,
+  timeLeft = 120,
+  killsInTime = 0
 }) {
   const [prevBossHealth, setPrevBossHealth] = useState(bossHealth);
   const [healthShake, setHealthShake] = useState(false);
