@@ -1555,10 +1555,31 @@ export default function GameCanvas({
           game.defenseStartTime = Date.now();
         }
         
-        // Player heals when inside home base
+        // Player heals when inside home base (every 20 seconds)
         const dx = game.player.x - game.homeBase.x;
         const dy = game.player.y - game.homeBase.y;
         const distToHome = Math.sqrt(dx * dx + dy * dy);
+        
+        // Home regenerates health every 20 seconds
+        if (!game.lastHomeRegen) game.lastHomeRegen = Date.now();
+        if (Date.now() - game.lastHomeRegen > 20000) {
+          game.homeBase.health = Math.min(game.homeBase.maxHealth, game.homeBase.health + 20);
+          game.lastHomeRegen = Date.now();
+          
+          // Regen particles
+          for (let i = 0; i < 50; i++) {
+            game.particles.push({
+              x: game.homeBase.x + (Math.random() - 0.5) * game.homeBase.size,
+              y: game.homeBase.y + (Math.random() - 0.5) * game.homeBase.size,
+              vx: (Math.random() - 0.5) * 4,
+              vy: -Math.random() * 6,
+              life: 40,
+              color: '#3b82f6',
+              size: 5
+            });
+          }
+        }
+        
         if (distToHome < game.homeBase.size - 30 && game.animationFrame % 60 === 0) {
           // Heal player
           for (let i = 0; i < 10; i++) {
@@ -1574,6 +1595,15 @@ export default function GameCanvas({
           }
         }
         
+        // Check if home is destroyed
+        if (game.homeBase.health <= 0) {
+          // Game over
+          setTimeout(() => {
+            alert('家园被摧毁！游戏结束！');
+            window.location.reload();
+          }, 100);
+        }
+        
         // Spawn enemies targeting walls
         if (Date.now() - game.lastEnemySpawn > 3000) {
           const spawnCount = 8 + Math.floor((Date.now() - game.defenseStartTime) / 30000);
@@ -1587,7 +1617,7 @@ export default function GameCanvas({
         }
       }
 
-      // Raid mode - fast assassins attacking
+      // Raid mode - fast assassins attacking SEPARATELY from different directions
       if (gameMode === 'raid') {
         if (Date.now() - game.lastRaidSpawn > 1500) {
           const wave = Math.floor((Date.now() - (game.defenseStartTime || Date.now())) / 15000) + 1;
@@ -1597,6 +1627,17 @@ export default function GameCanvas({
             const enemy = spawnEnemy(ENEMY_TYPES.ASSASSIN);
             enemy.speed *= 1.5;
             enemy.damage *= 1.3;
+            
+            // Spread spawn positions - different angles
+            const spreadAngle = (Math.PI * 2 / spawnCount) * i + Math.random() * 0.5;
+            const spreadDist = 600 + Math.random() * 400;
+            enemy.x = game.player.x + Math.cos(spreadAngle) * spreadDist;
+            enemy.y = game.player.y + Math.sin(spreadAngle) * spreadDist;
+            
+            // Individual attack timing
+            enemy.attackDelay = Math.random() * 2000;
+            enemy.spawnTime = Date.now();
+            
             game.enemies.push(enemy);
           }
           game.lastRaidSpawn = Date.now();
@@ -2904,8 +2945,35 @@ export default function GameCanvas({
         const dy = game.player.y - enemy.y;
         const distToPlayer = Math.sqrt(dx * dx + dy * dy);
         
-        // Defense mode - enemies attack walls
-        if (gameMode === 'defense' && enemy.attacksBuildings && enemy.targetWall) {
+        // Defense mode - enemies attack home base (not walls)
+        if (gameMode === 'defense' && game.homeBase) {
+          const home = game.homeBase;
+          const hdx = home.x - enemy.x;
+          const hdy = home.y - enemy.y;
+          const distToHome = Math.sqrt(hdx * hdx + hdy * hdy);
+          
+          // Move towards home base
+          enemy.vx = (hdx / distToHome) * enemy.speed;
+          enemy.vy = (hdy / distToHome) * enemy.speed;
+          
+          // Attack home when close
+          if (distToHome < home.size + 50 && game.animationFrame % 60 === 0) {
+            home.health -= enemy.damage * 0.5;
+            
+            // Damage particles
+            for (let i = 0; i < 10; i++) {
+              game.particles.push({
+                x: home.x + (Math.random() - 0.5) * home.size,
+                y: home.y + (Math.random() - 0.5) * home.size,
+                vx: (Math.random() - 0.5) * 8,
+                vy: (Math.random() - 0.5) * 8,
+                life: 20,
+                color: '#ef4444',
+                size: 4
+              });
+            }
+          }
+        } else if (gameMode === 'defense' && enemy.attacksBuildings && enemy.targetWall) {
           const wall = enemy.targetWall;
           if (wall.health > 0) {
             const wdx = wall.x + wall.width / 2 - enemy.x;

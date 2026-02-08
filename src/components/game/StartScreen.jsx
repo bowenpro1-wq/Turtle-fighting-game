@@ -285,14 +285,32 @@ export default function StartScreen({ onStart, onStartTutorial, defeatedBosses =
           ⚔️ Boss试炼
         </Button>
         
-        <Link to={createPageUrl('Multiplayer')} className="block">
+        <Link to={createPageUrl('PublicGame')} className="block">
           <Button
             className="w-full px-5 py-5 md:py-6 bg-gradient-to-r from-cyan-600 via-blue-600 to-purple-600 hover:from-cyan-700 hover:via-blue-700 hover:to-purple-700 rounded-xl text-white text-base md:text-lg font-bold border-2 border-cyan-400/50 active:scale-95 transition-transform"
           >
             <Users className="w-5 h-5 mr-2" />
-            🎮 多人模式
+            🌐 公共游戏
           </Button>
         </Link>
+        
+        <div className="grid grid-cols-2 gap-2 md:gap-3">
+          <Link to={createPageUrl('PublicChat')} className="block">
+            <Button
+              className="w-full px-3 py-4 md:py-5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 rounded-xl text-white text-sm md:text-base font-bold border-2 border-purple-400/50 active:scale-95 transition-transform"
+            >
+              💬 公共聊天室
+            </Button>
+          </Link>
+          
+          <Link to={createPageUrl('Friends')} className="block">
+            <Button
+              className="w-full px-3 py-4 md:py-5 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 rounded-xl text-white text-sm md:text-base font-bold border-2 border-pink-400/50 active:scale-95 transition-transform"
+            >
+              👥 添加好友
+            </Button>
+          </Link>
+        </div>
         
         <Link to={createPageUrl('Forge')} className="block">
           <Button
