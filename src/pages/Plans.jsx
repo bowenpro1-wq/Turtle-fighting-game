@@ -22,6 +22,8 @@ export default function Plans() {
 
   const generateAndGiveCredits = async (planType) => {
     try {
+      console.log('Starting generation for plan:', planType);
+      
       // Wait 1 second before generating
       await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -30,21 +32,27 @@ export default function Plans() {
         Math.random().toString(36).substr(2, 1).toUpperCase()
       ).join('');
 
+      console.log('Generated key:', key);
+
       const promoCode = `PROMO${Date.now().toString(36).toUpperCase()}`;
       const goldAmount = planType === 'silver' ? 10000 : 150000;
 
-      await base44.entities.GoldPlanKey.create({
+      console.log('Creating database entry...');
+      const created = await base44.entities.GoldPlanKey.create({
         key: key,
         plan_type: planType,
         promo_code: promoCode,
         gold_amount: goldAmount,
         used: false
       });
+      console.log('Created:', created);
 
       const keyUrl = `${window.location.origin}${createPageUrl('Key')}?=${key}`;
+      console.log('Redirecting to:', keyUrl);
       window.location.href = keyUrl;
     } catch (error) {
       console.error('Credit generation error:', error);
+      alert('Error: ' + error.message);
       setStatus('error');
     }
   };
