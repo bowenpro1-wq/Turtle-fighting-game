@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Search, UserPlus, Phone, X } from 'lucide-react';
+import { ArrowLeft, Search, UserPlus, Phone, X, MessageCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import VoiceCall from '@/components/social/VoiceCall';
+import PrivateChat from '@/components/social/PrivateChat';
+import { AnimatePresence } from 'framer-motion';
 
 export default function Friends() {
   const [profile, setProfile] = useState(null);
@@ -151,6 +153,23 @@ export default function Friends() {
     setActiveCall(friend);
   };
 
+  const handleStartChat = async (friend) => {
+    try {
+      await base44.entities.ChatInvitation.create({
+        from_turtle_id: profile.turtle_id,
+        to_turtle_id: friend.turtle_id,
+        from_email: profile.user_email,
+        to_email: friend.user_email,
+        from_name: profile.display_name,
+        status: 'accepted'
+      });
+
+      setActiveChat(friend);
+    } catch (error) {
+      console.error('Failed to start chat:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
       <div className="max-w-4xl mx-auto">
@@ -261,6 +280,13 @@ export default function Friends() {
                   </div>
                   <div className="flex gap-2">
                     <Button
+                      onClick={() => handleStartChat(friend)}
+                      size="sm"
+                      className="bg-purple-600 hover:bg-purple-700"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                    </Button>
+                    <Button
                       onClick={() => startCall(friend)}
                       size="sm"
                       className="bg-green-600 hover:bg-green-700"
@@ -275,13 +301,26 @@ export default function Friends() {
         </div>
       </div>
 
-      {activeCall && (
-        <VoiceCall
-          friend={activeCall}
-          myProfile={profile}
-          onClose={() => setActiveCall(null)}
-        />
-      )}
+      <AnimatePresence>
+        {activeCall && (
+          <VoiceCall
+            friend={activeCall}
+            myProfile={profile}
+            onClose={() => setActiveCall(null)}
+          />
+        )}
+        
+        {activeChat && (
+          <PrivateChat
+            friend={activeChat}
+            onClose={() => setActiveChat(null)}
+            onVoiceCall={() => {
+              setActiveChat(null);
+              setActiveCall(activeChat);
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
