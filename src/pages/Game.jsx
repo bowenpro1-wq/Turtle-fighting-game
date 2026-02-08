@@ -22,6 +22,7 @@ import SplashScreen from '@/components/game/SplashScreen';
 import SoundSettings from '@/components/game/SoundSettings';
 import MultiBossSelect from '@/components/game/MultiBossSelect';
 import SocialButtons from '@/components/SocialButtons';
+import TurtleIDDisplay from '@/components/TurtleIDDisplay';
 import { soundManager } from '@/components/game/SoundManager';
 
 const BOSSES = [
@@ -1154,7 +1155,14 @@ export default function Game() {
       )}
 
       {gameState === 'start' && !showSplash && (
-        <SocialButtons />
+        <>
+          <SocialButtons />
+          <TurtleIDDisplay />
+        </>
+      )}
+      
+      {(gameState === 'playing' || gameState === 'boss') && (
+        <TurtleIDDisplay />
       )}
 
       <AnimatePresence mode="wait">
