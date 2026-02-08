@@ -120,6 +120,13 @@ export default function Game() {
   const [multiBossSelected, setMultiBossSelected] = useState([]);
   const [multiBossCount, setMultiBossCount] = useState(2);
   const [showMultiBossSelect, setShowMultiBossSelect] = useState(false);
+  
+  // Social features
+  const [showFriendSearch, setShowFriendSearch] = useState(false);
+  const [showChatRoom, setShowChatRoom] = useState(false);
+  const [showFriendsList, setShowFriendsList] = useState(false);
+  const [showPublicGameLobby, setShowPublicGameLobby] = useState(false);
+  const [publicGameSession, setPublicGameSession] = useState(null);
 
   // Profile and difficulty
   const [playerProfile, setPlayerProfile] = useState(null);
@@ -383,6 +390,13 @@ export default function Game() {
       // Time attack - kill as many as possible in 2 minutes
       setGameMode(mode);
       setShowWeaponSelect(true);
+      return;
+    }
+    
+    if (mode === 'public_coop') {
+      // Public co-op game - show lobby
+      setGameMode(mode);
+      setShowPublicGameLobby(true);
       return;
     }
     
@@ -1378,6 +1392,34 @@ export default function Game() {
               hasTheHand={hasTheHand}
             />
         )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {showFriendSearch && (
+            <FriendSearch onClose={() => setShowFriendSearch(false)} />
+          )}
+
+          {showChatRoom && (
+            <PublicChatRoom onClose={() => setShowChatRoom(false)} />
+          )}
+
+          {showFriendsList && (
+            <FriendsList 
+              onClose={() => setShowFriendsList(false)}
+            />
+          )}
+
+          {showPublicGameLobby && (
+            <PublicGameLobby
+              onClose={() => setShowPublicGameLobby(false)}
+              onStartGame={(game) => {
+                setPublicGameSession(game);
+                setShowPublicGameLobby(false);
+                setGameMode('public_coop');
+                setShowWeaponSelect(true);
+              }}
+            />
+          )}
         </AnimatePresence>
 
         {(gameState === 'playing' || gameState === 'boss') && (

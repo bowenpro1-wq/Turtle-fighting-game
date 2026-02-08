@@ -3103,6 +3103,11 @@ export default function GameCanvas({
               enemy.vx = Math.cos(angle) * enemy.speed;
               enemy.vy = Math.sin(angle) * enemy.speed;
             }
+          } else if (enemy.behaviorType === 'raid_solo') {
+            // Raid mode - solo aggressive charge from unique angle
+            const angle = Math.atan2(dy, dx) + (enemy.raidAngle || 0);
+            enemy.vx = Math.cos(angle) * enemy.speed;
+            enemy.vy = Math.sin(angle) * enemy.speed;
           } else if (enemy.behaviorType === 'stationary') {
             enemy.vx = 0;
             enemy.vy = 0;
