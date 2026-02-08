@@ -134,7 +134,7 @@ export default function GameUI({
               <span className="text-yellow-400 text-sm md:text-lg font-bold">{coins}</span>
               </div>
 
-          {gameMode !== 'tower' && (
+          {gameMode !== 'tower' && gameMode !== 'defense' && gameMode !== 'superattack' && gameMode !== 'raid' && gameMode !== 'timeattack' && (
             <div className="text-orange-400 text-xs font-semibold">
               BOSS: {defeatedBosses}/20
             </div>
@@ -315,6 +315,50 @@ export default function GameUI({
         <div>B-商店</div>
         <div>F-锻造</div>
       </div>
+      
+      {/* Mode-specific top display */}
+      {gameMode === 'defense' && (
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-slate-900/80 backdrop-blur-sm px-6 py-3 rounded-lg border-2 border-cyan-500/50 pointer-events-none">
+          <div className="text-center">
+            <div className="text-cyan-400 font-bold text-2xl">
+              {Math.floor(defenseTimer / 60)}:{(defenseTimer % 60).toString().padStart(2, '0')}
+            </div>
+            <div className="flex gap-4 mt-2 text-sm">
+              <div className="text-blue-400">🏠 {homeHealth}</div>
+              <div className="text-gray-400">🧱 {wallHealth}/500</div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {gameMode === 'superattack' && (
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-slate-900/80 backdrop-blur-sm px-6 py-3 rounded-lg border-2 border-red-500/50 pointer-events-none">
+          <div className="text-center">
+            <div className="text-red-400 font-bold text-xl">波次 {bossWave}</div>
+            <div className="text-orange-400 text-sm mt-1">⚔️ Boss突袭</div>
+          </div>
+        </div>
+      )}
+      
+      {gameMode === 'raid' && (
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-slate-900/80 backdrop-blur-sm px-6 py-3 rounded-lg border-2 border-purple-500/50 pointer-events-none">
+          <div className="text-center">
+            <div className="text-purple-400 font-bold text-xl">波次 {raidWave}</div>
+            <div className="text-pink-400 text-sm mt-1">⚡ 快速突袭</div>
+          </div>
+        </div>
+      )}
+      
+      {gameMode === 'timeattack' && (
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-slate-900/80 backdrop-blur-sm px-6 py-3 rounded-lg border-2 border-cyan-500/50 pointer-events-none">
+          <div className="text-center">
+            <div className="text-cyan-400 font-bold text-2xl">
+              {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+            </div>
+            <div className="text-green-400 text-sm mt-1">击杀: {killsInTime}</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
