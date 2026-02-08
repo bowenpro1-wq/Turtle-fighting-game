@@ -1632,8 +1632,19 @@ export default function GameCanvas({
         }
       }
 
+      // Time attack mode - endless fast spawning
+      if (gameMode === 'timeattack' && Date.now() - game.lastEnemySpawn > 800) {
+        const spawnCount = 12 + Math.floor(score / 500);
+        for (let i = 0; i < spawnCount; i++) {
+          const enemy = spawnEnemy();
+          enemy.speed *= 1.3;
+          game.enemies.push(enemy);
+        }
+        game.lastEnemySpawn = Date.now();
+      }
+      
       // Spawn LOTS of enemies every 2 seconds in normal mode
-      else if (gameMode !== 'tower' && gameMode !== 'busbreak' && gameMode !== 'superattack' && gameMode !== 'multiboss' && gameState === 'playing' && Date.now() - game.lastEnemySpawn > 2000) {
+      else if (gameMode !== 'tower' && gameMode !== 'busbreak' && gameMode !== 'superattack' && gameMode !== 'multiboss' && gameMode !== 'defense' && gameMode !== 'raid' && gameMode !== 'timeattack' && gameState === 'playing' && Date.now() - game.lastEnemySpawn > 2000) {
         const baseSpawn = Math.floor(score / 1000) + 5;
         const spawnCount = Math.floor(Math.random() * baseSpawn) + baseSpawn;
         for (let i = 0; i < spawnCount; i++) {
@@ -1643,7 +1654,7 @@ export default function GameCanvas({
       }
 
       // Boss mode: spawn LOTS of enemies continuously
-      if (gameMode !== 'tower' && gameMode !== 'busbreak' && gameMode !== 'multiboss' && gameMode !== 'superattack' && gameState === 'boss') {
+      if (gameMode !== 'tower' && gameMode !== 'busbreak' && gameMode !== 'multiboss' && gameMode !== 'superattack' && gameMode !== 'defense' && gameMode !== 'raid' && gameMode !== 'timeattack' && gameState === 'boss') {
         // Initial spawn of 30-50 enemies when boss appears
         if (game.lastBossEnemySpawn === 0) {
           const initialCount = Math.floor(Math.random() * 21) + 30;
@@ -1659,7 +1670,7 @@ export default function GameCanvas({
           }
           game.lastBossEnemySpawn = Date.now();
           }
-          } else if (gameMode !== 'tower' && gameMode !== 'busbreak' && gameMode !== 'multiboss' && gameMode !== 'superattack') {
+          } else if (gameMode !== 'tower' && gameMode !== 'busbreak' && gameMode !== 'multiboss' && gameMode !== 'superattack' && gameMode !== 'defense' && gameMode !== 'raid' && gameMode !== 'timeattack') {
           game.lastBossEnemySpawn = 0;
           }
 
@@ -3554,6 +3565,29 @@ export default function GameCanvas({
           return false;
         }
 
+        // Check wall collision in defense mode
+        if (gameMode === 'defense' && game.wallSegments) {
+          for (let wall of game.wallSegments) {
+            if (bullet.x > wall.x && bullet.x < wall.x + wall.width &&
+                bullet.y > wall.y && bullet.y < wall.y + wall.height) {
+              wall.health -= bullet.damage;
+              
+              for (let i = 0; i < 8; i++) {
+                game.particles.push({
+                  x: bullet.x,
+                  y: bullet.y,
+                  vx: (Math.random() - 0.5) * 6,
+                  vy: -Math.random() * 6,
+                  life: 20,
+                  color: '#78716c',
+                  size: 4
+                });
+              }
+              return false;
+            }
+          }
+        }
+        
         // Check building collision
         if (bullet.targetBuilding) {
           for (let building of game.buildings) {

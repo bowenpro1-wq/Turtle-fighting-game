@@ -118,21 +118,6 @@ export default function Game() {
   const [multiBossSelected, setMultiBossSelected] = useState([]);
   const [multiBossCount, setMultiBossCount] = useState(2);
   const [showMultiBossSelect, setShowMultiBossSelect] = useState(false);
-  
-  // Defense mode state
-  const [homeHealth, setHomeHealth] = useState(1000);
-  const [wallHealth, setWallHealth] = useState(500);
-  const [defenseTimer, setDefenseTimer] = useState(180);
-  
-  // Superattack mode state
-  const [bossWave, setBossWave] = useState(1);
-  
-  // Raid mode state
-  const [raidWave, setRaidWave] = useState(1);
-  
-  // Time attack mode state
-  const [timeLeft, setTimeLeft] = useState(120);
-  const [killsInTime, setKillsInTime] = useState(0);
 
   // Profile and difficulty
   const [playerProfile, setPlayerProfile] = useState(null);
@@ -392,6 +377,13 @@ export default function Game() {
       return;
     }
     
+    if (mode === 'timeattack') {
+      // Time attack - kill as many as possible in 2 minutes
+      setGameMode(mode);
+      setShowWeaponSelect(true);
+      return;
+    }
+    
     // Show weapon select for all other modes
     setGameMode(mode);
     setShowWeaponSelect(true);
@@ -436,15 +428,6 @@ export default function Game() {
     setBossHealth(0);
     setBossMaxHealth(0);
     setTowerKillCount(0);
-    
-    // Reset mode-specific state
-    setHomeHealth(1000);
-    setWallHealth(500);
-    setDefenseTimer(180);
-    setBossWave(1);
-    setRaidWave(1);
-    setTimeLeft(120);
-    setKillsInTime(0);
     
     // Start background music based on mode
     if (mode === 'tower') {
@@ -1253,23 +1236,6 @@ export default function Game() {
               multiBossMode={gameMode === 'multiboss'}
               activeBosses={window.multiBosses || []}
               selectedBosses={multiBossSelected}
-              homeHealth={homeHealth}
-              setHomeHealth={setHomeHealth}
-              wallHealth={wallHealth}
-              setWallHealth={setWallHealth}
-              defenseTimer={defenseTimer}
-              setDefenseTimer={setDefenseTimer}
-              bossWave={bossWave}
-              setBossWave={setBossWave}
-              raidWave={raidWave}
-              setRaidWave={setRaidWave}
-              timeLeft={timeLeft}
-              setTimeLeft={setTimeLeft}
-              killsInTime={killsInTime}
-              setKillsInTime={setKillsInTime}
-              onDefenseVictory={() => setGameState('victory')}
-              onDefenseDefeat={() => setGameState('gameover')}
-              onTimeAttackEnd={() => setGameState('victory')}
               />
             
             <GameUI
@@ -1301,13 +1267,6 @@ export default function Game() {
               towerKillCount={towerKillCount}
               towerRequiredKills={towerRequiredKills}
               weaponLevel={weapons[selectedWeapon]?.level || 0}
-              homeHealth={homeHealth}
-              wallHealth={wallHealth}
-              defenseTimer={defenseTimer}
-              bossWave={bossWave}
-              raidWave={raidWave}
-              timeLeft={timeLeft}
-              killsInTime={killsInTime}
             />
             
             <AnimatePresence>
