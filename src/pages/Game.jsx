@@ -1228,7 +1228,7 @@ export default function Game() {
               showTowerDoor={showTowerDoor}
               multiBossMode={gameMode === 'multiboss'}
               activeBosses={window.multiBosses || []}
-              selectedBosses={selectedBosses}
+              selectedBosses={multiBossSelected}
               />
             
             <GameUI
