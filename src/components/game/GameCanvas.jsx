@@ -2719,8 +2719,34 @@ export default function GameCanvas({
 
           ctx.save();
 
+          // AI Turtle - colorful turtles
+          if (ally.aiTurtle && ally.color) {
+            ctx.fillStyle = ally.color;
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            
+            // Shell
+            ctx.beginPath();
+            ctx.ellipse(screenX, screenY, 18, 15, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Head
+            ctx.fillStyle = ally.color;
+            ctx.beginPath();
+            ctx.arc(screenX, screenY - 12, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Eyes
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(screenX - 2, screenY - 13, 1.5, 0, Math.PI * 2);
+            ctx.arc(screenX + 2, screenY - 13, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
           // Draw based on ally type
-          if (ally.type === 'guangzhi') {
+          else if (ally.type === 'guangzhi') {
             // 广智战友 - 简化版火焰战神
             ctx.fillStyle = '#ff4500';
             ctx.strokeStyle = '#7f1d1d';
@@ -3101,6 +3127,39 @@ export default function GameCanvas({
             if (distToPlayer < 60) {
               enemy.health = 0;
             }
+          } else if (enemy.behaviorType === 'rage') {
+            // Berserker - faster when low health
+            const rageMultiplier = enemy.health < enemy.maxHealth * 0.3 ? 2 : 1;
+            const angle = Math.atan2(dy, dx);
+            enemy.vx = Math.cos(angle) * enemy.speed * rageMultiplier;
+            enemy.vy = Math.sin(angle) * enemy.speed * rageMultiplier;
+          } else if (enemy.behaviorType === 'kiting') {
+            // Ranger - keep distance
+            if (distToPlayer < 250) {
+              const angle = Math.atan2(dy, dx);
+              enemy.vx = -Math.cos(angle) * enemy.speed;
+              enemy.vy = -Math.sin(angle) * enemy.speed;
+            } else if (distToPlayer > 400) {
+              const angle = Math.atan2(dy, dx);
+              enemy.vx = Math.cos(angle) * enemy.speed * 0.5;
+              enemy.vy = Math.sin(angle) * enemy.speed * 0.5;
+            } else {
+              enemy.vx *= 0.95;
+              enemy.vy *= 0.95;
+            }
+          } else {
+            // Default chase behavior
+            const angle = Math.atan2(dy, dx);
+            enemy.vx = Math.cos(angle) * enemy.speed;
+            enemy.vy = Math.sin(angle) * enemy.speed;
+          }
+          
+          // Raid mode - spread out enemies
+          if (gameMode === 'raid' && enemy.offsetAngle !== undefined) {
+            const spreadX = Math.cos(enemy.offsetAngle) * enemy.offsetDistance;
+            const spreadY = Math.sin(enemy.offsetAngle) * enemy.offsetDistance;
+            enemy.vx += spreadX * 0.01;
+            enemy.vy += spreadY * 0.01;
           }
 
           enemy.x += enemy.vx;
