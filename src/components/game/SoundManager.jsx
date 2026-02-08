@@ -16,6 +16,29 @@ class SoundManager {
       this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
     }
   }
+
+  loadSettings() {
+    if (typeof window !== 'undefined') {
+      const savedVolume = localStorage.getItem('soundVolume');
+      const savedMusicVolume = localStorage.getItem('musicVolume');
+      const savedMuted = localStorage.getItem('soundMuted');
+      const savedMusicMuted = localStorage.getItem('musicMuted');
+      
+      if (savedVolume) this.volume = parseFloat(savedVolume);
+      if (savedMusicVolume) this.musicVolume = parseFloat(savedMusicVolume);
+      if (savedMuted) this.muted = savedMuted === 'true';
+      if (savedMusicMuted) this.musicMuted = savedMusicMuted === 'true';
+    }
+  }
+
+  saveSettings() {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('soundVolume', this.volume.toString());
+      localStorage.setItem('musicVolume', this.musicVolume.toString());
+      localStorage.setItem('soundMuted', this.muted.toString());
+      localStorage.setItem('musicMuted', this.musicMuted.toString());
+    }
+  }
   
   playBackgroundMusic(mode = 'normal') {
     if (this.musicMuted || !this.audioContext || this.currentMusicMode === mode) return;
@@ -255,19 +278,23 @@ class SoundManager {
 
   setVolume(vol) {
     this.volume = Math.max(0, Math.min(1, vol));
+    this.saveSettings();
   }
 
   setMusicVolume(vol) {
     this.musicVolume = Math.max(0, Math.min(1, vol));
+    this.saveSettings();
   }
 
   toggleMute() {
     this.muted = !this.muted;
+    this.saveSettings();
     return this.muted;
   }
 
   toggleMusicMute() {
     this.musicMuted = !this.musicMuted;
+    this.saveSettings();
     if (this.musicMuted) {
       this.stopBackgroundMusic();
     } else if (this.currentMusicMode) {
