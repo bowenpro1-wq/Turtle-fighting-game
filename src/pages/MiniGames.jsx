@@ -5,6 +5,13 @@ import { ArrowLeft, Coins } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import BottomNav from '@/components/BottomNav';
+import ReactionGame from '@/components/minigames/ReactionGame';
+import QuizGame from '@/components/minigames/QuizGame';
+import LuckyWheel from '@/components/minigames/LuckyWheel';
+import DiceGame from '@/components/minigames/DiceGame';
+import ColorMatch from '@/components/minigames/ColorMatch';
+import NumberGuess from '@/components/minigames/NumberGuess';
+import SnakeGame from '@/components/minigames/SnakeGame';
 
 export default function MiniGames() {
   const [coins, setCoins] = useState(() => {
@@ -17,6 +24,40 @@ export default function MiniGames() {
   const [matchedCards, setMatchedCards] = useState([]);
   const [currentGame, setCurrentGame] = useState(null);
   const [hasSubscribed, setHasSubscribed] = useState(() => localStorage.getItem('youtubeSubscribed') === 'true');
+  
+  // Reaction game
+  const [reactionState, setReactionState] = useState('waiting');
+  const [reactionStartTime, setReactionStartTime] = useState(0);
+  const [reactionScore, setReactionScore] = useState(0);
+  
+  // Quiz game
+  const [quizQuestions] = useState([
+    { q: '龟龟冒险岛中最终Boss是谁？', a: ['广智', '小黄龙', '中大林', '海星'], correct: 0 },
+    { q: 'What key is used to shoot?', a: ['K', 'J', 'L', 'H'], correct: 0 },
+    { q: '塔模式有多少层？', a: ['50', '100', '200', '150'], correct: 1 },
+    { q: 'Which weapon summons allies?', a: ['Totem', 'Chichao', 'Dianchao', 'Guigui'], correct: 0 },
+    { q: '每击败多少Boss获胜？', a: ['10', '15', '20', '25'], correct: 2 }
+  ]);
+  const [currentQuizIndex, setCurrentQuizIndex] = useState(0);
+  const [quizCorrect, setQuizCorrect] = useState(0);
+  
+  // Lucky wheel
+  const [wheelSpinning, setWheelSpinning] = useState(false);
+  const [wheelRotation, setWheelRotation] = useState(0);
+  
+  // Dice game
+  const [diceValue, setDiceValue] = useState(1);
+  const [diceRolling, setDiceRolling] = useState(false);
+  
+  // Color match
+  const [colorTarget, setColorTarget] = useState('#ff0000');
+  const [colorOptions, setColorOptions] = useState([]);
+  const [colorScore, setColorScore] = useState(0);
+  
+  // Number guess
+  const [targetNumber, setTargetNumber] = useState(50);
+  const [guessAttempts, setGuessAttempts] = useState(0);
+  const [guessHistory, setGuessHistory] = useState([]);
 
   useEffect(() => {
     // Load YouTube API
@@ -144,7 +185,7 @@ export default function MiniGames() {
               onClick={() => setCurrentGame('reaction')}
             >
               <h2 className="text-2xl font-bold text-white mb-2">⚡ 反应速度</h2>
-              <p className="text-white/80">即将推出...</p>
+              <p className="text-white/80">测试反应获得200金币</p>
             </motion.div>
 
             <motion.div
@@ -153,7 +194,52 @@ export default function MiniGames() {
               onClick={() => setCurrentGame('quiz')}
             >
               <h2 className="text-2xl font-bold text-white mb-2">🧠 知识问答</h2>
-              <p className="text-white/80">即将推出...</p>
+              <p className="text-white/80">答对获得150金币</p>
+            </motion.div>
+
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              className="bg-gradient-to-br from-yellow-600 to-orange-600 p-6 rounded-xl cursor-pointer"
+              onClick={() => setCurrentGame('wheel')}
+            >
+              <h2 className="text-2xl font-bold text-white mb-2">🎡 幸运转盘</h2>
+              <p className="text-white/80">转盘赢取大奖</p>
+            </motion.div>
+
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              className="bg-gradient-to-br from-indigo-600 to-purple-600 p-6 rounded-xl cursor-pointer"
+              onClick={() => setCurrentGame('dice')}
+            >
+              <h2 className="text-2xl font-bold text-white mb-2">🎲 骰子游戏</h2>
+              <p className="text-white/80">赌大小赢金币</p>
+            </motion.div>
+
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              className="bg-gradient-to-br from-cyan-600 to-blue-600 p-6 rounded-xl cursor-pointer"
+              onClick={() => setCurrentGame('color')}
+            >
+              <h2 className="text-2xl font-bold text-white mb-2">🎨 颜色配对</h2>
+              <p className="text-white/80">快速配对获得金币</p>
+            </motion.div>
+
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              className="bg-gradient-to-br from-emerald-600 to-teal-600 p-6 rounded-xl cursor-pointer"
+              onClick={() => setCurrentGame('guess')}
+            >
+              <h2 className="text-2xl font-bold text-white mb-2">🔢 猜数字</h2>
+              <p className="text-white/80">猜中数字赢金币</p>
+            </motion.div>
+
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              className="bg-gradient-to-br from-violet-600 to-fuchsia-600 p-6 rounded-xl cursor-pointer"
+              onClick={() => setCurrentGame('snake')}
+            >
+              <h2 className="text-2xl font-bold text-white mb-2">🐍 贪吃蛇</h2>
+              <p className="text-white/80">经典贪吃蛇游戏</p>
             </motion.div>
 
             <motion.div
@@ -268,13 +354,81 @@ export default function MiniGames() {
           </div>
         )}
 
-        {(currentGame === 'reaction' || currentGame === 'quiz') && (
-          <div className="text-center bg-slate-800 p-8 rounded-xl">
-            <h2 className="text-2xl font-bold text-white mb-4">即将推出</h2>
-            <Button onClick={() => setCurrentGame(null)} variant="outline">
-              返回
-            </Button>
-          </div>
+        {currentGame === 'reaction' && (
+          <ReactionGame 
+            onBack={() => setCurrentGame(null)}
+            onReward={(amount) => {
+              const newTotal = coins + amount;
+              setCoins(newTotal);
+              localStorage.setItem('gameCoins', newTotal.toString());
+            }}
+          />
+        )}
+
+        {currentGame === 'quiz' && (
+          <QuizGame
+            onBack={() => setCurrentGame(null)}
+            onReward={(amount) => {
+              const newTotal = coins + amount;
+              setCoins(newTotal);
+              localStorage.setItem('gameCoins', newTotal.toString());
+            }}
+          />
+        )}
+
+        {currentGame === 'wheel' && (
+          <LuckyWheel
+            onBack={() => setCurrentGame(null)}
+            onReward={(amount) => {
+              const newTotal = coins + amount;
+              setCoins(newTotal);
+              localStorage.setItem('gameCoins', newTotal.toString());
+            }}
+          />
+        )}
+
+        {currentGame === 'dice' && (
+          <DiceGame
+            coins={coins}
+            onBack={() => setCurrentGame(null)}
+            onCoinsChange={(newCoins) => {
+              setCoins(newCoins);
+              localStorage.setItem('gameCoins', newCoins.toString());
+            }}
+          />
+        )}
+
+        {currentGame === 'color' && (
+          <ColorMatch
+            onBack={() => setCurrentGame(null)}
+            onReward={(amount) => {
+              const newTotal = coins + amount;
+              setCoins(newTotal);
+              localStorage.setItem('gameCoins', newTotal.toString());
+            }}
+          />
+        )}
+
+        {currentGame === 'guess' && (
+          <NumberGuess
+            onBack={() => setCurrentGame(null)}
+            onReward={(amount) => {
+              const newTotal = coins + amount;
+              setCoins(newTotal);
+              localStorage.setItem('gameCoins', newTotal.toString());
+            }}
+          />
+        )}
+
+        {currentGame === 'snake' && (
+          <SnakeGame
+            onBack={() => setCurrentGame(null)}
+            onReward={(amount) => {
+              const newTotal = coins + amount;
+              setCoins(newTotal);
+              localStorage.setItem('gameCoins', newTotal.toString());
+            }}
+          />
         )}
       </div>
 
