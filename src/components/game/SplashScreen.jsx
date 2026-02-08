@@ -58,7 +58,7 @@ export default function SplashScreen({ onComplete }) {
               transition={{ delay: 0.5 }}
               className="text-4xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400"
             >
-              Produced by Mentu Tech
+              Produced by Mentus tech
             </motion.h1>
           </motion.div>
         </motion.div>
