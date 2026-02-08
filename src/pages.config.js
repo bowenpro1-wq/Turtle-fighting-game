@@ -59,6 +59,7 @@ import Skins from './pages/Skins';
 import Game from './pages/Game';
 import PublicChat from './pages/PublicChat';
 import Friends from './pages/Friends';
+import PublicGame from './pages/PublicGame';
 
 
 export const PAGES = {
@@ -74,6 +75,7 @@ export const PAGES = {
     "Game": Game,
     "PublicChat": PublicChat,
     "Friends": Friends,
+    "PublicGame": PublicGame,
 }
 
 export const pagesConfig = {
