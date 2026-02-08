@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
-import { Button } from '@/components/ui/button';
 import GameCanvas from '@/components/game/GameCanvas';
 import GameUI from '@/components/game/GameUI';
 import GameOver from '@/components/game/GameOver';
@@ -23,11 +22,6 @@ import SplashScreen from '@/components/game/SplashScreen';
 import SoundSettings from '@/components/game/SoundSettings';
 import MultiBossSelect from '@/components/game/MultiBossSelect';
 import { soundManager } from '@/components/game/SoundManager';
-import TurtleIDDisplay from '@/components/social/TurtleIDDisplay';
-import FriendSearch from '@/components/social/FriendSearch';
-import PublicChatRoom from '@/components/social/PublicChatRoom';
-import FriendsList from '@/components/social/FriendsList';
-import PublicGameLobby from '@/components/social/PublicGameLobby';
 
 const BOSSES = [
   { id: 1, name: "海星守卫", health: 100, damage: 15, speed: 1.5, size: 60, color: "#ff6b6b", pattern: "circle" },
@@ -124,13 +118,6 @@ export default function Game() {
   const [multiBossSelected, setMultiBossSelected] = useState([]);
   const [multiBossCount, setMultiBossCount] = useState(2);
   const [showMultiBossSelect, setShowMultiBossSelect] = useState(false);
-  
-  // Social features
-  const [showFriendSearch, setShowFriendSearch] = useState(false);
-  const [showChatRoom, setShowChatRoom] = useState(false);
-  const [showFriendsList, setShowFriendsList] = useState(false);
-  const [showPublicGameLobby, setShowPublicGameLobby] = useState(false);
-  const [publicGameSession, setPublicGameSession] = useState(null);
 
   // Profile and difficulty
   const [playerProfile, setPlayerProfile] = useState(null);
@@ -394,13 +381,6 @@ export default function Game() {
       // Time attack - kill as many as possible in 2 minutes
       setGameMode(mode);
       setShowWeaponSelect(true);
-      return;
-    }
-    
-    if (mode === 'public_coop') {
-      // Public co-op game - show lobby
-      setGameMode(mode);
-      setShowPublicGameLobby(true);
       return;
     }
     
@@ -1136,17 +1116,6 @@ export default function Game() {
     return () => clearInterval(autoSaveInterval);
   }, [gameState, gameMode, currentFloor, checkpoint, score, coins, playerHealth, defeatedBosses, upgrades, selectedWeapon, hasCannonUpgrade]);
 
-  const exitGame = () => {
-    soundManager.stopBackgroundMusic();
-    setGameState('start');
-    setCurrentBoss(null);
-    setShowShop(false);
-    setShowForge(false);
-    setIsInShop(false);
-    setShowTutorial(false);
-    setTutorialMode(false);
-  };
-
   return (
     <div className="w-full h-screen bg-gradient-to-b from-[#87CEEB] via-[#5F9EA0] to-[#2F4F4F] overflow-hidden relative pb-12">
       {showSplash && (
@@ -1163,55 +1132,8 @@ export default function Game() {
       )}
 
       {(gameState === 'playing' || gameState === 'boss') && (
-        <>
-          <div className="absolute top-2 left-2 z-40">
-            <TurtleIDDisplay />
-          </div>
-          
-          <div className="absolute top-2 right-2 z-40 flex gap-2">
-            <Button
-              size="sm"
-              onClick={() => setShowChatRoom(true)}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              💬 公共聊天室
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => setShowFriendSearch(true)}
-              className="bg-purple-600 hover:bg-purple-700"
-            >
-              👥 添加好友
-            </Button>
-            <Button
-              size="sm"
-              onClick={exitGame}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              ❌ 退出
-            </Button>
-            <LanguageSwitcher currentLang={language} onLanguageChange={setLanguage} />
-          </div>
-        </>
-      )}
-
-      {gameState === 'start' && !showSplash && (
-        <div className="absolute top-4 left-4 z-40 flex gap-2">
-          <TurtleIDDisplay />
-          <Button
-            size="sm"
-            onClick={() => setShowChatRoom(true)}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            💬 公共聊天室
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => setShowFriendSearch(true)}
-            className="bg-purple-600 hover:bg-purple-700"
-          >
-            👥 添加好友
-          </Button>
+        <div className="absolute top-2 right-2 z-40">
+          <LanguageSwitcher currentLang={language} onLanguageChange={setLanguage} />
         </div>
       )}
 
@@ -1428,34 +1350,6 @@ export default function Game() {
               hasTheHand={hasTheHand}
             />
         )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {showFriendSearch && (
-            <FriendSearch onClose={() => setShowFriendSearch(false)} />
-          )}
-
-          {showChatRoom && (
-            <PublicChatRoom onClose={() => setShowChatRoom(false)} />
-          )}
-
-          {showFriendsList && (
-            <FriendsList 
-              onClose={() => setShowFriendsList(false)}
-            />
-          )}
-
-          {showPublicGameLobby && (
-            <PublicGameLobby
-              onClose={() => setShowPublicGameLobby(false)}
-              onStartGame={(game) => {
-                setPublicGameSession(game);
-                setShowPublicGameLobby(false);
-                setGameMode('public_coop');
-                setShowWeaponSelect(true);
-              }}
-            />
-          )}
         </AnimatePresence>
 
         {(gameState === 'playing' || gameState === 'boss') && (

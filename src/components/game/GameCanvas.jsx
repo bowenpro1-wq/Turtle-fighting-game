@@ -1574,59 +1574,29 @@ export default function GameCanvas({
           }
         }
         
-        // Spawn allies every 20 seconds
-        if (Date.now() - (game.lastAllySpawn || 0) > 20000) {
-          game.allies = game.allies || [];
-          if (game.allies.length < 20) {
-            const colors = ['#22c55e', '#3b82f6', '#ef4444', '#f59e0b', '#a855f7', '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#8b5cf6'];
-            for (let i = 0; i < 3; i++) {
-              const angle = Math.random() * Math.PI * 2;
-              const dist = 150 + Math.random() * 100;
-              game.allies.push({
-                x: game.homeBase.x + Math.cos(angle) * dist,
-                y: game.homeBase.y + Math.sin(angle) * dist,
-                width: 40,
-                height: 50,
-                health: 80,
-                maxHealth: 80,
-                damage: 12,
-                lifetime: 999999,
-                lastShot: Date.now(),
-                color: colors[Math.floor(Math.random() * colors.length)],
-                aiTurtle: true
-              });
-            }
-          }
-          game.lastAllySpawn = Date.now();
-        }
-        
-        // Spawn enemies targeting home (not buildings)
+        // Spawn enemies targeting walls
         if (Date.now() - game.lastEnemySpawn > 3000) {
           const spawnCount = 8 + Math.floor((Date.now() - game.defenseStartTime) / 30000);
           for (let i = 0; i < spawnCount; i++) {
             const enemy = spawnEnemy(ENEMY_TYPES.HEAVY);
-            enemy.attacksBuildings = false;
-            enemy.targetHome = true;
+            enemy.attacksBuildings = true;
+            enemy.targetWall = game.wallSegments[Math.floor(Math.random() * game.wallSegments.length)];
             game.enemies.push(enemy);
           }
           game.lastEnemySpawn = Date.now();
         }
       }
 
-      // Raid mode - fast assassins attacking (SEPARATED)
+      // Raid mode - fast assassins attacking
       if (gameMode === 'raid') {
         if (Date.now() - game.lastRaidSpawn > 1500) {
           const wave = Math.floor((Date.now() - (game.defenseStartTime || Date.now())) / 15000) + 1;
           const spawnCount = 15 + wave * 3;
           
-          // Spawn enemies in different locations (SEPARATED)
           for (let i = 0; i < spawnCount; i++) {
             const enemy = spawnEnemy(ENEMY_TYPES.ASSASSIN);
             enemy.speed *= 1.5;
             enemy.damage *= 1.3;
-            // Give each enemy different spawn offset
-            enemy.offsetAngle = (Math.PI * 2 / spawnCount) * i;
-            enemy.offsetDistance = 100 + Math.random() * 200;
             game.enemies.push(enemy);
           }
           game.lastRaidSpawn = Date.now();
@@ -2719,34 +2689,8 @@ export default function GameCanvas({
 
           ctx.save();
 
-          // AI Turtle - colorful turtles
-          if (ally.aiTurtle && ally.color) {
-            ctx.fillStyle = ally.color;
-            ctx.strokeStyle = '#000';
-            ctx.lineWidth = 2;
-            
-            // Shell
-            ctx.beginPath();
-            ctx.ellipse(screenX, screenY, 18, 15, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
-            
-            // Head
-            ctx.fillStyle = ally.color;
-            ctx.beginPath();
-            ctx.arc(screenX, screenY - 12, 6, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
-            
-            // Eyes
-            ctx.fillStyle = '#fff';
-            ctx.beginPath();
-            ctx.arc(screenX - 2, screenY - 13, 1.5, 0, Math.PI * 2);
-            ctx.arc(screenX + 2, screenY - 13, 1.5, 0, Math.PI * 2);
-            ctx.fill();
-          }
           // Draw based on ally type
-          else if (ally.type === 'guangzhi') {
+          if (ally.type === 'guangzhi') {
             // 广智战友 - 简化版火焰战神
             ctx.fillStyle = '#ff4500';
             ctx.strokeStyle = '#7f1d1d';
@@ -2960,31 +2904,38 @@ export default function GameCanvas({
         const dy = game.player.y - enemy.y;
         const distToPlayer = Math.sqrt(dx * dx + dy * dy);
         
-        // Defense mode - enemies attack home
-        if (gameMode === 'defense' && enemy.targetHome && game.homeBase) {
-          const hdx = game.homeBase.x - enemy.x;
-          const hdy = game.homeBase.y - enemy.y;
-          const distToHome = Math.sqrt(hdx * hdx + hdy * hdy);
-          
-          enemy.vx = (hdx / distToHome) * enemy.speed;
-          enemy.vy = (hdy / distToHome) * enemy.speed;
-          
-          // Attack home when close
-          if (distToHome < game.homeBase.size + 50 && game.animationFrame % 60 === 0) {
-            game.homeBase.health -= enemy.damage * 0.1;
+        // Defense mode - enemies attack walls
+        if (gameMode === 'defense' && enemy.attacksBuildings && enemy.targetWall) {
+          const wall = enemy.targetWall;
+          if (wall.health > 0) {
+            const wdx = wall.x + wall.width / 2 - enemy.x;
+            const wdy = wall.y + wall.height / 2 - enemy.y;
+            const distToWall = Math.sqrt(wdx * wdx + wdy * wdy);
             
-            // Explosion particles
-            for (let i = 0; i < 15; i++) {
-              game.particles.push({
-                x: game.homeBase.x,
-                y: game.homeBase.y,
-                vx: (Math.random() - 0.5) * 10,
-                vy: (Math.random() - 0.5) * 10,
-                life: 25,
-                color: '#ef4444',
-                size: 5
-              });
+            enemy.vx = (wdx / distToWall) * enemy.speed;
+            enemy.vy = (wdy / distToWall) * enemy.speed;
+            
+            // Attack wall when close
+            if (distToWall < 100 && game.animationFrame % 60 === 0) {
+              wall.health -= enemy.damage;
+              
+              // Explosion particles
+              for (let i = 0; i < 15; i++) {
+                game.particles.push({
+                  x: wall.x + wall.width / 2,
+                  y: wall.y + wall.height / 2,
+                  vx: (Math.random() - 0.5) * 10,
+                  vy: (Math.random() - 0.5) * 10,
+                  life: 25,
+                  color: '#fbbf24',
+                  size: 5
+                });
+              }
             }
+          } else {
+            // Wall destroyed, attack player
+            enemy.vx = (dx / distToPlayer) * enemy.speed;
+            enemy.vy = (dy / distToPlayer) * enemy.speed;
           }
         }
 
@@ -3103,11 +3054,6 @@ export default function GameCanvas({
               enemy.vx = Math.cos(angle) * enemy.speed;
               enemy.vy = Math.sin(angle) * enemy.speed;
             }
-          } else if (enemy.behaviorType === 'raid_solo') {
-            // Raid mode - solo aggressive charge from unique angle
-            const angle = Math.atan2(dy, dx) + (enemy.raidAngle || 0);
-            enemy.vx = Math.cos(angle) * enemy.speed;
-            enemy.vy = Math.sin(angle) * enemy.speed;
           } else if (enemy.behaviorType === 'stationary') {
             enemy.vx = 0;
             enemy.vy = 0;
@@ -3132,39 +3078,6 @@ export default function GameCanvas({
             if (distToPlayer < 60) {
               enemy.health = 0;
             }
-          } else if (enemy.behaviorType === 'rage') {
-            // Berserker - faster when low health
-            const rageMultiplier = enemy.health < enemy.maxHealth * 0.3 ? 2 : 1;
-            const angle = Math.atan2(dy, dx);
-            enemy.vx = Math.cos(angle) * enemy.speed * rageMultiplier;
-            enemy.vy = Math.sin(angle) * enemy.speed * rageMultiplier;
-          } else if (enemy.behaviorType === 'kiting') {
-            // Ranger - keep distance
-            if (distToPlayer < 250) {
-              const angle = Math.atan2(dy, dx);
-              enemy.vx = -Math.cos(angle) * enemy.speed;
-              enemy.vy = -Math.sin(angle) * enemy.speed;
-            } else if (distToPlayer > 400) {
-              const angle = Math.atan2(dy, dx);
-              enemy.vx = Math.cos(angle) * enemy.speed * 0.5;
-              enemy.vy = Math.sin(angle) * enemy.speed * 0.5;
-            } else {
-              enemy.vx *= 0.95;
-              enemy.vy *= 0.95;
-            }
-          } else {
-            // Default chase behavior
-            const angle = Math.atan2(dy, dx);
-            enemy.vx = Math.cos(angle) * enemy.speed;
-            enemy.vy = Math.sin(angle) * enemy.speed;
-          }
-          
-          // Raid mode - spread out enemies
-          if (gameMode === 'raid' && enemy.offsetAngle !== undefined) {
-            const spreadX = Math.cos(enemy.offsetAngle) * enemy.offsetDistance;
-            const spreadY = Math.sin(enemy.offsetAngle) * enemy.offsetDistance;
-            enemy.vx += spreadX * 0.01;
-            enemy.vy += spreadY * 0.01;
           }
 
           enemy.x += enemy.vx;
