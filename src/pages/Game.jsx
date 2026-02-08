@@ -18,6 +18,9 @@ import LanguageSwitcher from '@/components/LanguageSwitcher';
 import BottomNav from '@/components/BottomNav';
 import EmailSubscriptionModal from '@/components/EmailSubscriptionModal';
 import TouchShopButton from '@/components/game/TouchShopButton';
+import SplashScreen from '@/components/game/SplashScreen';
+import SoundSettings from '@/components/game/SoundSettings';
+import { soundManager } from '@/components/game/SoundManager';
 
 const BOSSES = [
   { id: 1, name: "海星守卫", health: 100, damage: 15, speed: 1.5, size: 60, color: "#ff6b6b", pattern: "circle" },
@@ -43,7 +46,9 @@ const BOSSES = [
 ];
 
 export default function Game() {
+  const [showSplash, setShowSplash] = useState(true);
   const [gameState, setGameState] = useState('start');
+  const [selectedBosses, setSelectedBosses] = useState([]);
   const [gameMode, setGameMode] = useState('normal');
   const [language, setLanguage] = useState('zh');
   const [playerHealth, setPlayerHealth] = useState(100);
@@ -343,6 +348,7 @@ export default function Game() {
   };
 
   const startGame = (mode = 'normal', fromCheckpoint = false) => {
+    soundManager.playSound('powerup');
     setGameStartTime(Date.now());
     // Reset all state first
     setGameState('start');
@@ -357,6 +363,20 @@ export default function Game() {
       // Boss试炼模式直接开始,显示boss选择
       setGameMode(mode);
       setGameState('busbreak_select');
+      return;
+    }
+    
+    if (mode === 'multiboss') {
+      // Multi-boss mode - show forge for boss selection
+      setGameMode(mode);
+      setShowForge(true);
+      return;
+    }
+    
+    if (mode === 'superattack') {
+      // Super attack mode - enhanced enemies
+      setGameMode(mode);
+      setShowWeaponSelect(true);
       return;
     }
     
@@ -595,6 +615,7 @@ export default function Game() {
   const triggerBoss = useCallback((bossIndex) => {
     const boss = BOSSES[bossIndex];
     if (boss && !defeatedBosses.includes(boss.id)) {
+      soundManager.playSound('bossSpawn');
       setCurrentBoss(boss);
       setBossHealth(boss.health);
       setBossMaxHealth(boss.health);
@@ -609,6 +630,7 @@ export default function Game() {
 
   const defeatBoss = useCallback(() => {
     if (currentBoss) {
+      soundManager.playSound('victory');
       const newDefeatedCount = defeatedBosses.length + 1;
       setDefeatedBosses(prev => [...prev, currentBoss.id]);
       setScore(prev => prev + currentBoss.health * 10);
@@ -689,10 +711,12 @@ export default function Game() {
 
   const handlePlayerDamage = useCallback((damage) => {
     if (isFlying) return;
+    soundManager.playSound('hit');
     const adjustedDamage = damage * difficultyMultiplier;
     setPlayerHealth(prev => {
       const newHealth = prev - adjustedDamage;
       if (newHealth <= 0) {
+        soundManager.playSound('gameOver');
         if (playerProfile) {
           const playtime = gameStartTime ? Math.floor((Date.now() - gameStartTime) / 60000) : 0;
           updateProfileStats({
@@ -739,6 +763,7 @@ export default function Game() {
   };
 
   const handleEnemyKill = useCallback((enemyType) => {
+    soundManager.playSound('enemyDie');
     // Tutorial tracking
     if (tutorialMode && window.tutorialUpdateState) {
       window.tutorialUpdateState({ 
@@ -840,6 +865,7 @@ export default function Game() {
 
   const shoot = useCallback(() => {
     if (shootCooldown <= 0) {
+      soundManager.playSound('shoot');
       setShootCooldown(SHOOT_CD);
       return true;
     }
@@ -848,6 +874,7 @@ export default function Game() {
 
   const heal = useCallback(() => {
     if (healCooldown <= 0 && playerHealth < maxHealth) {
+      soundManager.playSound('heal');
       setHealCooldown(HEAL_CD);
       const healAmount = 30 + (upgrades.abilityPower - 1) * 10;
       setPlayerHealth(prev => Math.min(maxHealth, prev + healAmount));
@@ -858,6 +885,7 @@ export default function Game() {
 
   const fly = useCallback(() => {
     if (flyCooldown <= 0 && !isFlying) {
+      soundManager.playSound('jump');
       setFlyCooldown(FLY_CD);
       setIsFlying(true);
       setTimeout(() => setIsFlying(false), FLY_DURATION);
@@ -1011,7 +1039,11 @@ export default function Game() {
 
   return (
     <div className="w-full h-screen bg-gradient-to-b from-[#87CEEB] via-[#5F9EA0] to-[#2F4F4F] overflow-hidden relative pb-12">
-      {showEmailModal && gameState === 'start' && (
+      {showSplash && (
+        <SplashScreen onComplete={() => setShowSplash(false)} />
+      )}
+      
+      {!showSplash && showEmailModal && gameState === 'start' && (
         <EmailSubscriptionModal 
           onClose={() => setShowEmailModal(false)}
           onSubscribe={() => setShowEmailModal(false)}
@@ -1019,9 +1051,12 @@ export default function Game() {
       )}
 
       {(gameState === 'playing' || gameState === 'boss') && (
-        <div className="absolute top-2 right-2 z-40">
-          <LanguageSwitcher currentLang={language} onLanguageChange={setLanguage} />
-        </div>
+        <>
+          <SoundSettings />
+          <div className="absolute top-2 right-2 z-40">
+            <LanguageSwitcher currentLang={language} onLanguageChange={setLanguage} />
+          </div>
+        </>
       )}
 
       <AnimatePresence mode="wait">
