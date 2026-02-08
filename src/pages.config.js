@@ -60,6 +60,8 @@ import PublicChat from './pages/PublicChat';
 import PublicGame from './pages/PublicGame';
 import Settings from './pages/Settings';
 import Skins from './pages/Skins';
+import Plans from './pages/Plans';
+import Key from './pages/Key';
 
 
 export const PAGES = {
@@ -76,6 +78,8 @@ export const PAGES = {
     "PublicGame": PublicGame,
     "Settings": Settings,
     "Skins": Skins,
+    "Plans": Plans,
+    "Key": Key,
 }
 
 export const pagesConfig = {

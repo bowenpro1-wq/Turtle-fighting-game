@@ -10,6 +10,7 @@ import LanguageSwitcher from '../LanguageSwitcher';
 import BottomNav from '../BottomNav';
 import PromoCodeInput from '../PromoCodeInput';
 import ChatInvitationBanner from '../social/ChatInvitationBanner';
+import GetGoldModal from '../GetGoldModal';
 
 export default function StartScreen({ onStart, onStartTutorial, defeatedBosses = [] }) {
   const [selectedMode, setSelectedMode] = useState(null);
@@ -18,6 +19,7 @@ export default function StartScreen({ onStart, onStartTutorial, defeatedBosses =
   const [showPromoCode, setShowPromoCode] = useState(false);
   const [hasProgress, setHasProgress] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showGetGold, setShowGetGold] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -120,6 +122,9 @@ export default function StartScreen({ onStart, onStartTutorial, defeatedBosses =
             onRedeem={handlePromoRedeem}
             onClose={() => setShowPromoCode(false)}
           />
+        )}
+        {showGetGold && (
+          <GetGoldModal onClose={() => setShowGetGold(false)} />
         )}
       </AnimatePresence>
       <motion.div
@@ -363,31 +368,39 @@ export default function StartScreen({ onStart, onStartTutorial, defeatedBosses =
           </Link>
         </div>
         
-        <div className="grid grid-cols-3 gap-2 md:gap-3">
+        <div className="grid grid-cols-2 gap-2 md:gap-3 mb-2">
+          <Button
+            onClick={() => setShowGetGold(true)}
+            className="px-3 py-4 md:py-5 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 rounded-xl text-white text-xs md:text-sm font-bold border-2 border-yellow-400/50 active:scale-95 transition-transform"
+          >
+            💰 获取金币
+          </Button>
+
           <Button
             onClick={() => setShowPromoCode(true)}
-            className="px-2 py-4 md:py-5 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 rounded-xl text-white text-xs md:text-sm font-bold border-2 border-pink-400/50 active:scale-95 transition-transform"
+            className="px-3 py-4 md:py-5 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 rounded-xl text-white text-xs md:text-sm font-bold border-2 border-pink-400/50 active:scale-95 transition-transform"
           >
             <Gift className="w-3.5 h-3.5 mr-1" />
             优惠码
           </Button>
+        </div>
 
+        <div className="grid grid-cols-2 gap-2 md:gap-3">
           <Link to={createPageUrl('Admin')} className="block">
             <Button
-              className="px-2 py-4 md:py-5 bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-800 hover:to-black rounded-xl text-white text-xs md:text-sm font-bold border-2 border-slate-500/50 active:scale-95 transition-transform"
+              className="w-full px-2 py-4 md:py-5 bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-800 hover:to-black rounded-xl text-white text-xs md:text-sm font-bold border-2 border-slate-500/50 active:scale-95 transition-transform"
             >
               🔧 管理员
             </Button>
           </Link>
-
-          <Button
-            onClick={handleDownloadApp}
-            className="px-2 py-4 md:py-5 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 rounded-xl text-white text-xs md:text-sm font-bold border-2 border-green-400/50 active:scale-95 transition-transform"
-          >
-            <Download className="w-3.5 h-3.5 mr-1" />
-            下载
-          </Button>
-        </div>
+<Button
+  onClick={handleDownloadApp}
+  className="w-full px-2 py-4 md:py-5 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 rounded-xl text-white text-xs md:text-sm font-bold border-2 border-green-400/50 active:scale-95 transition-transform"
+>
+  <Download className="w-3.5 h-3.5 mr-1" />
+  下载
+</Button>
+</div>
         </motion.div>
 
       <motion.div
