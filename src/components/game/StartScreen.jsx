@@ -213,7 +213,7 @@ export default function StartScreen({ onStart, onStartTutorial, defeatedBosses =
           </Button>
         )}
 
-        <div className="grid grid-cols-2 gap-2 md:gap-3">
+        <div className="grid grid-cols-3 gap-2 md:gap-3">
           <Button
             onClick={() => handleModeSelect('normal')}
             className="px-3 py-4 md:py-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 rounded-xl text-white text-xs md:text-sm font-bold shadow-xl active:scale-95 transition-transform"
@@ -225,19 +225,31 @@ export default function StartScreen({ onStart, onStartTutorial, defeatedBosses =
             onClick={() => handleModeSelect('endless')}
             className="px-3 py-4 md:py-5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-xl text-white text-xs md:text-sm font-bold shadow-xl active:scale-95 transition-transform"
           >
-            无尽
+            ♾️ 无尽
           </Button>
           <Button
             onClick={() => handleModeSelect('survival')}
             className="px-3 py-4 md:py-5 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 rounded-xl text-white text-xs md:text-sm font-bold shadow-xl active:scale-95 transition-transform"
           >
-            生存
+            🛡️ 生存
           </Button>
           <Button
             onClick={() => handleModeSelect('bossrush')}
             className="px-3 py-4 md:py-5 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 rounded-xl text-white text-xs md:text-sm font-bold shadow-xl active:scale-95 transition-transform"
           >
-            连战
+            ⚔️ 连战
+          </Button>
+          <Button
+            onClick={() => handleModeSelect('defense')}
+            className="px-3 py-4 md:py-5 bg-gradient-to-r from-slate-600 to-gray-600 hover:from-slate-700 hover:to-gray-700 rounded-xl text-white text-xs md:text-sm font-bold shadow-xl active:scale-95 transition-transform"
+          >
+            🏰 防守
+          </Button>
+          <Button
+            onClick={() => handleModeSelect('timeattack')}
+            className="px-3 py-4 md:py-5 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 rounded-xl text-white text-xs md:text-sm font-bold shadow-xl active:scale-95 transition-transform"
+          >
+            ⏱️ 限时
           </Button>
           <Button
             onClick={() => handleModeSelect('multiboss')}
@@ -249,7 +261,13 @@ export default function StartScreen({ onStart, onStartTutorial, defeatedBosses =
             onClick={() => handleModeSelect('superattack')}
             className="px-3 py-4 md:py-5 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 rounded-xl text-white text-xs md:text-sm font-bold shadow-xl active:scale-95 transition-transform"
           >
-            ⚡ 超强攻击
+            ⚡ 超攻
+          </Button>
+          <Button
+            onClick={() => handleModeSelect('raid')}
+            className="px-3 py-4 md:py-5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 rounded-xl text-white text-xs md:text-sm font-bold shadow-xl active:scale-95 transition-transform"
+          >
+            🗡️ 突袭
           </Button>
           </div>
         
