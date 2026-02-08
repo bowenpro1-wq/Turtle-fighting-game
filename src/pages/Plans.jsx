@@ -22,15 +22,27 @@ export default function Plans() {
 
   const generateAndGiveCredits = async (planType) => {
     try {
-      const goldAmount = planType === 'silver' ? 10000 : 150000;
-      
-      // Add gold to localStorage
-      const currentCoins = parseInt(localStorage.getItem('gameCoins') || '0');
-      const newCoins = currentCoins + goldAmount;
-      localStorage.setItem('gameCoins', newCoins.toString());
+      // Wait 1 second before generating
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      setGoldAmount(goldAmount);
-      setStatus('success');
+      const keyLength = planType === 'silver' ? 8 : 20;
+      const key = Array.from({ length: keyLength }, () => 
+        Math.random().toString(36).substr(2, 1).toUpperCase()
+      ).join('');
+
+      const promoCode = `PROMO${Date.now().toString(36).toUpperCase()}`;
+      const goldAmount = planType === 'silver' ? 10000 : 150000;
+
+      await base44.entities.GoldPlanKey.create({
+        key: key,
+        plan_type: planType,
+        promo_code: promoCode,
+        gold_amount: goldAmount,
+        used: false
+      });
+
+      const keyUrl = `${window.location.origin}${createPageUrl('Key')}?=${key}`;
+      window.location.href = keyUrl;
     } catch (error) {
       console.error('Credit generation error:', error);
       setStatus('error');
