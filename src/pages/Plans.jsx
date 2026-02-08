@@ -44,12 +44,12 @@ export default function Plans() {
         gold_amount: goldAmount,
         used: false
       });
-      console.log('Database entry created');
+      console.log('Database entry created, redirecting...');
 
-      console.log('Navigating to Key page with key:', key);
-      setTimeout(() => {
-        navigate(`${createPageUrl('Key')}?=${key}`);
-      }, 100);
+      // Use window.location for immediate redirect
+      const keyUrl = `/app/${createPageUrl('Key').split('/').pop()}?=${key}`;
+      console.log('Redirecting to:', keyUrl);
+      window.location.href = keyUrl;
     } catch (error) {
       console.error('Credit generation error:', error);
       alert('Error: ' + error.message);
