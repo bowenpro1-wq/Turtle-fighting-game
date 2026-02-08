@@ -20,6 +20,7 @@ import EmailSubscriptionModal from '@/components/EmailSubscriptionModal';
 import TouchShopButton from '@/components/game/TouchShopButton';
 import SplashScreen from '@/components/game/SplashScreen';
 import SoundSettings from '@/components/game/SoundSettings';
+import MultiBossSelect from '@/components/game/MultiBossSelect';
 import { soundManager } from '@/components/game/SoundManager';
 
 const BOSSES = [
@@ -521,7 +522,26 @@ export default function Game() {
     setSelectedWeapon(weaponId);
     setShowWeaponSelect(false);
     
-    continueGameAfterWeaponSelect(gameMode);
+    if (gameMode === 'multiboss' && selectedBosses.length > 0) {
+      // Start multi-boss mode
+      continueGameAfterWeaponSelect(gameMode);
+      // Trigger all selected bosses after delay
+      setTimeout(() => {
+        selectedBosses.forEach((bossId, index) => {
+          setTimeout(() => {
+            triggerBusBreakBoss(bossId);
+          }, index * 500);
+        });
+      }, 2000);
+    } else {
+      continueGameAfterWeaponSelect(gameMode);
+    }
+  };
+
+  const handleMultiBossConfirm = (bosses) => {
+    setSelectedBosses(bosses);
+    setShowForge(false);
+    setShowWeaponSelect(true);
   };
 
   const handleBossSelect = (bossId) => {
@@ -1210,12 +1230,22 @@ export default function Game() {
                 />
               )}
 
-            {showForge && (
+            {showForge && gameMode !== 'multiboss' && (
               <Forge
                 weapons={weapons}
                 templates={upgradeTemplates}
                 onUpgrade={handleWeaponUpgrade}
                 onClose={() => setShowForge(false)}
+              />
+            )}
+            
+            {showForge && gameMode === 'multiboss' && (
+              <MultiBossSelect
+                onConfirm={handleMultiBossConfirm}
+                onCancel={() => {
+                  setShowForge(false);
+                  setGameState('start');
+                }}
               />
             )}
           </AnimatePresence>

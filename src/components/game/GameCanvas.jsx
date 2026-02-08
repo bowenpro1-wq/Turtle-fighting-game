@@ -1440,8 +1440,33 @@ export default function GameCanvas({
       // Remove destroyed buildings
       game.buildings = game.buildings.filter(b => b.health > 0);
 
+      // Super attack mode - spawn 100 fast enemies at start
+      if (gameMode === 'superattack' && gameState === 'playing' && game.lastEnemySpawn === 0) {
+        for (let i = 0; i < 100; i++) {
+          const enemy = spawnEnemy();
+          enemy.speed *= 2;
+          enemy.damage *= 1.5;
+          enemy.shootInterval = Math.max(2000, enemy.shootInterval * 0.5);
+          game.enemies.push(enemy);
+        }
+        game.lastEnemySpawn = Date.now();
+      }
+
+      // Super attack mode - continuous fast spawning
+      if (gameMode === 'superattack' && gameState === 'playing' && Date.now() - game.lastEnemySpawn > 1000) {
+        const spawnCount = 15;
+        for (let i = 0; i < spawnCount; i++) {
+          const enemy = spawnEnemy();
+          enemy.speed *= 2;
+          enemy.damage *= 1.5;
+          enemy.shootInterval = Math.max(2000, enemy.shootInterval * 0.5);
+          game.enemies.push(enemy);
+        }
+        game.lastEnemySpawn = Date.now();
+      }
+
       // Spawn LOTS of enemies every 2 seconds in normal mode
-      if (gameMode !== 'tower' && gameMode !== 'busbreak' && gameState === 'playing' && Date.now() - game.lastEnemySpawn > 2000) {
+      if (gameMode !== 'tower' && gameMode !== 'busbreak' && gameMode !== 'superattack' && gameState === 'playing' && Date.now() - game.lastEnemySpawn > 2000) {
         const baseSpawn = Math.floor(score / 1000) + 5;
         const spawnCount = Math.floor(Math.random() * baseSpawn) + baseSpawn;
         for (let i = 0; i < spawnCount; i++) {
