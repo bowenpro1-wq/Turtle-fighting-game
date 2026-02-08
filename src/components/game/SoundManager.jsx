@@ -9,16 +9,16 @@ class SoundManager {
     this.muted = false;
     this.musicMuted = false;
     this.currentMusicMode = null;
+    this.musicInterval = null;
+    this.musicNoteIndex = 0;
     
     // Initialize audio context
     this.audioContext = null;
-    this.musicOscillator = null;
-    this.musicGain = null;
     this.init();
   }
 
   init() {
-    // Create simple sound effects using Web Audio API
+    // Create audio context
     if (typeof window !== 'undefined') {
       this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
     }
@@ -30,39 +30,76 @@ class SoundManager {
     this.stopBackgroundMusic();
     this.currentMusicMode = mode;
     
-    const ctx = this.audioContext;
-    this.musicOscillator = ctx.createOscillator();
-    this.musicGain = ctx.createGain();
+    // Music patterns - different melodies for each mode
+    const melodies = {
+      normal: [
+        { freq: 523, duration: 300 }, // C5
+        { freq: 587, duration: 300 }, // D5
+        { freq: 659, duration: 300 }, // E5
+        { freq: 698, duration: 300 }, // F5
+        { freq: 784, duration: 300 }, // G5
+        { freq: 659, duration: 300 }, // E5
+        { freq: 587, duration: 300 }, // D5
+        { freq: 523, duration: 300 }  // C5
+      ],
+      boss: [
+        { freq: 220, duration: 200 }, // A3
+        { freq: 277, duration: 200 }, // C#4
+        { freq: 330, duration: 200 }, // E4
+        { freq: 277, duration: 200 }, // C#4
+        { freq: 220, duration: 200 }, // A3
+        { freq: 185, duration: 200 }, // F#3
+        { freq: 220, duration: 200 }, // A3
+        { freq: 277, duration: 200 }  // C#4
+      ],
+      tower: [
+        { freq: 392, duration: 400 }, // G4
+        { freq: 440, duration: 400 }, // A4
+        { freq: 494, duration: 400 }, // B4
+        { freq: 523, duration: 400 }, // C5
+        { freq: 494, duration: 400 }, // B4
+        { freq: 440, duration: 400 }, // A4
+        { freq: 392, duration: 200 }, // G4
+        { freq: 349, duration: 200 }  // F4
+      ]
+    };
     
-    this.musicOscillator.connect(this.musicGain);
-    this.musicGain.connect(ctx.destination);
+    const melody = melodies[mode] || melodies.normal;
+    this.musicNoteIndex = 0;
     
-    this.musicGain.gain.value = this.musicVolume * 0.1;
+    const playNote = () => {
+      if (!this.audioContext || this.musicMuted) return;
+      
+      const note = melody[this.musicNoteIndex % melody.length];
+      const osc = this.audioContext.createOscillator();
+      const gain = this.audioContext.createGain();
+      
+      osc.connect(gain);
+      gain.connect(this.audioContext.destination);
+      
+      osc.frequency.value = note.freq;
+      osc.type = mode === 'boss' ? 'sawtooth' : mode === 'tower' ? 'triangle' : 'sine';
+      
+      gain.gain.setValueAtTime(this.musicVolume * 0.15, this.audioContext.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + note.duration / 1000);
+      
+      osc.start();
+      osc.stop(this.audioContext.currentTime + note.duration / 1000);
+      
+      this.musicNoteIndex++;
+    };
     
-    // Different music for different modes
-    if (mode === 'boss' || mode === 'multiboss') {
-      this.musicOscillator.frequency.value = 220; // A3
-      this.musicOscillator.type = 'sawtooth';
-    } else if (mode === 'tower') {
-      this.musicOscillator.frequency.value = 196; // G3
-      this.musicOscillator.type = 'triangle';
-    } else {
-      this.musicOscillator.frequency.value = 262; // C4
-      this.musicOscillator.type = 'sine';
-    }
-    
-    this.musicOscillator.start();
+    playNote();
+    this.musicInterval = setInterval(playNote, melody[0].duration);
   }
   
   stopBackgroundMusic() {
-    if (this.musicOscillator) {
-      this.musicOscillator.stop();
-      this.musicOscillator = null;
-    }
-    if (this.musicGain) {
-      this.musicGain = null;
+    if (this.musicInterval) {
+      clearInterval(this.musicInterval);
+      this.musicInterval = null;
     }
     this.currentMusicMode = null;
+    this.musicNoteIndex = 0;
   }
 
   playSound(type) {
@@ -165,12 +202,20 @@ class SoundManager {
         break;
       
       case 'powerup':
-        oscillator.frequency.value = 1200;
-        oscillator.type = 'sine';
-        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-        oscillator.start(ctx.currentTime);
-        oscillator.stop(ctx.currentTime + 0.3);
-        break;
+        // Powerup arpeggio
+        [523, 659, 784, 1047].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.frequency.value = freq;
+          osc.type = 'sine';
+          gain.gain.setValueAtTime(this.volume * 0.25, ctx.currentTime + i * 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.08 + 0.2);
+          osc.start(ctx.currentTime + i * 0.08);
+          osc.stop(ctx.currentTime + i * 0.08 + 0.2);
+        });
+        return;
       
       case 'hit':
         oscillator.frequency.value = 250;
