@@ -9,6 +9,7 @@ import PreBattleChat from '../PreBattleChat';
 import LanguageSwitcher from '../LanguageSwitcher';
 import BottomNav from '../BottomNav';
 import PromoCodeInput from '../PromoCodeInput';
+import ChatInvitationBanner from '../social/ChatInvitationBanner';
 
 export default function StartScreen({ onStart, onStartTutorial, defeatedBosses = [] }) {
   const [selectedMode, setSelectedMode] = useState(null);
@@ -412,5 +413,6 @@ export default function StartScreen({ onStart, onStartTutorial, defeatedBosses =
         />
       </div>
     </motion.div>
+    </>
   );
 }
