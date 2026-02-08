@@ -518,7 +518,8 @@ export default function GameCanvas({
   showTowerDoor = false,
   onDoorEnter,
   multiBossMode = false,
-  activeBosses = []
+  activeBosses = [],
+  selectedBosses = []
 }) {
   const canvasRef = useRef(null);
   const WORLD_WIDTH = gameMode === 'tower' ? 1800 : 4000;
@@ -1487,91 +1488,129 @@ export default function GameCanvas({
           game.lastBossEnemySpawn = 0;
           }
 
-          // Multi-boss mode rendering
+          // Multi-boss mode rendering - use same visuals as busbreak
           if (multiBossMode && activeBosses.length > 0) {
-          activeBosses.forEach((boss, idx) => {
-          if (!game.multiBosses) game.multiBosses = {};
+            activeBosses.forEach((boss, idx) => {
+              if (!game.multiBosses) game.multiBosses = {};
 
-          if (!game.multiBosses[boss.id]) {
-            const angle = (Math.PI * 2 / activeBosses.length) * idx;
-            game.multiBosses[boss.id] = {
-              x: game.player.x + Math.cos(angle) * 400,
-              y: game.player.y + Math.sin(angle) * 400,
-              vx: 0,
-              vy: 0,
-              lastShot: Date.now(),
-              health: boss.health,
-              maxHealth: boss.health
-            };
-          }
+              if (!game.multiBosses[boss.id]) {
+                const angle = (Math.PI * 2 / activeBosses.length) * idx;
+                game.multiBosses[boss.id] = {
+                  x: game.player.x + Math.cos(angle) * 400,
+                  y: game.player.y + Math.sin(angle) * 400,
+                  vx: 0,
+                  vy: 0,
+                  lastShot: Date.now(),
+                  lastDash: Date.now(),
+                  lastSpecialAttack: Date.now(),
+                  health: boss.health,
+                  maxHealth: boss.health
+                };
+              }
 
-          const bossState = game.multiBosses[boss.id];
-          const dx = game.player.x - bossState.x;
-          const dy = game.player.y - bossState.y;
-          const distToPlayer = Math.sqrt(dx * dx + dy * dy);
+              const bossState = game.multiBosses[boss.id];
+              const dx = game.player.x - bossState.x;
+              const dy = game.player.y - bossState.y;
+              const distToPlayer = Math.sqrt(dx * dx + dy * dy);
 
-          // Simple chase AI
-          bossState.vx = (dx / distToPlayer) * boss.speed;
-          bossState.vy = (dy / distToPlayer) * boss.speed;
-          bossState.x += bossState.vx;
-          bossState.y += bossState.vy;
+              // Use same AI patterns as busbreak bosses
+              if (boss.pattern === 'chase') {
+                bossState.vx = (dx / distToPlayer) * boss.speed;
+                bossState.vy = (dy / distToPlayer) * boss.speed;
+              } else if (boss.pattern === 'dash') {
+                if (Date.now() - bossState.lastDash > 3000) {
+                  bossState.vx = (dx / distToPlayer) * boss.speed * 4;
+                  bossState.vy = (dy / distToPlayer) * boss.speed * 4;
+                  bossState.lastDash = Date.now();
+                } else {
+                  bossState.vx *= 0.95;
+                  bossState.vy *= 0.95;
+                }
+              } else if (boss.pattern === 'teleport') {
+                if (Date.now() - bossState.lastDash > 2000 && distToPlayer > 200) {
+                  const angle = Math.random() * Math.PI * 2;
+                  bossState.x = game.player.x + Math.cos(angle) * 150;
+                  bossState.y = game.player.y + Math.sin(angle) * 150;
+                  bossState.lastDash = Date.now();
+                }
+                bossState.vx = (dx / distToPlayer) * boss.speed * 0.5;
+                bossState.vy = (dy / distToPlayer) * boss.speed * 0.5;
+              } else if (boss.pattern === 'spiral') {
+                const angle = Math.atan2(dy, dx) + Math.sin(game.animationFrame * 0.05) * 0.5;
+                bossState.vx = Math.cos(angle) * boss.speed;
+                bossState.vy = Math.sin(angle) * boss.speed;
+              } else if (boss.pattern === 'flame') {
+                if (distToPlayer > 250) {
+                  bossState.vx = (dx / distToPlayer) * boss.speed;
+                  bossState.vy = (dy / distToPlayer) * boss.speed;
+                } else if (distToPlayer < 200) {
+                  bossState.vx = -(dx / distToPlayer) * boss.speed;
+                  bossState.vy = -(dy / distToPlayer) * boss.speed;
+                } else {
+                  bossState.vx *= 0.9;
+                  bossState.vy *= 0.9;
+                }
+              }
 
-          // Draw boss
-          const bossScreenX = bossState.x - game.camera.x;
-          const bossScreenY = bossState.y - game.camera.y;
+              bossState.x += bossState.vx;
+              bossState.y += bossState.vy;
 
-          ctx.save();
-          ctx.fillStyle = boss.color;
-          ctx.strokeStyle = '#000';
-          ctx.lineWidth = 4;
-          ctx.shadowBlur = 20;
-          ctx.shadowColor = boss.color;
-          ctx.beginPath();
-          ctx.arc(bossScreenX, bossScreenY, boss.size / 2, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.stroke();
+              // Draw boss using same function as busbreak
+              const bossScreenX = bossState.x - game.camera.x;
+              const bossScreenY = bossState.y - game.camera.y;
 
-          // Boss name
-          ctx.fillStyle = 'rgba(0,0,0,0.7)';
-          ctx.fillRect(bossScreenX - 60, bossScreenY - boss.size/2 - 40, 120, 25);
-          ctx.fillStyle = '#fff';
-          ctx.font = 'bold 14px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText(boss.name, bossScreenX, bossScreenY - boss.size/2 - 22);
+              // Use the existing drawBusBreakBoss function
+              const bossDataForDrawing = {
+                id: boss.id,
+                name: boss.name,
+                size: boss.size || 120,
+                color: boss.color,
+                pattern: boss.pattern
+              };
 
-          // Health bar
-          const healthPercent = bossState.health / bossState.maxHealth;
-          ctx.fillStyle = 'rgba(0,0,0,0.7)';
-          ctx.fillRect(bossScreenX - 60, bossScreenY - boss.size/2 - 50, 120, 8);
-          ctx.fillStyle = healthPercent > 0.5 ? '#22c55e' : healthPercent > 0.25 ? '#f59e0b' : '#ef4444';
-          ctx.fillRect(bossScreenX - 60, bossScreenY - boss.size/2 - 50, 120 * healthPercent, 8);
+              drawBusBreakBoss(ctx, bossState, game.camera, game.animationFrame, bossScreenX, bossScreenY, bossDataForDrawing);
 
-          ctx.restore();
+              // Boss name and health bar
+              ctx.save();
+              ctx.fillStyle = 'rgba(0,0,0,0.7)';
+              ctx.fillRect(bossScreenX - 80, bossScreenY - boss.size/2 - 50, 160, 25);
+              ctx.fillStyle = '#fff';
+              ctx.font = 'bold 16px sans-serif';
+              ctx.textAlign = 'center';
+              ctx.fillText(boss.name, bossScreenX, bossScreenY - boss.size/2 - 30);
 
-          // Collision damage
-          if (distToPlayer < boss.size + 25 && !isFlying && !isInShop) {
-            if (game.animationFrame % 30 === 0) {
-              onPlayerDamage(boss.damage * 0.5);
-            }
-          }
+              const healthPercent = bossState.health / bossState.maxHealth;
+              ctx.fillStyle = 'rgba(0,0,0,0.7)';
+              ctx.fillRect(bossScreenX - 80, bossScreenY - boss.size/2 - 70, 160, 12);
+              ctx.fillStyle = healthPercent > 0.5 ? '#22c55e' : healthPercent > 0.25 ? '#f59e0b' : '#ef4444';
+              ctx.fillRect(bossScreenX - 80, bossScreenY - boss.size/2 - 70, 160 * healthPercent, 12);
+              ctx.restore();
 
-          // Shooting
-          if (Date.now() - bossState.lastShot > 2000 && distToPlayer < 600) {
-            for (let i = 0; i < 5; i++) {
-              const spreadAngle = Math.atan2(dy, dx) + (i - 2) * 0.2;
-              game.enemyBullets.push({
-                x: bossState.x,
-                y: bossState.y,
-                vx: Math.cos(spreadAngle) * 8,
-                vy: Math.sin(spreadAngle) * 8,
-                damage: boss.damage,
-                size: 10,
-                color: boss.color
-              });
-            }
-            bossState.lastShot = Date.now();
-          }
-          });
+              // Collision damage
+              if (distToPlayer < boss.size + 25 && !isFlying && !isInShop) {
+                if (game.animationFrame % 30 === 0) {
+                  onPlayerDamage(boss.damage * 0.5);
+                }
+              }
+
+              // Shooting
+              if (Date.now() - bossState.lastShot > 2000 && distToPlayer < 600) {
+                const bulletCount = boss.pattern === 'flame' ? 8 : 5;
+                for (let i = 0; i < bulletCount; i++) {
+                  const spreadAngle = Math.atan2(dy, dx) + (i - bulletCount/2) * 0.2;
+                  game.enemyBullets.push({
+                    x: bossState.x,
+                    y: bossState.y,
+                    vx: Math.cos(spreadAngle) * 8,
+                    vy: Math.sin(spreadAngle) * 8,
+                    damage: boss.damage,
+                    size: 10,
+                    color: boss.color
+                  });
+                }
+                bossState.lastShot = Date.now();
+              }
+            });
           }
 
       // 赤潮持续火线攻击
@@ -2924,32 +2963,39 @@ export default function GameCanvas({
         if (multiBossMode && game.multiBosses) {
           for (const bossId in game.multiBosses) {
             const bossState = game.multiBosses[bossId];
-            const boss = activeBosses.find(b => b.id === bossId);
+            const boss = activeBosses.find(b => b.id === bossId || b.id.startsWith(bossId));
             if (!boss) continue;
 
             const dx = bullet.x - bossState.x;
             const dy = bullet.y - bossState.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
 
-            if (dist < boss.size / 2) {
+            if (dist < (boss.size || 120) / 2) {
               bossState.health -= bullet.damage;
 
-              if (bossState.health <= 0) {
-                delete game.multiBosses[bossId];
-                onBossDamage(999999); // Trigger boss defeat
-              }
-
-              for (let i = 0; i < 15; i++) {
+              // Hit particles
+              const particleCount = bullet.isCannon ? 30 : 15;
+              for (let i = 0; i < particleCount; i++) {
                 game.particles.push({
                   x: bullet.x,
                   y: bullet.y,
-                  vx: (Math.random() - 0.5) * 10,
-                  vy: (Math.random() - 0.5) * 10,
+                  vx: (Math.random() - 0.5) * 12,
+                  vy: (Math.random() - 0.5) * 12,
                   life: 25,
                   color: boss.color,
-                  size: 4
+                  size: bullet.isCannon ? 6 : 4
                 });
               }
+
+              if (bossState.health <= 0) {
+                delete game.multiBosses[bossId];
+
+                // Check if all bosses defeated
+                if (Object.keys(game.multiBosses).length === 0) {
+                  onBossDamage(999999); // Trigger victory
+                }
+              }
+
               return false;
             }
           }

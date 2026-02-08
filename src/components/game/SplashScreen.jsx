@@ -40,7 +40,7 @@ export default function SplashScreen({ onComplete }) {
             <motion.img
               src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSjg9Q9oRLQyEo2OC7whIYLx6-yBWUurkrJZQ&s"
               alt="Mentu Tech"
-              className="w-32 h-32 mx-auto mb-6 rounded-2xl shadow-2xl"
+              className="w-64 h-64 mx-auto mb-8 rounded-3xl shadow-2xl object-cover"
               animate={{ 
                 rotate: [0, 5, -5, 0],
                 scale: [1, 1.05, 1]

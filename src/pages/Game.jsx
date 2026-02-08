@@ -422,6 +422,15 @@ export default function Game() {
     setBossMaxHealth(0);
     setTowerKillCount(0);
     
+    // Start background music based on mode
+    if (mode === 'tower') {
+      soundManager.playBackgroundMusic('tower');
+    } else if (mode === 'boss' || mode === 'busbreak' || mode === 'multiboss') {
+      soundManager.playBackgroundMusic('boss');
+    } else {
+      soundManager.playBackgroundMusic('normal');
+    }
+    
     // Track game start
     if (playerProfile) {
       await updateProfileStats({
@@ -708,7 +717,22 @@ export default function Game() {
         return;
       }
       
+      // Multi-boss mode - check if all bosses defeated
+      if (gameMode === 'multiboss') {
+        if (!window.multiBosses || Object.keys(window.multiBosses).length === 0) {
+          soundManager.playSound('victory');
+          setGameState('victory');
+        }
+        setCurrentBoss(null);
+        return;
+      }
+      
       setCurrentBoss(null);
+      
+      // Resume normal music after boss
+      if (gameMode !== 'busbreak' && gameMode !== 'multiboss') {
+        soundManager.playBackgroundMusic(gameMode);
+      }
       
       // Tower mode floor progression
       if (gameMode === 'tower') {
@@ -1204,6 +1228,7 @@ export default function Game() {
               showTowerDoor={showTowerDoor}
               multiBossMode={gameMode === 'multiboss'}
               activeBosses={window.multiBosses || []}
+              selectedBosses={selectedBosses}
               />
             
             <GameUI

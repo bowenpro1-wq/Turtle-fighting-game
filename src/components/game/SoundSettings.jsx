@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Volume2, VolumeX, Music, Music4 } from 'lucide-react';
 import { soundManager } from './SoundManager';
+import FullscreenButton from './FullscreenButton';
 
 export default function SoundSettings() {
   const [volume, setVolume] = useState(0.5);
@@ -43,6 +44,7 @@ export default function SoundSettings() {
   return (
     <div className="fixed top-4 left-4 z-40">
       <div className="flex gap-2">
+        <FullscreenButton />
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={toggleMute}
