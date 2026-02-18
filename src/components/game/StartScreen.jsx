@@ -20,21 +20,14 @@ export default function StartScreen({ onStart, onStartTutorial, defeatedBosses =
   const [hasProgress, setHasProgress] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showGetGold, setShowGetGold] = useState(false);
-  const [recaptchaVerified, setRecaptchaVerified] = useState(false);
-
   useEffect(() => {
-    // Load reCAPTCHA script
-    if (!document.getElementById('recaptcha-script')) {
-      const script = document.createElement('script');
-      script.id = 'recaptcha-script';
-      script.src = 'https://www.google.com/recaptcha/api.js';
-      script.async = true;
-      script.defer = true;
-      document.head.appendChild(script);
+    // Check if recaptcha is needed (every 5 minutes)
+    const lastVerified = parseInt(localStorage.getItem('recaptcha_verified_at') || '0');
+    const fiveMinutes = 5 * 60 * 1000;
+    if (Date.now() - lastVerified > fiveMinutes) {
+      window.location.href = createPageUrl('Recaptcha');
+      return;
     }
-    // Global callback for reCAPTCHA
-    window.onRecaptchaVerified = () => setRecaptchaVerified(true);
-    return () => { delete window.onRecaptchaVerified; };
   }, []);
 
   useEffect(() => {
