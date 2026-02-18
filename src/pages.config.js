@@ -52,16 +52,17 @@ import Encyclopedia from './pages/Encyclopedia';
 import Forge from './pages/Forge';
 import Friends from './pages/Friends';
 import Game from './pages/Game';
+import Key from './pages/Key';
 import Leaderboard from './pages/Leaderboard';
 import MiniGames from './pages/MiniGames';
 import Multiplayer from './pages/Multiplayer';
+import Plans from './pages/Plans';
 import Profile from './pages/Profile';
 import PublicChat from './pages/PublicChat';
 import PublicGame from './pages/PublicGame';
 import Settings from './pages/Settings';
 import Skins from './pages/Skins';
-import Plans from './pages/Plans';
-import Key from './pages/Key';
+import Recaptcha from './pages/Recaptcha';
 
 
 export const PAGES = {
@@ -70,16 +71,17 @@ export const PAGES = {
     "Forge": Forge,
     "Friends": Friends,
     "Game": Game,
+    "Key": Key,
     "Leaderboard": Leaderboard,
     "MiniGames": MiniGames,
     "Multiplayer": Multiplayer,
+    "Plans": Plans,
     "Profile": Profile,
     "PublicChat": PublicChat,
     "PublicGame": PublicGame,
     "Settings": Settings,
     "Skins": Skins,
-    "Plans": Plans,
-    "Key": Key,
+    "Recaptcha": Recaptcha,
 }
 
 export const pagesConfig = {
