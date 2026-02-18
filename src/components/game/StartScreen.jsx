@@ -151,53 +151,6 @@ export default function StartScreen({ onStart, onStartTutorial, defeatedBosses =
       </motion.div>
 
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="bg-black/40 backdrop-blur-sm rounded-2xl p-4 md:p-6 mb-6 border-2 border-cyan-500/30 max-w-2xl mx-4"
-      >
-        <h3 className="text-cyan-300 text-sm md:text-base font-semibold mb-3 text-center">操作指南</h3>
-        <div className="grid grid-cols-2 gap-2 md:gap-3 text-white/90 text-xs md:text-sm">
-          <div className="flex items-center gap-1.5 md:gap-2 col-span-2 justify-center">
-            <kbd className="px-2 py-1 bg-white/20 rounded font-mono font-bold text-[10px] md:text-xs">WASD</kbd>
-            <span className="text-[10px] md:text-xs">移动</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <kbd className="px-2 py-1 bg-red-500/40 rounded font-mono font-bold text-[10px] md:text-xs">K</kbd>
-            <span className="text-[10px] md:text-xs">射击</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <kbd className="px-2 py-1 bg-cyan-500/40 rounded font-mono font-bold text-[10px] md:text-xs">J</kbd>
-            <span className="text-[10px] md:text-xs">近战</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <kbd className="px-2 py-1 bg-green-500/40 rounded font-mono font-bold text-[10px] md:text-xs">H</kbd>
-            <span className="text-[10px] md:text-xs">治疗</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <kbd className="px-2 py-1 bg-blue-500/40 rounded font-mono font-bold text-[10px] md:text-xs">O</kbd>
-            <span className="text-[10px] md:text-xs">飞行</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <kbd className="px-2 py-1 bg-yellow-500/40 rounded font-mono font-bold text-[10px] md:text-xs">B</kbd>
-            <span className="text-[10px] md:text-xs">商店</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <kbd className="px-2 py-1 bg-orange-500/40 rounded font-mono font-bold text-[10px] md:text-xs">L</kbd>
-            <span className="text-[10px] md:text-xs">大招</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <kbd className="px-2 py-1 bg-purple-500/40 rounded font-mono font-bold text-[10px] md:text-xs">U</kbd>
-            <span className="text-[10px] md:text-xs">召唤</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <kbd className="px-2 py-1 bg-pink-500/40 rounded font-mono font-bold text-[10px] md:text-xs">P</kbd>
-            <span className="text-[10px] md:text-xs">终极</span>
-          </div>
-        </div>
-      </motion.div>
-
-      <motion.div
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: "spring", delay: 0.7 }}
