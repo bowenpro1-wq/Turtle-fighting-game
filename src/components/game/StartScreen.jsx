@@ -197,27 +197,11 @@ export default function StartScreen({ onStart, onStartTutorial, defeatedBosses =
         </div>
       </motion.div>
 
-      {!recaptchaVerified && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col items-center gap-4 px-4 mb-4"
-        >
-          <p className="text-cyan-200 text-sm font-semibold">请先完成验证以继续</p>
-          <div
-            className="g-recaptcha"
-            data-sitekey="6LebhG8sAAAAAP-KBMASY0M6Tj5SyPHils4MGSXn"
-            data-callback="onRecaptchaVerified"
-            data-theme="dark"
-          />
-        </motion.div>
-      )}
-
       <motion.div
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: "spring", delay: 0.7 }}
-        className={`space-y-2 md:space-y-3 px-4 w-full max-w-md ${!recaptchaVerified ? 'opacity-50 pointer-events-none select-none' : ''}`}
+        className="space-y-2 md:space-y-3 px-4 w-full max-w-md"
       >
         {/* Tutorial Button */}
         <Button
