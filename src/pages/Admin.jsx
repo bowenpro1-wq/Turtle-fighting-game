@@ -391,6 +391,41 @@ export default function AdminPanel() {
             </Button>
           </motion.div>
 
+          {/* reCAPTCHA Settings */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.05 }}
+            className="bg-slate-800 rounded-xl p-6 border border-slate-700"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <span className="text-2xl">🤖</span>
+              <h2 className="text-2xl font-bold text-white">reCAPTCHA 设置</h2>
+            </div>
+            <Input
+              placeholder="Site Key（网站密钥）"
+              value={recaptchaSiteKey}
+              onChange={(e) => setRecaptchaSiteKey(e.target.value)}
+              className="mb-4 font-mono text-xs"
+            />
+            <Input
+              placeholder="Secret Key（服务器密钥）"
+              value={recaptchaSecretKey}
+              onChange={(e) => setRecaptchaSecretKey(e.target.value)}
+              className="mb-4 font-mono text-xs"
+            />
+            <Button
+              onClick={() => {
+                localStorage.setItem('recaptcha_site_key', recaptchaSiteKey);
+                localStorage.setItem('recaptcha_secret_key', recaptchaSecretKey);
+                setMessage('reCAPTCHA 密钥已保存！');
+              }}
+              className="w-full bg-green-600 hover:bg-green-700"
+            >
+              💾 保存 reCAPTCHA 设置
+            </Button>
+          </motion.div>
+
           {/* Gold & Promo Section */}
           <div className="space-y-6">
             <motion.div
