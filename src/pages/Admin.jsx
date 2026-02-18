@@ -11,6 +11,8 @@ import { createPageUrl } from '@/utils';
 export default function AdminPanel() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
+  const [recaptchaSiteKey, setRecaptchaSiteKey] = useState(() => localStorage.getItem('recaptcha_site_key') || '6LebhG8sAAAAAP-KBMASY0M6Tj5SyPHils4MGSXn');
+  const [recaptchaSecretKey, setRecaptchaSecretKey] = useState(() => localStorage.getItem('recaptcha_secret_key') || '6LebhG8sAAAAAJKJ7Pkt-tuXizNwMQuLWH7ZOa7F');
   const [emailSubject, setEmailSubject] = useState('');
   const [emailBody, setEmailBody] = useState('');
   const [isDraftingEmail, setIsDraftingEmail] = useState(false);
