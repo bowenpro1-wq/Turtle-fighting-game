@@ -63,6 +63,7 @@ import PublicGame from './pages/PublicGame';
 import Recaptcha from './pages/Recaptcha';
 import Settings from './pages/Settings';
 import Skins from './pages/Skins';
+import ads from './pages/ads';
 import __Layout from './Layout.jsx';
 
 
@@ -83,6 +84,7 @@ export const PAGES = {
     "Recaptcha": Recaptcha,
     "Settings": Settings,
     "Skins": Skins,
+    "ads": ads,
 }
 
 export const pagesConfig = {
