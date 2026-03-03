@@ -60,9 +60,10 @@ import Plans from './pages/Plans';
 import Profile from './pages/Profile';
 import PublicChat from './pages/PublicChat';
 import PublicGame from './pages/PublicGame';
+import Recaptcha from './pages/Recaptcha';
 import Settings from './pages/Settings';
 import Skins from './pages/Skins';
-import Recaptcha from './pages/Recaptcha';
+import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
@@ -79,12 +80,13 @@ export const PAGES = {
     "Profile": Profile,
     "PublicChat": PublicChat,
     "PublicGame": PublicGame,
+    "Recaptcha": Recaptcha,
     "Settings": Settings,
     "Skins": Skins,
-    "Recaptcha": Recaptcha,
 }
 
 export const pagesConfig = {
     mainPage: "Game",
     Pages: PAGES,
+    Layout: __Layout,
 };
