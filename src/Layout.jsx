@@ -2,6 +2,12 @@ import { useEffect } from "react";
 
 export default function Layout({ children }) {
   useEffect(() => {
+    if (!document.querySelector('meta[name="google-adsense-account"]')) {
+      const meta = document.createElement("meta");
+      meta.name = "google-adsense-account";
+      meta.content = "ca-pub-9193408952526894";
+      document.head.appendChild(meta);
+    }
     if (!document.getElementById("adsense-script")) {
       const script = document.createElement("script");
       script.id = "adsense-script";
