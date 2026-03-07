@@ -78,6 +78,15 @@ export default function Recaptcha() {
             <div className="text-white/50 text-xs text-center mt-2">
               您的 IP 地址：<span className="text-cyan-400 font-mono">{ip}</span>
             </div>
+            <button
+              onClick={() => {
+                localStorage.setItem('recaptcha_verified_at', Date.now().toString());
+                window.location.href = createPageUrl('Game');
+              }}
+              className="text-white/40 text-xs underline hover:text-white/70 transition-colors mt-1"
+            >
+              跳过验证，直接进入游戏
+            </button>
           </>
         ) : (
           <motion.div
