@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
 Deno.serve(async (req) => {
   try {
@@ -15,8 +15,6 @@ Deno.serve(async (req) => {
 
     console.log(`Found ${subscribers.length} subscribers`);
 
-    const accessToken = await base44.asServiceRole.connectors.getAccessToken('gmail');
-    
     const gameUpdates = [
       '🎮 本周新增了3个全新小游戏！',
       '⚔️ Boss试炼模式新增两位强力Boss',
@@ -39,12 +37,7 @@ Deno.serve(async (req) => {
     
     for (const subscriber of subscribers) {
       try {
-        const emailContent = `From: Turtle Adventure Island <me>
-To: ${subscriber.email}
-Subject: 🐢 龟龟冒险岛 - 本周游戏更新
-Content-Type: text/html; charset=utf-8
-
-<html>
+        const emailBody = `<html>
 <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f3f4f6;">
   <div style="background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); padding: 40px 30px; border-radius: 15px; text-align: center;">
     <h1 style="color: white; margin: 0; font-size: 36px;">🐢 龟龟冒险岛</h1>
@@ -84,30 +77,19 @@ Content-Type: text/html; charset=utf-8
 </body>
 </html>`;
 
-        const encodedMessage = btoa(unescape(encodeURIComponent(emailContent)));
-        
-        const response = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            raw: encodedMessage
-          })
+        await base44.asServiceRole.integrations.Core.SendEmail({
+          to: subscriber.email,
+          subject: '🐢 龟龟冒险岛 - 本周游戏更新',
+          body: emailBody,
+          from_name: '龟龟冒险岛'
         });
 
-        if (response.ok) {
-          sentCount++;
-          // Update last email sent timestamp
-          await base44.asServiceRole.entities.EmailSubscription.update(subscriber.id, {
-            last_email_sent: new Date().toISOString()
-          });
-          console.log(`Email sent to ${subscriber.email}`);
-        } else {
-          console.error(`Failed to send to ${subscriber.email}`);
-        }
-        
+        sentCount++;
+        await base44.asServiceRole.entities.EmailSubscription.update(subscriber.id, {
+          last_email_sent: new Date().toISOString()
+        });
+        console.log(`Email sent to ${subscriber.email}`);
+
         // Small delay to avoid rate limiting
         await new Promise(resolve => setTimeout(resolve, 100));
         
