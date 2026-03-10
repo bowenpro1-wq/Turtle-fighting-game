@@ -47,7 +47,7 @@ const BOSSES = [
 ];
 
 export default function Game() {
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(false);
   const [gameState, setGameState] = useState('start');
   const [gameMode, setGameMode] = useState('normal');
   const [language, setLanguage] = useState('zh');

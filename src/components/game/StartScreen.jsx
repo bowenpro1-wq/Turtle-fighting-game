@@ -21,13 +21,15 @@ export default function StartScreen({ onStart, onStartTutorial, defeatedBosses =
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showGetGold, setShowGetGold] = useState(false);
   useEffect(() => {
-    // Check if recaptcha is needed (every 5 minutes)
-    const lastVerified = parseInt(localStorage.getItem('recaptcha_verified_at') || '0');
-    const fiveMinutes = 5 * 60 * 1000;
-    if (Date.now() - lastVerified > fiveMinutes) {
-      window.location.href = createPageUrl('Recaptcha');
-      return;
-    }
+    // Check if recaptcha is needed (every 5 minutes) - delay to avoid white screen
+    const timer = setTimeout(() => {
+      const lastVerified = parseInt(localStorage.getItem('recaptcha_verified_at') || '0');
+      const fiveMinutes = 5 * 60 * 1000;
+      if (Date.now() - lastVerified > fiveMinutes) {
+        window.location.href = createPageUrl('Recaptcha');
+      }
+    }, 100);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
