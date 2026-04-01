@@ -692,7 +692,6 @@ export default function Shop({ coins, upgrades, hasHomingBullets, hasPiercingSho
                 </motion.div>
                 </div>
           </div>
-        )}
       </motion.div>
     </motion.div>
   );
